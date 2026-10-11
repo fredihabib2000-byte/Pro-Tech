@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pro-Tech Store</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* ── Design tokens ────────────────────────────────────────────── */
+:root {
+  --bg: #f8f9fb;
+  --surface: #ffffff;
+  --surface-2: #f0f2f7;
+  --fg: #0d1117;
+  --fg-2: #4a5568;
+  --fg-3: #8a94a6;
+  --accent: #0057ff;
+  --accent-hover: #0044cc;
+  --accent-soft: #e6edff;
+  --success: #00a86b;
+  --warning: #f59e0b;
+  --border: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+  --r: 12px;
+  --r-sm: 8px;
+  --display: 'Syne', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #21262d;
+    --fg: #e6edf3;
+    --fg-2: #8b949e;
+    --fg-3: #6e7681;
+    --accent: #4d94ff;
+    --accent-hover: #6aabff;
+    --accent-soft: #1a2a4a;
+    --border: #30363d;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.4);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #21262d;
+  --fg: #e6edf3;
+  --fg-2: #8b949e;
+  --fg-3: #6e7681;
+  --accent: #4d94ff;
+  --accent-hover: #6aabff;
+  --accent-soft: #1a2a4a;
+  --border: #30363d;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.5);
+  color-scheme: dark;
+}
+
+/* ── Reset & base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+  padding-inline: 0;
+  padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+}
+img { max-width: 100%; display: block; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; border: none; }
+
+/* ── Layout utilities ─────────────────────────────────────────── */
+.container {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+.section { padding-block: 64px; }
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-wrap: balance;
+}
+.section-sub {
+  color: var(--fg-2);
+  font-size: .95rem;
+  margin-bottom: 40px;
+}
+
+/* ── Nav ──────────────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-block: 14px;
+  padding-inline: 20px;
+  max-width: 1200px;
+  margin-inline: auto;
+}
+.logo {
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--accent);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-dot { color: var(--fg); }
+.nav-links {
+  display: flex;
+  gap: 4px;
+  list-style: none;
+  flex-wrap: wrap;
+}
+.nav-links a {
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  font-size: .875rem;
+  font-weight: 500;
+  color: var(--fg-2);
+  transition: color .15s, background .15s;
+}
+.nav-links a:hover { color: var(--fg); background: var(--surface-2); }
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.cart-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--r-sm);
+  font-size: .875rem;
+  font-weight: 600;
+  transition: background .15s, transform .1s;
+}
+.cart-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.cart-count {
+  background: #fff;
+  color: var(--accent);
+  border-radius: 99px;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  min-width: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.theme-btn {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  padding: 8px;
+  font-size: 1rem;
+  line-height: 1;
+  transition: background .15s;
+}
+.theme-btn:hover { background: var(--border); }
+@media (max-width: 720px) {
+  .nav-links { display: none; }
+}
+
+/* ── Hero ─────────────────────────────────────────────────────── */
+.hero {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+  padding-block: 72px 80px;
+}
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+@media (max-width: 768px) {
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-visual { display: none; }
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 99px;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-wrap: balance;
+  margin-bottom: 20px;
+}
+.hero h1 span { color: var(--accent); }
+.hero p {
+  color: var(--fg-2);
+  font-size: 1.1rem;
+  max-width: 480px;
+  margin-bottom: 32px;
+  line-height: 1.7;
+}
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-primary {
+  padding: 12px 28px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  font-size: .95rem;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  box-shadow: 0 2px 12px rgba(0,87,255,.3);
+}
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,87,255,.35); }
+.btn-secondary {
+  padding: 12px 28px;
+  background: var(--surface-2);
+  color: var(--fg);
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  font-size: .95rem;
+  border: 1px solid var(--border);
+  transition: background .15s, transform .1s;
+}
+.btn-secondary:hover { background: var(--border); transform: translateY(-2px); }
+.hero-visual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.hero-card {
+  background: var(--surface-2);
+  border-radius: var(--r);
+  padding: 20px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: transform .2s;
+}
+.hero-card:hover { transform: translateY(-4px); }
+.hero-card-icon { font-size: 2rem; }
+.hero-card-label { font-size: .8rem; font-weight: 600; color: var(--fg-2); text-align: center; }
+
+/* ── Stats bar ────────────────────────────────────────────────── */
+.stats-bar {
+  background: var(--accent);
+  color: #fff;
+}
+.stats-inner {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-block: 24px;
+  padding-inline: 20px;
+  max-width: 1200px;
+  margin-inline: auto;
+}
+.stat { text-align: center; }
+.stat-num {
+  font-family: var(--display);
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-label { font-size: .8rem; opacity: .85; margin-top: 4px; }
+
+/* ── Category grid ────────────────────────────────────────────── */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+.category-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.category-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  transform: translateY(-3px);
+}
+.category-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.cat-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--accent-soft);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+.cat-name {
+  font-weight: 600;
+  font-size: .85rem;
+  color: var(--fg);
+}
+.cat-count {
+  font-size: .75rem;
+  color: var(--fg-3);
+}
+
+/* ── Products grid ────────────────────────────────────────────── */
+.products-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.products-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 6px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--fg-2);
+  transition: all .15s;
+}
+.filter-btn:hover, .filter-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 14px;
+  gap: 8px;
+  min-width: 220px;
+}
+.search-bar input {
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: .875rem;
+  width: 100%;
+  outline: none;
+  font-family: var(--body);
+}
+.search-bar input::placeholder { color: var(--fg-3); }
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow .15s, transform .15s;
+  cursor: pointer;
+}
+.product-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+.product-img {
+  aspect-ratio: 4/3;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  position: relative;
+  overflow: hidden;
+}
+.product-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 99px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.product-badge.sale { background: #e53e3e; }
+.product-badge.new { background: var(--success); }
+.product-body { padding: 16px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.product-cat {
+  font-size: .7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--accent);
+}
+.product-name {
+  font-weight: 600;
+  font-size: .95rem;
+  line-height: 1.3;
+}
+.product-desc {
+  font-size: .8rem;
+  color: var(--fg-2);
+  line-height: 1.5;
+  flex: 1;
+}
+.product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.product-price {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+.product-price-old {
+  font-size: .8rem;
+  color: var(--fg-3);
+  text-decoration: line-through;
+  margin-left: 6px;
+  font-weight: 400;
+  font-family: var(--body);
+}
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--r-sm);
+  font-size: .8rem;
+  font-weight: 600;
+  transition: background .15s, transform .1s;
+}
+.add-btn:hover { background: var(--accent-hover); transform: scale(1.04); }
+.add-btn.added { background: var(--success); }
+
+/* ── Brands ───────────────────────────────────────────────────── */
+.brands-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding-block: 32px; }
+.brands-inner { max-width: 1200px; margin-inline: auto; padding-inline: 20px; }
+.brands-label { font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 20px; text-align: center; }
+.brands-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center; }
+.brand-chip {
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--fg-2);
+  background: var(--bg);
+  letter-spacing: .03em;
+  transition: border-color .15s, color .15s;
+}
+.brand-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Why us ───────────────────────────────────────────────────── */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 28px 24px;
+}
+.feature-icon {
+  font-size: 1.8rem;
+  margin-bottom: 14px;
+}
+.feature-title { font-weight: 700; font-size: 1rem; margin-bottom: 8px; }
+.feature-desc { font-size: .85rem; color: var(--fg-2); line-height: 1.6; }
+
+/* ── CTA banner ───────────────────────────────────────────────── */
+.cta-banner {
+  background: var(--accent);
+  border-radius: var(--r);
+  padding: 48px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.cta-banner h2 {
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+  color: #fff;
+  text-wrap: balance;
+  margin-bottom: 8px;
+}
+.cta-banner p { color: rgba(255,255,255,.85); font-size: .95rem; max-width: 480px; }
+.btn-white {
+  padding: 12px 28px;
+  background: #fff;
+  color: var(--accent);
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  font-size: .95rem;
+  white-space: nowrap;
+  transition: opacity .15s, transform .1s;
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+.btn-white:hover { opacity: .92; transform: translateY(-2px); }
+
+/* ── Cart drawer ──────────────────────────────────────────────── */
+.cart-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 200;
+}
+.cart-overlay.open { display: block; }
+.cart-drawer {
+  position: fixed;
+  top: 0;
+  right: -420px;
+  width: min(420px, 100vw);
+  height: 100%;
+  background: var(--surface);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  transition: right .3s cubic-bezier(.4,0,.2,1);
+  box-shadow: var(--shadow-lg);
+}
+.cart-drawer.open { right: 0; }
+.cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.cart-header h3 { font-family: var(--display); font-size: 1.1rem; font-weight: 700; }
+.close-btn {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  padding: 8px;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: background .15s;
+}
+.close-btn:hover { background: var(--border); }
+.cart-items { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.cart-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-3);
+  gap: 12px;
+  font-size: .9rem;
+}
+.cart-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  padding: 12px;
+}
+.cart-item-icon { font-size: 2rem; flex-shrink: 0; width: 52px; text-align: center; }
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-name { font-weight: 600; font-size: .875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cart-item-price { font-size: .85rem; color: var(--accent); font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.cart-item-qty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qty-btn {
+  width: 26px;
+  height: 26px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: .9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .1s;
+}
+.qty-btn:hover { background: var(--border); }
+.qty-num { font-size: .85rem; font-weight: 600; min-width: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.remove-btn { background: none; color: var(--fg-3); font-size: .8rem; transition: color .1s; }
+.remove-btn:hover { color: #e53e3e; }
+.cart-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+.cart-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 1rem; margin-bottom: 14px; }
+.cart-total-num { font-variant-numeric: tabular-nums; color: var(--accent); font-size: 1.1rem; }
+.checkout-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--r-sm);
+  font-weight: 700;
+  font-size: .95rem;
+  transition: background .15s;
+  text-align: center;
+}
+.checkout-btn:hover { background: var(--accent-hover); }
+
+/* ── Toast ────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  right: 20px;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 12px 18px;
+  border-radius: var(--r-sm);
+  font-size: .875rem;
+  font-weight: 600;
+  z-index: 300;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform .25s, opacity .25s;
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── Footer ───────────────────────────────────────────────────── */
+.footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-block: 48px 24px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  padding-inline: 20px;
+  max-width: 1200px;
+  margin-inline: auto;
+  margin-bottom: 40px;
+}
+@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-brand { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}
+.footer-brand-name {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.footer-tagline { font-size: .875rem; color: var(--fg-2); line-height: 1.6; max-width: 280px; }
+.footer-col h4 { font-weight: 700; font-size: .9rem; margin-bottom: 14px; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.footer-col a { font-size: .85rem; color: var(--fg-2); transition: color .1s; }
+.footer-col a:hover { color: var(--accent); }
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  padding-inline: 20px;
+  max-width: 1200px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: .8rem;
+  color: var(--fg-3);
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ────────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <rect width="20" height="20" rx="5" fill="currentColor"/>
+        <path d="M4 10h12M10 4v12" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      Pro<span class="logo-dot">Tech</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#categories">Categories</a></li>
+      <li><a href="#products">Products</a></li>
+      <li><a href="#why-us">Why Us</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="theme-btn" id="themeToggle" title="Toggle theme">🌙</button>
+      <button class="cart-btn" id="cartBtn">
+        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ───────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-grid">
+    <div class="hero-copy">
+      <div class="hero-eyebrow">✦ Technology Solutions</div>
+      <h1>Power Your <span>Business</span> with the Right Tech</h1>
+      <p>From laptops to complete POS systems, receipt printers, cash drawers, barcode scanners and more — everything your store or restaurant needs.</p>
+      <div class="hero-ctas">
+        <a href="#products" class="btn-primary">Shop Now</a>
+        <a href="#categories" class="btn-secondary">Browse Categories</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card"><div class="hero-card-icon">💻</div><div class="hero-card-label">Laptops &amp; PCs</div></div>
+      <div class="hero-card"><div class="hero-card-icon">🖨️</div><div class="hero-card-label">Receipt Printers</div></div>
+      <div class="hero-card"><div class="hero-card-icon">🏧</div><div class="hero-card-label">POS Systems</div></div>
+      <div class="hero-card"><div class="hero-card-icon">📦</div><div class="hero-card-label">Cash Drawers</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS ──────────────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Products in Stock</div></div>
+    <div class="stat"><div class="stat-num">1,200+</div><div class="stat-label">Happy Customers</div></div>
+    <div class="stat"><div class="stat-num">50+</div><div class="stat-label">Brands Available</div></div>
+    <div class="stat"><div class="stat-num">24h</div><div class="stat-label">Fast Delivery</div></div>
+  </div>
+</div>
+
+<!-- ── CATEGORIES ─────────────────────────────────────────────── -->
+<section class="section" id="categories">
+  <div class="container">
+    <h2 class="section-title">Shop by Category</h2>
+    <p class="section-sub">Everything your business needs, organized for easy browsing.</p>
+    <div class="categories-grid">
+      <div class="category-card active" data-cat="all">
+        <div class="cat-icon">🏪</div>
+        <div class="cat-name">All Products</div>
+        <div class="cat-count">24 items</div>
+      </div>
+      <div class="category-card" data-cat="laptops">
+        <div class="cat-icon">💻</div>
+        <div class="cat-name">Laptops &amp; PCs</div>
+        <div class="cat-count">6 items</div>
+      </div>
+      <div class="category-card" data-cat="pos">
+        <div class="cat-icon">🏧</div>
+        <div class="cat-name">POS Systems</div>
+        <div class="cat-count">4 items</div>
+      </div>
+      <div class="category-card" data-cat="printers">
+        <div class="cat-icon">🖨️</div>
+        <div class="cat-name">Printers</div>
+        <div class="cat-count">5 items</div>
+      </div>
+      <div class="category-card" data-cat="cash">
+        <div class="cat-icon">💰</div>
+        <div class="cat-name">Cash Drawers</div>
+        <div class="cat-count">3 items</div>
+      </div>
+      <div class="category-card" data-cat="scanners">
+        <div class="cat-icon">📡</div>
+        <div class="cat-name">Barcode Scanners</div>
+        <div class="cat-count">4 items</div>
+      </div>
+      <div class="category-card" data-cat="displays">
+        <div class="cat-icon">🖥️</div>
+        <div class="cat-name">Customer Displays</div>
+        <div class="cat-count">2 items</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BRANDS ─────────────────────────────────────────────────── -->
+<div class="brands-section">
+  <div class="brands-inner">
+    <div class="brands-label">Trusted Brands We Carry</div>
+    <div class="brands-row">
+      <div class="brand-chip">Epson</div>
+      <div class="brand-chip">HP</div>
+      <div class="brand-chip">Dell</div>
+      <div class="brand-chip">Lenovo</div>
+      <div class="brand-chip">Zebra</div>
+      <div class="brand-chip">Star Micronics</div>
+      <div class="brand-chip">Honeywell</div>
+      <div class="brand-chip">Datalogic</div>
+      <div class="brand-chip">Verifone</div>
+      <div class="brand-chip">PAX</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRODUCTS ───────────────────────────────────────────────── -->
+<section class="section" id="products" style="background: var(--bg)">
+  <div class="container">
+    <div class="products-header">
+      <div>
+        <h2 class="section-title" style="margin-bottom:4px">Featured Products</h2>
+        <p class="section-sub" style="margin-bottom:0">Showing <span id="productCount">24</span> products</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div class="search-bar">
+          <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Search products…">
+        </div>
+      </div>
+    </div>
+    <div class="products-filter">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="laptops">Laptops</button>
+      <button class="filter-btn" data-filter="pos">POS</button>
+      <button class="filter-btn" data-filter="printers">Printers</button>
+      <button class="filter-btn" data-filter="cash">Cash Drawers</button>
+      <button class="filter-btn" data-filter="scanners">Scanners</button>
+      <button class="filter-btn" data-filter="displays">Displays</button>
+    </div>
+    <br>
+    <div class="products-grid" id="productsGrid"></div>
+  </div>
+</section>
+
+<!-- ── WHY US ─────────────────────────────────────────────────── -->
+<section class="section" id="why-us" style="background: var(--surface); border-top: 1px solid var(--border)">
+  <div class="container">
+    <h2 class="section-title">Why Choose Pro-Tech?</h2>
+    <p class="section-sub">Business-focused solutions with expert support.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🚀</div>
+        <div class="feature-title">Same-Day Shipping</div>
+        <div class="feature-desc">Orders placed before 2 PM ship the same business day. Get your equipment fast.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛠️</div>
+        <div class="feature-title">Technical Support</div>
+        <div class="feature-desc">Our team helps you set up and configure every device you purchase from us.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">30-Day Returns</div>
+        <div class="feature-desc">Not satisfied? Return any product within 30 days for a full refund, no questions asked.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <div class="feature-title">Genuine Products</div>
+        <div class="feature-desc">100% authentic products direct from authorized distributors with full warranties.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💼</div>
+        <div class="feature-title">Business Accounts</div>
+        <div class="feature-desc">Volume discounts and net payment terms for businesses that buy regularly.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📞</div>
+        <div class="feature-title">Dedicated Account Manager</div>
+        <div class="feature-desc">Large orders get a personal point of contact to handle everything end to end.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────────────────────── -->
+<section class="section">
+  <div class="container">
+    <div class="cta-banner">
+      <div>
+        <h2>Ready to Upgrade Your Business Tech?</h2>
+        <p>Get a free consultation with our specialists. We'll build you the perfect tech stack for your store or restaurant.</p>
+      </div>
+      <a href="#contact" class="btn-white">Get Free Quote</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONTACT ────────────────────────────────────────────────── -->
+<section class="section" id="contact" style="background: var(--surface); border-top: 1px solid var(--border)">
+  <div class="container">
+    <h2 class="section-title">Get in Touch</h2>
+    <p class="section-sub">Our team is ready to help you find the right solution.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:800px">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:1.3rem;margin-top:2px">📧</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Email</div>
+            <div style="color:var(--fg-2);font-size:.875rem">sales@protech.store</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:1.3rem;margin-top:2px">📞</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Phone</div>
+            <div style="color:var(--fg-2);font-size:.875rem">+1 (800) 776-8324</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:1.3rem;margin-top:2px">🕐</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Business Hours</div>
+            <div style="color:var(--fg-2);font-size:.875rem">Mon–Fri 8 AM – 6 PM</div>
+          </div>
+        </div>
+      </div>
+      <form id="contactForm" style="display:flex;flex-direction:column;gap:12px" onsubmit="handleContact(event)">
+        <input type="text" placeholder="Your name" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <input type="email" placeholder="Email address" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <textarea placeholder="Tell us what you need…" rows="4" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;resize:vertical;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <button type="submit" class="btn-primary" style="align-self:flex-start">Send Message</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-brand-name">Pro-Tech Store</div>
+      <div class="footer-tagline">Your one-stop shop for business technology. Laptops, POS systems, printers, scanners, and everything in between.</div>
+    </div>
+    <div class="footer-col">
+      <h4>Categories</h4>
+      <ul>
+        <li><a href="#">Laptops &amp; PCs</a></li>
+        <li><a href="#">POS Systems</a></li>
+        <li><a href="#">Receipt Printers</a></li>
+        <li><a href="#">Cash Drawers</a></li>
+        <li><a href="#">Barcode Scanners</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Press</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Returns</a></li>
+        <li><a href="#">Warranty</a></li>
+        <li><a href="#">Track Order</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2024 Pro-Tech Store. All rights reserved.</span>
+    <span>Privacy · Terms · Cookies</span>
+  </div>
+</footer>
+
+<!-- ── CART OVERLAY & DRAWER ───────────────────────────────────── -->
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <h3>Shopping Cart</h3>
+    <button class="close-btn" id="closeCart">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty" id="cartEmpty">
+      <span style="font-size:2.5rem">🛒</span>
+      <span>Your cart is empty</span>
+      <span style="font-size:.8rem">Add some products to get started</span>
+    </div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total">
+      <span>Total</span>
+      <span class="cart-total-num" id="cartTotal">$0.00</span>
+    </div>
+    <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Product data ─────────────────────────────────────────────────
+const PRODUCTS = [
+  { id:1, name:"HP EliteBook 840 G10", cat:"laptops", price:1299, icon:"💻", badge:"Best Seller", desc:"14\" FHD, Intel Core i7, 16GB RAM, 512GB SSD. Built for business professionals." },
+  { id:2, name:"Dell Latitude 5540", cat:"laptops", price:1149, oldPrice:1299, icon:"💻", badge:"sale", desc:"15.6\" FHD, Intel Core i5, 8GB RAM, 256GB SSD. Reliable everyday workhorse." },
+  { id:3, name:"Lenovo ThinkPad X1 Carbon", cat:"laptops", price:1599, icon:"💻", badge:"new", desc:"14\" 2K IPS, Intel Core i7, 32GB RAM, 1TB SSD. Ultra-light premium ultrabook." },
+  { id:4, name:"HP ProBook 450 G10", cat:"laptops", price:849, icon:"💻", badge:null, desc:"15.6\" FHD, Intel Core i5, 8GB RAM, 256GB SSD. Affordable business laptop." },
+  { id:5, name:"Dell Inspiron 15 Business", cat:"laptops", price:699, oldPrice:799, icon:"💻", badge:"sale", desc:"15.6\" FHD, Intel Core i3, 8GB RAM, 128GB SSD. Budget-friendly option." },
+  { id:6, name:"Lenovo IdeaPad 5 Pro", cat:"laptops", price:999, icon:"💻", badge:null, desc:"16\" 2.5K, AMD Ryzen 7, 16GB RAM, 512GB SSD. Creator-focused laptop." },
+  { id:7, name:"PAX A920 Android POS", cat:"pos", price:549, icon:"🏧", badge:"Best Seller", desc:"Full Android POS terminal. 5\" touchscreen, built-in printer, WiFi + 4G." },
+  { id:8, name:"Verifone P400 Terminal", cat:"pos", price:329, icon:"🏧", badge:null, desc:"Countertop payment terminal. EMV, NFC, magstripe. Works with all major processors." },
+  { id:9, name:"Star mPOP All-in-One", cat:"pos", price:499, icon:"🏧", badge:"new", desc:"Combine POS printer and cash drawer in one device. Bluetooth, USB connectivity." },
+  { id:10, name:"Ingenico Desk/3500", cat:"pos", price:279, oldPrice:349, icon:"🏧", badge:"sale", desc:"Smart payment terminal with color touchscreen. Ideal for retail checkout." },
+  { id:11, name:"Epson TM-T88VII Thermal", cat:"printers", price:289, icon:"🖨️", badge:"Best Seller", desc:"High-speed 80mm thermal receipt printer. 350mm/s, Ethernet + USB + WiFi." },
+  { id:12, name:"Star TSP143IIIU", cat:"printers", price:219, icon:"🖨️", badge:null, desc:"80mm direct thermal receipt printer. USB-C, auto-cutter, easy paper loading." },
+  { id:13, name:"Zebra ZD421 Label Printer", cat:"printers", price:399, icon:"🖨️", badge:"new", desc:"4\" thermal label printer. Print speed 152mm/s, Bluetooth + USB + Ethernet." },
+  { id:14, name:"Epson TM-L100 Linerless", cat:"printers", price:349, oldPrice:399, icon:"🖨️", badge:"sale", desc:"Linerless label printer for restaurants and retail. No backing paper waste." },
+  { id:15, name:"Brother QL-820NWB", cat:"printers", price:179, icon:"🖨️", badge:null, desc:"Label printer with automatic label peeler. WiFi, Ethernet, Bluetooth." },
+  { id:16, name:"APG Vasario Cash Drawer", cat:"cash", price:129, icon:"💰", badge:"Best Seller", desc:"16\" x 16\" cash drawer, 5 bill and 5 coin slots, RJ-11 printer connection." },
+  { id:17, name:"MMF Val-u Line Drawer", cat:"cash", price:89, oldPrice:109, icon:"💰", badge:"sale", desc:"15\" compact cash drawer, stainless lock, USB interface, fits tight spaces." },
+  { id:18, name:"APG Series 4000 Large", cat:"cash", price:199, icon:"💰", badge:null, desc:"18\" heavy-duty cash drawer for high-volume retail environments. Dual media slots." },
+  { id:19, name:"Honeywell Voyager 1250g", cat:"scanners", price:149, icon:"📡", badge:"Best Seller", desc:"Single-line CCD barcode scanner. USB HID, reads 1D barcodes at 270 scans/sec." },
+  { id:20, name:"Zebra DS2208 2D Scanner", cat:"scanners", price:199, icon:"📡", badge:null, desc:"2D imager scanner. Reads QR codes, PDF417, DataMatrix. USB + RS232." },
+  { id:21, name:"Datalogic QuickScan QD2430", cat:"scanners", price:179, oldPrice:219, icon:"📡", badge:"sale", desc:"2D handheld imager. Reads codes from phone screens. Excellent for retail." },
+  { id:22, name:"Honeywell Granit 1910i", cat:"scanners", price:249, icon:"📡", badge:"new", desc:"Industrial-grade 1D/2D scanner. IP65 rated, 2m drop resistance." },
+  { id:23, name:"Epson DM-D210 Display", cat:"displays", price:189, icon:"🖥️", badge:null, desc:"10.1\" pole customer display. Bright LCD, multi-language, USB, RS-232." },
+  { id:24, name:"Logic Controls LD9900", cat:"displays", price:219, oldPrice:259, icon:"🖥️", badge:"sale", desc:"Customer-facing 9\" color display. Touch capability, USB hub built-in." },
+];
+
+// ── State ─────────────────────────────────────────────────────────
+let cart = [];
+let activeFilter = "all";
+let searchTerm = "";
+
+// ── Render products ───────────────────────────────────────────────
+function renderProducts() {
+  const grid = document.getElementById("productsGrid");
+  const filtered = PRODUCTS.filter(p => {
+    const matchCat = activeFilter === "all" || p.cat === activeFilter;
+    const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || p.desc.toLowerCase().includes(searchTerm);
+    return matchCat && matchSearch;
+  });
+  document.getElementById("productCount").textContent = filtered.length;
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card" onclick="addToCart(${p.id})">
+      <div class="product-img">
+        <span>${p.icon}</span>
+        ${p.badge ? `<div class="product-badge ${p.badge === 'sale' ? 'sale' : p.badge === 'new' ? 'new' : ''}">${p.badge === 'sale' ? 'Sale' : p.badge === 'new' ? 'New' : p.badge}</div>` : ""}
+      </div>
+      <div class="product-body">
+        <div class="product-cat">${catLabel(p.cat)}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${p.desc}</div>
+        <div class="product-footer">
+          <div>
+            <span class="product-price">$${p.price.toLocaleString()}</span>
+            ${p.oldPrice ? `<span class="product-price-old">$${p.oldPrice.toLocaleString()}</span>` : ""}
+          </div>
+          <button class="add-btn" id="addbtn-${p.id}" onclick="event.stopPropagation();addToCart(${p.id})">
+            + Add
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function catLabel(cat) {
+  return { laptops:"Laptops & PCs", pos:"POS Systems", printers:"Printers", cash:"Cash Drawers", scanners:"Scanners", displays:"Customer Displays" }[cat] || cat;
+}
+
+// ── Filter & search ───────────────────────────────────────────────
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilter = btn.dataset.filter;
+    renderProducts();
+  });
+});
+document.querySelectorAll(".category-card").forEach(card => {
+  card.addEventListener("click", () => {
+    document.querySelectorAll(".category-card").forEach(c => c.classList.remove("active"));
+    card.classList.add("active");
+    activeFilter = card.dataset.cat;
+    document.querySelectorAll(".filter-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.filter === activeFilter);
+    });
+    renderProducts();
+    document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+  });
+});
+document.getElementById("searchInput").addEventListener("input", e => {
+  searchTerm = e.target.value.trim().toLowerCase();
+  renderProducts();
+});
+
+// ── Cart logic ────────────────────────────────────────────────────
+function addToCart(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  const existing = cart.find(x => x.id === id);
+  if (existing) existing.qty++;
+  else cart.push({ ...p, qty: 1 });
+  updateCart();
+  showToast(`${p.name} added to cart`);
+  const btn = document.getElementById(`addbtn-${id}`);
+  if (btn) {
+    btn.textContent = "✓ Added";
+    btn.classList.add("added");
+    setTimeout(() => { btn.textContent = "+ Add"; btn.classList.remove("added"); }, 1500);
+  }
+}
+function updateCart() {
+  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const count = cart.reduce((s, x) => s + x.qty, 0);
+  document.getElementById("cartCount").textContent = count;
+  document.getElementById("cartTotal").textContent = "$" + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const empty = document.getElementById("cartEmpty");
+  const itemsEl = document.getElementById("cartItems");
+  if (cart.length === 0) {
+    itemsEl.innerHTML = `<div class="cart-empty" id="cartEmpty"><span style="font-size:2.5rem">🛒</span><span>Your cart is empty</span><span style="font-size:.8rem">Add some products to get started</span></div>`;
+    return;
+  }
+  itemsEl.innerHTML = cart.map(item => `
+    <div class="cart-item" id="cart-item-${item.id}">
+      <div class="cart-item-icon">${item.icon}</div>
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+      </div>
+      <div class="cart-item-qty">
+        <button class="qty-btn" onclick="changeQty(${item.id},-1)">−</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-btn" onclick="changeQty(${item.id},1)">+</button>
+      </div>
+      <button class="remove-btn" onclick="removeItem(${item.id})">✕</button>
+    </div>
+  `).join("");
+}
+function changeQty(id, delta) {
+  const item = cart.find(x => x.id === id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) cart = cart.filter(x => x.id !== id);
+  updateCart();
+}
+function removeItem(id) {
+  cart = cart.filter(x => x.id !== id);
+  updateCart();
+}
+
+// ── Cart drawer ───────────────────────────────────────────────────
+const cartDrawer = document.getElementById("cartDrawer");
+const cartOverlay = document.getElementById("cartOverlay");
+document.getElementById("cartBtn").addEventListener("click", () => {
+  cartDrawer.classList.add("open");
+  cartOverlay.classList.add("open");
+});
+document.getElementById("closeCart").addEventListener("click", closeCartFn);
+cartOverlay.addEventListener("click", closeCartFn);
+function closeCartFn() {
+  cartDrawer.classList.remove("open");
+  cartOverlay.classList.remove("open");
+}
+document.getElementById("checkoutBtn").addEventListener("click", () => {
+  if (cart.length === 0) { showToast("Add items to your cart first!"); return; }
+  showToast("Checkout coming soon — contact us for bulk orders!");
+  closeCartFn();
+});
+
+// ── Toast ─────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+// ── Theme toggle ──────────────────────────────────────────────────
+const themeBtn = document.getElementById("themeToggle");
+let isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+function applyTheme() {
+  document.documentElement.dataset.theme = isDark ? "dark" : "light";
+  themeBtn.textContent = isDark ? "☀️" : "🌙";
+}
+themeBtn.addEventListener("click", () => { isDark = !isDark; applyTheme(); });
+
+// ── Contact form ──────────────────────────────────────────────────
+function handleContact(e) {
+  e.preventDefault();
+  showToast("Message sent! We'll get back to you soon.");
+  e.target.reset();
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+renderProducts();
+</script>
+</body>
+</html>
