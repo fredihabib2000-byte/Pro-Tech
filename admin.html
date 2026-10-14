@@ -291,8 +291,16 @@ td{padding:.7rem 1rem;vertical-align:middle}
               <input type="text" id="s_address" placeholder="123 Main St, City, Country">
             </div>
             <div class="form-group">
-              <label>Instagram / Social Handle</label>
-              <input type="text" id="s_social" placeholder="@protechstore">
+              <label>📸 Instagram username</label>
+              <input type="text" id="s_instagram" placeholder="protechstore (without @)">
+            </div>
+            <div class="form-group">
+              <label>📘 Facebook page name</label>
+              <input type="text" id="s_facebook" placeholder="protechstore">
+            </div>
+            <div class="form-group">
+              <label>🎵 TikTok username</label>
+              <input type="text" id="s_tiktok" placeholder="protechstore (without @)">
             </div>
           </div>
           <button class="btn-save" style="margin-top:.75rem" onclick="saveContactInfo()">Save Contact Info</button>
@@ -830,7 +838,9 @@ async function loadSettingsPage() {
     document.getElementById("s_email").value     = s.email     || "";
     document.getElementById("s_phone").value     = s.phone     || "";
     document.getElementById("s_address").value   = s.address   || "";
-    document.getElementById("s_social").value    = s.social    || "";
+    document.getElementById("s_instagram").value = s.instagram || "";
+    document.getElementById("s_facebook").value  = s.facebook  || "";
+    document.getElementById("s_tiktok").value    = s.tiktok    || "";
     document.getElementById("s_store_name").value = s.storeName || "Pro-Tech Store";
     document.getElementById("s_tagline").value   = s.tagline   || "";
   } catch(e) { showToast("Could not load settings: " + e.message, "error"); }
@@ -856,7 +866,9 @@ async function saveContactInfo() {
       sbUpsert("email",   document.getElementById("s_email").value.trim()),
       sbUpsert("phone",   document.getElementById("s_phone").value.trim()),
       sbUpsert("address", document.getElementById("s_address").value.trim()),
-      sbUpsert("social",  document.getElementById("s_social").value.trim()),
+      sbUpsert("instagram", document.getElementById("s_instagram").value.trim()),
+      sbUpsert("facebook",  document.getElementById("s_facebook").value.trim()),
+      sbUpsert("tiktok",    document.getElementById("s_tiktok").value.trim()),
     ]);
     showToast("Contact info saved — live on storefront now", "success");
   } catch(e) { showToast("Error: " + e.message, "error"); }
