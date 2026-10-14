@@ -114,6 +114,10 @@ td{padding:.7rem 1rem;vertical-align:middle}
 .form-group label{display:block;font-size:.78rem;color:var(--fg-2);margin-bottom:.3rem}
 .form-group input,.form-group select,.form-group textarea{width:100%}
 .modal-footer{display:flex;justify-content:flex-end;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid var(--border)}
+.img-upload-wrap{display:flex;flex-direction:column;gap:.4rem}
+.img-upload-wrap input[type="file"]{background:var(--surface-2);border:1px dashed var(--border);padding:.5rem;cursor:pointer;width:100%}
+.img-upload-wrap input[type="file"]:hover{border-color:var(--accent)}
+#p_img_preview{max-height:120px;max-width:100%;object-fit:contain;border-radius:6px;border:1px solid var(--border)}
 
 /* ── Tabs ── */
 .page{display:none}
@@ -281,6 +285,19 @@ td{padding:.7rem 1rem;vertical-align:middle}
         <div class="form-group span-2">
           <label>Description</label>
           <textarea id="p_description" rows="3" placeholder="Product details, specs, connectivity…"></textarea>
+        </div>
+        <div class="form-group span-2">
+          <label>Product Image</label>
+          <div class="img-upload-wrap">
+            <img id="p_img_preview" src="" alt="" style="display:none">
+            <input type="file" id="p_image_file" accept="image/jpeg,image/png,image/webp,image/gif" onchange="previewImage(this)">
+            <div style="font-size:.72rem;color:var(--fg-3)">or paste a public URL below</div>
+            <input type="text" id="p_image_url" placeholder="https://example.com/photo.jpg" oninput="previewImageUrl(this.value)">
+          </div>
+        </div>
+        <div class="form-group span-2">
+          <label>Specs (one per line, e.g. CPU: i7-1355U)</label>
+          <textarea id="p_specs" rows="5" placeholder="CPU: Intel Core i7-1355U&#10;RAM: 16GB DDR5&#10;Storage: 512GB NVMe SSD&#10;Display: 15.6&quot; FHD 1920×1080"></textarea>
         </div>
         <div class="form-group">
           <label>Active</label>
@@ -470,7 +487,7 @@ function renderProductsTable(list) {
   }
   tbody.innerHTML = list.map(p => `
     <tr>
-      <td style="font-size:1.4rem;text-align:center">${p.icon || "📦"}</td>
+      <td style="text-align:center">${p.image_url ? `<img src="${p.image_url}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:5px;vertical-align:middle">` : `<span style="font-size:1.4rem">${p.icon || "📦"}</span>`}</td>
       <td><strong>${p.name}</strong></td>
       <td>${catLabel(p.category)}</td>
       <td>$${parseFloat(p.price).toFixed(2)}</td>
@@ -512,11 +529,20 @@ function openProductModal(id) {
     document.getElementById("p_badge").value = p.badge || "";
     document.getElementById("p_description").value = p.description || "";
     document.getElementById("p_is_active").value = p.is_active ? "true" : "false";
+    document.getElementById("p_image_url").value = p.image_url || "";
+    document.getElementById("p_specs").value = p.specs || "";
+    document.getElementById("p_image_file").value = "";
+    const prev = document.getElementById("p_img_preview");
+    if (p.image_url) { prev.src = p.image_url; prev.style.display = "block"; }
+    else { prev.src = ""; prev.style.display = "none"; }
   } else {
-    ["p_name","p_price","p_old_price","p_quantity","p_description"].forEach(id => document.getElementById(id).value = "");
+    ["p_name","p_price","p_old_price","p_quantity","p_description","p_image_url","p_specs"].forEach(i => document.getElementById(i).value = "");
     document.getElementById("p_icon").value = "📦";
     document.getElementById("p_badge").value = "";
     document.getElementById("p_is_active").value = "true";
+    document.getElementById("p_image_file").value = "";
+    document.getElementById("p_img_preview").src = "";
+    document.getElementById("p_img_preview").style.display = "none";
   }
   openModal("productModal");
 }
@@ -527,6 +553,13 @@ async function saveProduct() {
   const qty = parseInt(document.getElementById("p_quantity").value);
   if (!name || isNaN(price) || isNaN(qty)) { showToast("Name, price and quantity are required", "error"); return; }
 
+  let imageUrl = document.getElementById("p_image_url").value.trim();
+  const imgFile = document.getElementById("p_image_file").files[0];
+  if (imgFile) {
+    try { imageUrl = await uploadImage(imgFile); }
+    catch(e) { showToast("Image upload failed: " + e.message, "error"); return; }
+  }
+
   const body = {
     name,
     category: document.getElementById("p_category").value,
@@ -536,6 +569,8 @@ async function saveProduct() {
     quantity: qty,
     badge: document.getElementById("p_badge").value || null,
     description: document.getElementById("p_description").value.trim() || null,
+    image_url: imageUrl || null,
+    specs: document.getElementById("p_specs").value.trim() || null,
     is_active: document.getElementById("p_is_active").value === "true",
     updated_at: new Date().toISOString()
   };
@@ -648,6 +683,39 @@ async function deletePromo(id, name) {
     showToast("Promotion deleted", "success");
     await loadAll();
   } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+// ── Image upload ─────────────────────────────────────────────────
+async function uploadImage(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const filename = `product-${Date.now()}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/pt-product-images/${filename}`, {
+    method: "POST",
+    headers: { "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON, "Content-Type": file.type },
+    body: file
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return `${SUPABASE_URL}/storage/v1/object/public/pt-product-images/${filename}`;
+}
+
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const p = document.getElementById("p_img_preview");
+    p.src = e.target.result;
+    p.style.display = "block";
+    document.getElementById("p_image_url").value = "";
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewImageUrl(url) {
+  const p = document.getElementById("p_img_preview");
+  if (url) { p.src = url; p.style.display = "block"; }
+  else { p.src = ""; p.style.display = "none"; }
+  document.getElementById("p_image_file").value = "";
 }
 
 // ── Modal helpers ────────────────────────────────────────────────

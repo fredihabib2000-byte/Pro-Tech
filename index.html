@@ -457,7 +457,28 @@ button { cursor: pointer; font-family: inherit; border: none; }
   font-size: .8rem;
   color: var(--fg-2);
   line-height: 1.5;
+}
+.product-specs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.product-specs li {
+  font-size: .72rem;
+  color: var(--fg-3);
+  line-height: 1.4;
+  padding-left: .75rem;
+  position: relative;
+}
+.product-specs li::before {
+  content: "›";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
 }
 .product-footer {
   display: flex;
@@ -1081,7 +1102,7 @@ async function loadProducts() {
       id: p.id, name: p.name, cat: p.category, price: parseFloat(p.price),
       oldPrice: p.old_price ? parseFloat(p.old_price) : null,
       icon: p.icon || "📦", badge: p.badge, desc: p.description || "",
-      quantity: p.quantity
+      quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || ""
     }));
     PROMOS = promos;
     renderProducts();
@@ -1106,13 +1127,14 @@ function renderProducts() {
   grid.innerHTML = filtered.map(p => `
     <div class="product-card" onclick="addToCart(${p.id})">
       <div class="product-img">
-        <span>${p.icon}</span>
+        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<span>${p.icon}</span>`}
         ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase() === 'sale' ? 'sale' : p.badge.toLowerCase() === 'new' ? 'new' : ''}">${p.badge}</div>` : ""}
       </div>
       <div class="product-body">
         <div class="product-cat">${catLabel(p.cat)}</div>
         <div class="product-name">${p.name}</div>
         <div class="product-desc">${p.desc}</div>
+        ${p.specs ? `<ul class="product-specs">${p.specs.split('\n').filter(Boolean).slice(0,4).map(s=>`<li>${s}</li>`).join('')}</ul>` : ""}
         <div class="product-footer">
           <div>
             <span class="product-price">$${p.price.toLocaleString()}</span>
