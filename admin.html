@@ -173,6 +173,7 @@ td{padding:.7rem 1rem;vertical-align:middle}
       <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span>Dashboard</div>
       <div class="nav-item" data-page="products"><span class="icon">📦</span>Products</div>
       <div class="nav-item" data-page="promotions"><span class="icon">🏷️</span>Promotions</div>
+      <div class="nav-item" data-page="settings"><span class="icon">⚙️</span>Settings</div>
     </div>
     <div class="sidebar-footer">
       <button class="logout-btn" onclick="logout()">Sign out</button>
@@ -228,6 +229,74 @@ td{padding:.7rem 1rem;vertical-align:middle}
         <button class="btn-add" onclick="openPromoModal()">+ Add Promotion</button>
       </div>
       <div class="promo-grid" id="promosGrid"></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="page-settings" class="page">
+      <div class="topbar"><h2>Settings</h2></div>
+      <div style="display:grid;gap:1.25rem;max-width:600px">
+
+        <!-- Change Password -->
+        <div class="table-card" style="padding:1.25rem">
+          <h3 style="font-family:'Syne',sans-serif;font-size:.95rem;margin-bottom:1rem;color:var(--fg)">🔐 Change Admin Password</h3>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="s_cur_pw" placeholder="Enter current password">
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="s_new_pw" placeholder="At least 8 characters">
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="s_confirm_pw" placeholder="Repeat new password">
+            </div>
+          </div>
+          <button class="btn-save" style="margin-top:.75rem" onclick="changePassword()">Update Password</button>
+        </div>
+
+        <!-- Store Contact Info -->
+        <div class="table-card" style="padding:1.25rem">
+          <h3 style="font-family:'Syne',sans-serif;font-size:.95rem;margin-bottom:1rem;color:var(--fg)">📞 Store Contact Info</h3>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <div class="form-group">
+              <label>Contact Email</label>
+              <input type="email" id="s_email" placeholder="contact@yourstore.com">
+            </div>
+            <div class="form-group">
+              <label>WhatsApp / Phone</label>
+              <input type="text" id="s_phone" placeholder="+1 (555) 000-0000">
+            </div>
+            <div class="form-group">
+              <label>Store Address</label>
+              <input type="text" id="s_address" placeholder="123 Main St, City, Country">
+            </div>
+            <div class="form-group">
+              <label>Instagram / Social Handle</label>
+              <input type="text" id="s_social" placeholder="@protechstore">
+            </div>
+          </div>
+          <button class="btn-save" style="margin-top:.75rem" onclick="saveContactInfo()">Save Contact Info</button>
+        </div>
+
+        <!-- Store Name & Tagline -->
+        <div class="table-card" style="padding:1.25rem">
+          <h3 style="font-family:'Syne',sans-serif;font-size:.95rem;margin-bottom:1rem;color:var(--fg)">🏪 Store Identity</h3>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <div class="form-group">
+              <label>Store Name</label>
+              <input type="text" id="s_store_name" placeholder="Pro-Tech Store">
+            </div>
+            <div class="form-group">
+              <label>Tagline</label>
+              <input type="text" id="s_tagline" placeholder="Your tech, delivered.">
+            </div>
+          </div>
+          <button class="btn-save" style="margin-top:.75rem" onclick="saveStoreIdentity()">Save Identity</button>
+        </div>
+
+      </div>
     </div>
   </main>
 </div>
@@ -422,6 +491,7 @@ document.querySelectorAll(".nav-item").forEach(item => {
     item.classList.add("active");
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     document.getElementById("page-" + item.dataset.page).classList.add("active");
+    if (item.dataset.page === "settings") loadSettingsPage();
   });
 });
 
@@ -683,6 +753,54 @@ async function deletePromo(id, name) {
     showToast("Promotion deleted", "success");
     await loadAll();
   } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+// ── Settings ─────────────────────────────────────────────────────
+let adminPassword = "protech2024!";
+
+function loadSettingsPage() {
+  const info = JSON.parse(localStorage.getItem("pt_store_info") || "{}");
+  document.getElementById("s_email").value = info.email || "";
+  document.getElementById("s_phone").value = info.phone || "";
+  document.getElementById("s_address").value = info.address || "";
+  document.getElementById("s_social").value = info.social || "";
+  document.getElementById("s_store_name").value = info.storeName || "Pro-Tech Store";
+  document.getElementById("s_tagline").value = info.tagline || "";
+  document.getElementById("s_cur_pw").value = "";
+  document.getElementById("s_new_pw").value = "";
+  document.getElementById("s_confirm_pw").value = "";
+}
+
+function changePassword() {
+  const cur = document.getElementById("s_cur_pw").value;
+  const nw = document.getElementById("s_new_pw").value;
+  const conf = document.getElementById("s_confirm_pw").value;
+  if (cur !== adminPassword) { showToast("Current password is incorrect", "error"); return; }
+  if (nw.length < 8) { showToast("New password must be at least 8 characters", "error"); return; }
+  if (nw !== conf) { showToast("Passwords do not match", "error"); return; }
+  adminPassword = nw;
+  document.getElementById("s_cur_pw").value = "";
+  document.getElementById("s_new_pw").value = "";
+  document.getElementById("s_confirm_pw").value = "";
+  showToast("Password updated successfully", "success");
+}
+
+function saveContactInfo() {
+  const info = JSON.parse(localStorage.getItem("pt_store_info") || "{}");
+  info.email   = document.getElementById("s_email").value.trim();
+  info.phone   = document.getElementById("s_phone").value.trim();
+  info.address = document.getElementById("s_address").value.trim();
+  info.social  = document.getElementById("s_social").value.trim();
+  localStorage.setItem("pt_store_info", JSON.stringify(info));
+  showToast("Contact info saved", "success");
+}
+
+function saveStoreIdentity() {
+  const info = JSON.parse(localStorage.getItem("pt_store_info") || "{}");
+  info.storeName = document.getElementById("s_store_name").value.trim();
+  info.tagline   = document.getElementById("s_tagline").value.trim();
+  localStorage.setItem("pt_store_info", JSON.stringify(info));
+  showToast("Store identity saved", "success");
 }
 
 // ── Image upload ─────────────────────────────────────────────────
