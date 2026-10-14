@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro-Tech Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #21262d;
+  --fg: #e6edf3;
+  --fg-2: #8b949e;
+  --fg-3: #6e7681;
+  --accent: #4d94ff;
+  --accent-hover: #6aabff;
+  --danger: #f85149;
+  --success: #3fb950;
+  --warning: #d29922;
+  --border: #30363d;
+  --r: 10px;
+  --r-sm: 6px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--fg);min-height:100vh;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit;border:none}
+input,select,textarea{font-family:inherit;font-size:.875rem;background:var(--surface-2);border:1px solid var(--border);color:var(--fg);border-radius:var(--r-sm);padding:.5rem .75rem;outline:none;transition:border .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical}
+
+/* ── Login screen ── */
+#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:1.5rem;padding:1rem}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2.5rem;width:100%;max-width:380px}
+.login-box h1{font-family:'Syne',sans-serif;font-size:1.6rem;margin-bottom:.25rem}
+.login-box p{color:var(--fg-2);font-size:.85rem;margin-bottom:1.5rem}
+.login-box label{display:block;font-size:.8rem;color:var(--fg-2);margin-bottom:.3rem}
+.login-box input{width:100%;margin-bottom:1rem}
+.btn-primary{background:var(--accent);color:#fff;border-radius:var(--r-sm);padding:.6rem 1.25rem;font-size:.875rem;font-weight:600;transition:background .15s;width:100%}
+.btn-primary:hover{background:var(--accent-hover)}
+.login-error{color:var(--danger);font-size:.8rem;text-align:center;min-height:1rem}
+
+/* ── Layout ── */
+#app{display:none}
+.sidebar{position:fixed;top:0;left:0;height:100vh;width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{padding:1.25rem 1rem;border-bottom:1px solid var(--border)}
+.sidebar-logo span{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent)}
+.sidebar-logo small{display:block;color:var(--fg-3);font-size:.7rem;margin-top:.1rem}
+.nav-items{padding:.75rem 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:.625rem;padding:.6rem 1rem;color:var(--fg-2);font-size:.85rem;cursor:pointer;transition:all .15s;border-radius:0}
+.nav-item:hover{color:var(--fg);background:var(--surface-2)}
+.nav-item.active{color:var(--accent);background:rgba(77,148,255,.1)}
+.nav-item .icon{font-size:1rem;width:1.25rem;text-align:center}
+.sidebar-footer{padding:1rem;border-top:1px solid var(--border)}
+.logout-btn{background:none;color:var(--fg-2);font-size:.8rem;padding:.4rem .75rem;border-radius:var(--r-sm);border:1px solid var(--border);width:100%;transition:all .15s}
+.logout-btn:hover{color:var(--danger);border-color:var(--danger)}
+.main{margin-left:220px;min-height:100vh;padding:1.5rem 2rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.topbar h2{font-family:'Syne',sans-serif;font-size:1.3rem}
+.topbar-actions{display:flex;gap:.5rem}
+
+/* ── Cards & stat row ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem}
+.stat-card .label{font-size:.75rem;color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em}
+.stat-card .value{font-size:1.6rem;font-weight:700;font-family:'Syne',sans-serif;color:var(--fg);margin-top:.2rem}
+.stat-card .sub{font-size:.75rem;color:var(--fg-2);margin-top:.1rem}
+
+/* ── Table ── */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.table-toolbar{display:flex;align-items:center;justify-content:space-between;padding:.875rem 1rem;border-bottom:1px solid var(--border);gap:.75rem;flex-wrap:wrap}
+.table-toolbar input{flex:1;min-width:180px;max-width:280px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.83rem}
+thead th{background:var(--surface-2);color:var(--fg-2);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;padding:.75rem 1rem;text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td{padding:.7rem 1rem;vertical-align:middle}
+.badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.7rem;font-weight:600;text-transform:uppercase}
+.badge-sale{background:rgba(248,81,73,.15);color:var(--danger)}
+.badge-new{background:rgba(63,185,80,.15);color:var(--success)}
+.badge-popular{background:rgba(77,148,255,.15);color:var(--accent)}
+.badge-budget{background:rgba(210,153,34,.15);color:var(--warning)}
+.badge-default{background:var(--surface-2);color:var(--fg-2)}
+.stock-low{color:var(--warning);font-weight:600}
+.stock-ok{color:var(--success)}
+
+/* ── Action buttons ── */
+.btn-sm{padding:.3rem .7rem;border-radius:var(--r-sm);font-size:.78rem;font-weight:500}
+.btn-edit{background:rgba(77,148,255,.15);color:var(--accent)}
+.btn-edit:hover{background:rgba(77,148,255,.3)}
+.btn-del{background:rgba(248,81,73,.12);color:var(--danger)}
+.btn-del:hover{background:rgba(248,81,73,.25)}
+.btn-add{background:var(--accent);color:#fff;border-radius:var(--r-sm);padding:.55rem 1.1rem;font-size:.83rem;font-weight:600}
+.btn-add:hover{background:var(--accent-hover)}
+.btn-save{background:var(--success);color:#000;border-radius:var(--r-sm);padding:.55rem 1.1rem;font-size:.83rem;font-weight:600}
+.btn-save:hover{filter:brightness(1.1)}
+.btn-cancel{background:var(--surface-2);color:var(--fg-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.5rem 1rem;font-size:.83rem}
+.btn-cancel:hover{color:var(--fg);border-color:var(--fg-2)}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.25rem;border-bottom:1px solid var(--border)}
+.modal-header h3{font-family:'Syne',sans-serif;font-size:1rem}
+.modal-close{background:none;color:var(--fg-2);font-size:1.2rem;padding:.2rem .4rem;border-radius:4px}
+.modal-close:hover{color:var(--fg)}
+.modal-body{padding:1.25rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.875rem}
+.form-grid .span-2{grid-column:span 2}
+.form-group label{display:block;font-size:.78rem;color:var(--fg-2);margin-bottom:.3rem}
+.form-group input,.form-group select,.form-group textarea{width:100%}
+.modal-footer{display:flex;justify-content:flex-end;gap:.5rem;padding:1rem 1.25rem;border-top:1px solid var(--border)}
+
+/* ── Tabs ── */
+.page{display:none}
+.page.active{display:block}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border);color:var(--fg);padding:.65rem 1rem;border-radius:var(--r-sm);font-size:.83rem;z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+#toast.success{border-color:var(--success);color:var(--success)}
+#toast.error{border-color:var(--danger);color:var(--danger)}
+
+/* ── Promo cards ── */
+.promo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin-top:1rem}
+.promo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem}
+.promo-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem}
+.promo-code{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.05em;color:var(--accent)}
+.promo-actions{display:flex;gap:.4rem}
+.promo-meta{font-size:.78rem;color:var(--fg-2);margin-top:.25rem}
+.promo-badge{display:inline-block;padding:.15rem .5rem;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(63,185,80,.15);color:var(--success);margin-left:.4rem}
+.promo-inactive .promo-badge{background:var(--surface-2);color:var(--fg-3)}
+
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap}
+  .nav-items{display:flex;flex-direction:row;padding:.5rem}
+  .main{margin-left:0;padding:1rem}
+  .form-grid{grid-template-columns:1fr}
+  .form-grid .span-2{grid-column:span 1}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Login ──────────────────────────────────────────────────────── -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>Pro-Tech Admin</h1>
+    <p>Sign in to manage your store</p>
+    <label>Password</label>
+    <input type="password" id="pwInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-primary" onclick="doLogin()">Sign In</button>
+    <p class="login-error" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- ── App ──────────────────────────────────────────────────────── -->
+<div id="app">
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <span>Pro-Tech</span>
+      <small>Admin Dashboard</small>
+    </div>
+    <div class="nav-items">
+      <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span>Dashboard</div>
+      <div class="nav-item" data-page="products"><span class="icon">📦</span>Products</div>
+      <div class="nav-item" data-page="promotions"><span class="icon">🏷️</span>Promotions</div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="topbar"><h2>Dashboard</h2></div>
+      <div class="stat-row" id="statsRow"></div>
+      <div class="table-card">
+        <div class="table-toolbar"><strong style="font-size:.85rem">Low Stock Items</strong></div>
+        <div class="table-scroll">
+          <table><thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Price</th></tr></thead>
+          <tbody id="lowStockBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products -->
+    <div id="page-products" class="page">
+      <div class="topbar">
+        <h2>Products</h2>
+        <button class="btn-add" onclick="openProductModal()">+ Add Product</button>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <input type="search" id="prodSearch" placeholder="Search products…" oninput="filterProdTable()">
+          <select id="catFilter" onchange="filterProdTable()">
+            <option value="">All Categories</option>
+            <option value="laptops">Laptops</option>
+            <option value="pos-systems">POS Systems</option>
+            <option value="printers">Printers</option>
+            <option value="cash-drawers">Cash Drawers</option>
+            <option value="scanners">Scanners</option>
+            <option value="displays">Customer Displays</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Icon</th><th>Name</th><th>Category</th><th>Price</th><th>Old Price</th><th>Stock</th><th>Badge</th><th>Active</th><th>Actions</th></tr></thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promotions -->
+    <div id="page-promotions" class="page">
+      <div class="topbar">
+        <h2>Promotions</h2>
+        <button class="btn-add" onclick="openPromoModal()">+ Add Promotion</button>
+      </div>
+      <div class="promo-grid" id="promosGrid"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ── Product Modal ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="productModalTitle">Add Product</h3>
+      <button class="modal-close" onclick="closeModal('productModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group span-2">
+          <label>Product Name *</label>
+          <input type="text" id="p_name" placeholder="e.g. Epson TM-T88VII">
+        </div>
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="p_category">
+            <option value="laptops">Laptops</option>
+            <option value="pos-systems">POS Systems</option>
+            <option value="printers">Printers</option>
+            <option value="cash-drawers">Cash Drawers</option>
+            <option value="scanners">Scanners</option>
+            <option value="displays">Customer Displays</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Icon (emoji)</label>
+          <input type="text" id="p_icon" placeholder="📦" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>Price ($) *</label>
+          <input type="number" id="p_price" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Original Price ($)</label>
+          <input type="number" id="p_old_price" min="0" step="0.01" placeholder="Leave empty if no discount">
+        </div>
+        <div class="form-group">
+          <label>Quantity *</label>
+          <input type="number" id="p_quantity" min="0" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Badge</label>
+          <select id="p_badge">
+            <option value="">None</option>
+            <option value="Sale">Sale</option>
+            <option value="New">New</option>
+            <option value="Popular">Popular</option>
+            <option value="Budget">Budget</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label>Description</label>
+          <textarea id="p_description" rows="3" placeholder="Product details, specs, connectivity…"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Active</label>
+          <select id="p_is_active">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('productModal')">Cancel</button>
+      <button class="btn-save" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Promotion Modal ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="promoModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="promoModalTitle">Add Promotion</h3>
+      <button class="modal-close" onclick="closeModal('promoModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group span-2">
+          <label>Promotion Name *</label>
+          <input type="text" id="pr_name" placeholder="e.g. Summer Sale">
+        </div>
+        <div class="form-group">
+          <label>Coupon Code</label>
+          <input type="text" id="pr_code" placeholder="SAVE10" style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label>Discount Type *</label>
+          <select id="pr_discount_type">
+            <option value="percent">Percentage (%)</option>
+            <option value="fixed">Fixed Amount ($)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Discount Value *</label>
+          <input type="number" id="pr_discount_value" min="0" step="0.01" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Minimum Order ($)</label>
+          <input type="number" id="pr_min_order" min="0" step="0.01" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="pr_start_date">
+        </div>
+        <div class="form-group">
+          <label>End Date</label>
+          <input type="date" id="pr_end_date">
+        </div>
+        <div class="form-group span-2">
+          <label>Active</label>
+          <select id="pr_is_active">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('promoModal')">Cancel</button>
+      <button class="btn-save" onclick="savePromo()">Save Promotion</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://cgmqovyttrjecrbynooo.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnbXFvdnl0dHJqZWNyYnlub29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzg4MDAsImV4cCI6MjEwNjAxNDgwMH0.T0fRGI4e1i0xcfVMdLZo_UTnCIGRaBjYgC_JjzcfjT0";
+const ADMIN_PASSWORD = "protech2024!";
+
+let products = [], promos = [], editProductId = null, editPromoId = null;
+let allProducts = [];
+
+async function sbFetch(path, opts = {}) {
+  const res = await fetch(SUPABASE_URL + path, {
+    ...opts,
+    headers: {
+      "apikey": SUPABASE_ANON,
+      "Authorization": "Bearer " + SUPABASE_ANON,
+      "Content-Type": "application/json",
+      "Prefer": opts.prefer || "",
+      ...(opts.headers || {})
+    }
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error(t); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ── Auth ─────────────────────────────────────────────────────────
+function doLogin() {
+  const pw = document.getElementById("pwInput").value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    loadAll();
+  } else {
+    document.getElementById("loginErr").textContent = "Incorrect password.";
+    setTimeout(() => document.getElementById("loginErr").textContent = "", 3000);
+  }
+}
+function logout() {
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("app").style.display = "none";
+  document.getElementById("pwInput").value = "";
+}
+
+// ── Navigation ───────────────────────────────────────────────────
+document.querySelectorAll(".nav-item").forEach(item => {
+  item.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach(i => i.classList.remove("active"));
+    item.classList.add("active");
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById("page-" + item.dataset.page).classList.add("active");
+  });
+});
+
+// ── Load all data ────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    [products, promos] = await Promise.all([
+      sbFetch("/rest/v1/pt_products?order=category.asc,name.asc&select=*"),
+      sbFetch("/rest/v1/pt_promotions?order=created_at.desc&select=*")
+    ]);
+    allProducts = [...products];
+    renderDashboard();
+    renderProductsTable(products);
+    renderPromos();
+  } catch(e) { showToast("Failed to load data: " + e.message, "error"); }
+}
+
+// ── Dashboard ────────────────────────────────────────────────────
+function renderDashboard() {
+  const total = products.length;
+  const active = products.filter(p => p.is_active).length;
+  const lowStock = products.filter(p => p.quantity <= 5);
+  const totalValue = products.reduce((s, p) => s + parseFloat(p.price) * p.quantity, 0);
+
+  document.getElementById("statsRow").innerHTML = `
+    <div class="stat-card"><div class="label">Total Products</div><div class="value">${total}</div><div class="sub">${active} active</div></div>
+    <div class="stat-card"><div class="label">Low Stock</div><div class="value" style="color:var(--warning)">${lowStock.length}</div><div class="sub">≤5 units</div></div>
+    <div class="stat-card"><div class="label">Active Promos</div><div class="value" style="color:var(--success)">${promos.filter(p=>p.is_active).length}</div><div class="sub">of ${promos.length} total</div></div>
+    <div class="stat-card"><div class="label">Inventory Value</div><div class="value">$${totalValue.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="sub">estimated</div></div>
+  `;
+
+  const tbody = document.getElementById("lowStockBody");
+  if (lowStock.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--fg-3);padding:1.5rem">All products well stocked</td></tr>`;
+  } else {
+    tbody.innerHTML = lowStock.map(p => `
+      <tr>
+        <td>${p.icon || "📦"} ${p.name}</td>
+        <td>${catLabel(p.category)}</td>
+        <td class="${p.quantity === 0 ? 'stock-low' : 'stock-low'}">${p.quantity === 0 ? "Out of stock" : p.quantity + " left"}</td>
+        <td>$${parseFloat(p.price).toFixed(2)}</td>
+      </tr>
+    `).join("");
+  }
+}
+
+function catLabel(cat) {
+  return { laptops:"Laptops", "pos-systems":"POS Systems", printers:"Printers", "cash-drawers":"Cash Drawers", scanners:"Scanners", displays:"Customer Displays" }[cat] || cat;
+}
+
+function badgeClass(b) {
+  if (!b) return "";
+  const m = {"Sale":"sale","New":"new","Popular":"popular","Budget":"budget"};
+  return "badge badge-" + (m[b] || "default");
+}
+
+// ── Products table ───────────────────────────────────────────────
+function renderProductsTable(list) {
+  const tbody = document.getElementById("productsBody");
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--fg-3);padding:2rem">No products found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p => `
+    <tr>
+      <td style="font-size:1.4rem;text-align:center">${p.icon || "📦"}</td>
+      <td><strong>${p.name}</strong></td>
+      <td>${catLabel(p.category)}</td>
+      <td>$${parseFloat(p.price).toFixed(2)}</td>
+      <td>${p.old_price ? "$"+parseFloat(p.old_price).toFixed(2) : "—"}</td>
+      <td class="${p.quantity <= 5 ? "stock-low" : "stock-ok"}">${p.quantity}</td>
+      <td>${p.badge ? `<span class="${badgeClass(p.badge)}">${p.badge}</span>` : "—"}</td>
+      <td><span style="color:${p.is_active ? 'var(--success)' : 'var(--fg-3)'}">${p.is_active ? "Yes" : "No"}</span></td>
+      <td style="white-space:nowrap;display:flex;gap:.4rem">
+        <button class="btn-sm btn-edit" onclick="openProductModal(${p.id})">Edit</button>
+        <button class="btn-sm btn-del" onclick="deleteProduct(${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+function filterProdTable() {
+  const q = document.getElementById("prodSearch").value.toLowerCase();
+  const cat = document.getElementById("catFilter").value;
+  const filtered = allProducts.filter(p =>
+    (!q || p.name.toLowerCase().includes(q) || (p.description||"").toLowerCase().includes(q)) &&
+    (!cat || p.category === cat)
+  );
+  renderProductsTable(filtered);
+}
+
+// ── Product CRUD ─────────────────────────────────────────────────
+function openProductModal(id) {
+  editProductId = id || null;
+  document.getElementById("productModalTitle").textContent = id ? "Edit Product" : "Add Product";
+  if (id) {
+    const p = products.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById("p_name").value = p.name;
+    document.getElementById("p_category").value = p.category;
+    document.getElementById("p_icon").value = p.icon || "📦";
+    document.getElementById("p_price").value = p.price;
+    document.getElementById("p_old_price").value = p.old_price || "";
+    document.getElementById("p_quantity").value = p.quantity;
+    document.getElementById("p_badge").value = p.badge || "";
+    document.getElementById("p_description").value = p.description || "";
+    document.getElementById("p_is_active").value = p.is_active ? "true" : "false";
+  } else {
+    ["p_name","p_price","p_old_price","p_quantity","p_description"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("p_icon").value = "📦";
+    document.getElementById("p_badge").value = "";
+    document.getElementById("p_is_active").value = "true";
+  }
+  openModal("productModal");
+}
+
+async function saveProduct() {
+  const name = document.getElementById("p_name").value.trim();
+  const price = parseFloat(document.getElementById("p_price").value);
+  const qty = parseInt(document.getElementById("p_quantity").value);
+  if (!name || isNaN(price) || isNaN(qty)) { showToast("Name, price and quantity are required", "error"); return; }
+
+  const body = {
+    name,
+    category: document.getElementById("p_category").value,
+    icon: document.getElementById("p_icon").value || "📦",
+    price,
+    old_price: document.getElementById("p_old_price").value ? parseFloat(document.getElementById("p_old_price").value) : null,
+    quantity: qty,
+    badge: document.getElementById("p_badge").value || null,
+    description: document.getElementById("p_description").value.trim() || null,
+    is_active: document.getElementById("p_is_active").value === "true",
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    if (editProductId) {
+      await sbFetch(`/rest/v1/pt_products?id=eq.${editProductId}`, { method: "PATCH", body: JSON.stringify(body) });
+      showToast("Product updated", "success");
+    } else {
+      await sbFetch("/rest/v1/pt_products", { method: "POST", body: JSON.stringify(body), prefer: "return=representation" });
+      showToast("Product added", "success");
+    }
+    closeModal("productModal");
+    await loadAll();
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+async function deleteProduct(id, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  try {
+    await sbFetch(`/rest/v1/pt_products?id=eq.${id}`, { method: "DELETE" });
+    showToast("Product deleted", "success");
+    await loadAll();
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+// ── Promotions ───────────────────────────────────────────────────
+function renderPromos() {
+  const grid = document.getElementById("promosGrid");
+  if (!promos || promos.length === 0) {
+    grid.innerHTML = `<p style="color:var(--fg-3);grid-column:1/-1;padding:1rem">No promotions yet. Click "+ Add Promotion" to create one.</p>`;
+    return;
+  }
+  grid.innerHTML = promos.map(p => `
+    <div class="promo-card ${p.is_active ? '' : 'promo-inactive'}">
+      <div class="promo-card-header">
+        <div>
+          <div class="promo-code">${p.code || "—"} <span class="promo-badge">${p.is_active ? "Active" : "Inactive"}</span></div>
+          <div style="font-weight:600;margin-top:.2rem">${p.name}</div>
+        </div>
+        <div class="promo-actions">
+          <button class="btn-sm btn-edit" onclick="openPromoModal(${p.id})">Edit</button>
+          <button class="btn-sm btn-del" onclick="deletePromo(${p.id},'${p.name.replace(/'/g,"\\'")}')">Del</button>
+        </div>
+      </div>
+      <div class="promo-meta">
+        ${p.discount_type === "percent" ? p.discount_value + "% off" : "$" + parseFloat(p.discount_value).toFixed(2) + " off"}
+        ${p.min_order > 0 ? " · Min order $" + parseFloat(p.min_order).toFixed(2) : ""}
+      </div>
+      ${p.start_date || p.end_date ? `<div class="promo-meta" style="margin-top:.2rem">${p.start_date||"—"} → ${p.end_date||"—"}</div>` : ""}
+    </div>
+  `).join("");
+}
+
+function openPromoModal(id) {
+  editPromoId = id || null;
+  document.getElementById("promoModalTitle").textContent = id ? "Edit Promotion" : "Add Promotion";
+  if (id) {
+    const p = promos.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById("pr_name").value = p.name;
+    document.getElementById("pr_code").value = p.code || "";
+    document.getElementById("pr_discount_type").value = p.discount_type;
+    document.getElementById("pr_discount_value").value = p.discount_value;
+    document.getElementById("pr_min_order").value = p.min_order || "";
+    document.getElementById("pr_start_date").value = p.start_date || "";
+    document.getElementById("pr_end_date").value = p.end_date || "";
+    document.getElementById("pr_is_active").value = p.is_active ? "true" : "false";
+  } else {
+    ["pr_name","pr_code","pr_discount_value","pr_min_order","pr_start_date","pr_end_date"].forEach(i => document.getElementById(i).value = "");
+    document.getElementById("pr_discount_type").value = "percent";
+    document.getElementById("pr_is_active").value = "true";
+  }
+  openModal("promoModal");
+}
+
+async function savePromo() {
+  const name = document.getElementById("pr_name").value.trim();
+  const val = parseFloat(document.getElementById("pr_discount_value").value);
+  if (!name || isNaN(val)) { showToast("Name and discount value are required", "error"); return; }
+
+  const body = {
+    name,
+    code: document.getElementById("pr_code").value.trim().toUpperCase() || null,
+    discount_type: document.getElementById("pr_discount_type").value,
+    discount_value: val,
+    min_order: parseFloat(document.getElementById("pr_min_order").value) || 0,
+    start_date: document.getElementById("pr_start_date").value || null,
+    end_date: document.getElementById("pr_end_date").value || null,
+    is_active: document.getElementById("pr_is_active").value === "true"
+  };
+
+  try {
+    if (editPromoId) {
+      await sbFetch(`/rest/v1/pt_promotions?id=eq.${editPromoId}`, { method: "PATCH", body: JSON.stringify(body) });
+      showToast("Promotion updated", "success");
+    } else {
+      await sbFetch("/rest/v1/pt_promotions", { method: "POST", body: JSON.stringify(body), prefer: "return=representation" });
+      showToast("Promotion added", "success");
+    }
+    closeModal("promoModal");
+    await loadAll();
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+async function deletePromo(id, name) {
+  if (!confirm(`Delete promotion "${name}"?`)) return;
+  try {
+    await sbFetch(`/rest/v1/pt_promotions?id=eq.${id}`, { method: "DELETE" });
+    showToast("Promotion deleted", "success");
+    await loadAll();
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+// ── Modal helpers ────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+document.querySelectorAll(".modal-overlay").forEach(m => m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); }));
+
+// ── Toast ────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = "") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "show" + (type ? " " + type : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = "", 3000);
+}
+</script>
+</body>
+</html>
