@@ -1075,6 +1075,7 @@ const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 async function sbFetch(path, opts = {}) {
   const res = await fetch(SUPABASE_URL + path, {
+    cache: "no-store",
     ...opts,
     headers: { "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON, "Content-Type": "application/json", ...(opts.headers || {}) }
   });
