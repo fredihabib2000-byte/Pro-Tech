@@ -762,7 +762,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 <!-- ── NAV ────────────────────────────────────────────────────── -->
 <nav class="nav">
   <div class="nav-inner">
-    <a href="#" class="logo">
+    <a href="#hero" class="logo">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <rect width="20" height="20" rx="5" fill="currentColor"/>
         <path d="M4 10h12M10 4v12" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
@@ -785,7 +785,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 </nav>
 
 <!-- ── HERO ───────────────────────────────────────────────────── -->
-<section class="hero">
+<section class="hero" id="hero">
   <div class="hero-grid">
     <div class="hero-copy">
       <div class="hero-eyebrow">✦ Technology Solutions</div>
@@ -967,28 +967,35 @@ button { cursor: pointer; font-family: inherit; border: none; }
           <div style="font-size:1.3rem;margin-top:2px">📧</div>
           <div>
             <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Email</div>
-            <div style="color:var(--fg-2);font-size:.875rem">sales@protech.store</div>
+            <div style="color:var(--fg-2);font-size:.875rem" id="contact-email">—</div>
           </div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start">
           <div style="font-size:1.3rem;margin-top:2px">📞</div>
           <div>
-            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Phone</div>
-            <div style="color:var(--fg-2);font-size:.875rem">+1 (800) 776-8324</div>
+            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Phone / WhatsApp</div>
+            <div style="color:var(--fg-2);font-size:.875rem" id="contact-phone">—</div>
           </div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-start">
-          <div style="font-size:1.3rem;margin-top:2px">🕐</div>
+          <div style="font-size:1.3rem;margin-top:2px">📍</div>
           <div>
-            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Business Hours</div>
-            <div style="color:var(--fg-2);font-size:.875rem">Mon–Fri 8 AM – 6 PM</div>
+            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Address</div>
+            <div style="color:var(--fg-2);font-size:.875rem" id="contact-address">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:1.3rem;margin-top:2px">📱</div>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Social</div>
+            <div style="color:var(--fg-2);font-size:.875rem" id="contact-social">—</div>
           </div>
         </div>
       </div>
       <form id="contactForm" style="display:flex;flex-direction:column;gap:12px" onsubmit="handleContact(event)">
-        <input type="text" placeholder="Your name" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-        <input type="email" placeholder="Email address" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-        <textarea placeholder="Tell us what you need…" rows="4" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;resize:vertical;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <input id="fb_name" type="text" placeholder="Your name" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="fb_email" type="email" placeholder="Email address" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <textarea id="fb_msg" placeholder="Tell us what you need…" rows="4" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;resize:vertical;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
         <button type="submit" class="btn-primary" style="align-self:flex-start">Send Message</button>
       </form>
     </div>
@@ -999,40 +1006,38 @@ button { cursor: pointer; font-family: inherit; border: none; }
 <footer class="footer">
   <div class="footer-grid">
     <div class="footer-brand">
-      <div class="footer-brand-name">Pro-Tech Store</div>
-      <div class="footer-tagline">Your one-stop shop for business technology. Laptops, POS systems, printers, scanners, and everything in between.</div>
+      <div class="footer-brand-name" id="footer-store-name">Pro-Tech Store</div>
+      <div class="footer-tagline" id="footer-tagline">Your one-stop shop for business technology. Laptops, POS systems, printers, scanners, and everything in between.</div>
     </div>
     <div class="footer-col">
       <h4>Categories</h4>
       <ul>
-        <li><a href="#">Laptops &amp; PCs</a></li>
-        <li><a href="#">POS Systems</a></li>
-        <li><a href="#">Receipt Printers</a></li>
-        <li><a href="#">Cash Drawers</a></li>
-        <li><a href="#">Barcode Scanners</a></li>
+        <li><a href="#products" onclick="setFilter('laptops')">💻 Laptops &amp; PCs</a></li>
+        <li><a href="#products" onclick="setFilter('pos-systems')">🖥️ POS Systems</a></li>
+        <li><a href="#products" onclick="setFilter('printers')">🖨️ Receipt Printers</a></li>
+        <li><a href="#products" onclick="setFilter('cash-drawers')">💰 Cash Drawers</a></li>
+        <li><a href="#products" onclick="setFilter('scanners')">📷 Barcode Scanners</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h4>Company</h4>
       <ul>
-        <li><a href="#">About Us</a></li>
-        <li><a href="#">Blog</a></li>
-        <li><a href="#">Careers</a></li>
-        <li><a href="#">Press</a></li>
+        <li><a href="#why-us">🏢 About Us</a></li>
+        <li><a href="#contact">💬 Feedback</a></li>
       </ul>
     </div>
     <div class="footer-col">
       <h4>Support</h4>
       <ul>
-        <li><a href="#">Help Center</a></li>
-        <li><a href="#">Warranty</a></li>
-        <li><a href="#">Track Order</a></li>
+        <li><a href="#contact">🙋 Help Center</a></li>
+        <li><a href="#contact">🛡️ Warranty</a></li>
+        <li><a href="#contact">📦 Track Order</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2024 Pro-Tech Store. All rights reserved.</span>
-    <span>Privacy · Terms · Cookies</span>
+    <span>© 2025 Pro-Tech Store. All rights reserved.</span>
+    <span>Privacy · Terms</span>
   </div>
 </footer>
 
@@ -1266,15 +1271,55 @@ function applyTheme() {
 }
 themeBtn.addEventListener("click", () => { isDark = !isDark; applyTheme(); });
 
-// ── Contact form ──────────────────────────────────────────────────
-function handleContact(e) {
+// ── Contact form → saves to Supabase ─────────────────────────────
+async function handleContact(e) {
   e.preventDefault();
-  showToast("Message sent! We'll get back to you soon.");
-  e.target.reset();
+  const btn = e.target.querySelector("button[type=submit]");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    await sbFetch("/rest/v1/pt_feedback", {
+      method: "POST",
+      body: JSON.stringify({
+        name: document.getElementById("fb_name").value.trim(),
+        email: document.getElementById("fb_email").value.trim(),
+        message: document.getElementById("fb_msg").value.trim()
+      })
+    });
+    showToast("Message sent! We'll get back to you soon.");
+    e.target.reset();
+  } catch(err) {
+    showToast("Failed to send. Please try again.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Send Message";
+  }
+}
+
+// ── Load store settings from Supabase ────────────────────────────
+async function loadStoreSettings() {
+  try {
+    const rows = await sbFetch("/rest/v1/pt_settings?select=key,value");
+    const s = {};
+    rows.forEach(r => s[r.key] = r.value);
+    if (s.email)     document.getElementById("contact-email").textContent   = s.email;
+    if (s.phone)     document.getElementById("contact-phone").textContent   = s.phone;
+    if (s.address)   document.getElementById("contact-address").textContent = s.address;
+    if (s.social)    document.getElementById("contact-social").textContent  = s.social;
+    if (s.storeName) { document.getElementById("footer-store-name").textContent = s.storeName; document.title = s.storeName + " – Store"; }
+    if (s.tagline)   document.getElementById("footer-tagline").textContent  = s.tagline;
+  } catch(_) {}
+}
+
+// ── Footer category filter helper ────────────────────────────────
+function setFilter(cat) {
+  activeFilter = cat;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
+  document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
+  renderProducts();
 }
 
 // ── Init ──────────────────────────────────────────────────────────
 loadProducts();
+loadStoreSettings();
 </script>
 </body>
 </html>

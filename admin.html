@@ -173,6 +173,7 @@ td{padding:.7rem 1rem;vertical-align:middle}
       <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span>Dashboard</div>
       <div class="nav-item" data-page="products"><span class="icon">📦</span>Products</div>
       <div class="nav-item" data-page="promotions"><span class="icon">🏷️</span>Promotions</div>
+      <div class="nav-item" data-page="feedback"><span class="icon">💬</span>Feedback</div>
       <div class="nav-item" data-page="settings"><span class="icon">⚙️</span>Settings</div>
     </div>
     <div class="sidebar-footer">
@@ -229,6 +230,23 @@ td{padding:.7rem 1rem;vertical-align:middle}
         <button class="btn-add" onclick="openPromoModal()">+ Add Promotion</button>
       </div>
       <div class="promo-grid" id="promosGrid"></div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="page-feedback" class="page">
+      <div class="topbar"><h2>Customer Feedback</h2></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <span id="feedbackCount" style="font-size:.8rem;color:var(--fg-2)"></span>
+          <button class="btn-sm btn-edit" onclick="loadFeedback()">↻ Refresh</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Message</th><th>Status</th></tr></thead>
+            <tbody id="feedbackBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Settings -->
@@ -492,6 +510,7 @@ document.querySelectorAll(".nav-item").forEach(item => {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     document.getElementById("page-" + item.dataset.page).classList.add("active");
     if (item.dataset.page === "settings") loadSettingsPage();
+    if (item.dataset.page === "feedback") loadFeedback();
   });
 });
 
@@ -755,52 +774,102 @@ async function deletePromo(id, name) {
   } catch(e) { showToast("Error: " + e.message, "error"); }
 }
 
+// ── Feedback ─────────────────────────────────────────────────────
+async function loadFeedback() {
+  const tbody = document.getElementById("feedbackBody");
+  tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--fg-3)">Loading…</td></tr>`;
+  try {
+    const rows = await sbFetch("/rest/v1/pt_feedback?order=created_at.desc&select=*");
+    document.getElementById("feedbackCount").textContent = rows.length + " message" + (rows.length !== 1 ? "s" : "");
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--fg-3)">No feedback yet</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(r => `
+      <tr style="${r.is_read ? '' : 'background:rgba(77,148,255,.06)'}">
+        <td style="white-space:nowrap;font-size:.8rem">${new Date(r.created_at).toLocaleDateString()}<br><span style="color:var(--fg-3)">${new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></td>
+        <td><strong>${r.name}</strong></td>
+        <td style="font-size:.82rem"><a href="mailto:${r.email}" style="color:var(--accent)">${r.email}</a></td>
+        <td style="font-size:.83rem;max-width:320px;white-space:pre-wrap">${r.message}</td>
+        <td style="white-space:nowrap">
+          ${r.is_read
+            ? `<span style="color:var(--fg-3);font-size:.78rem">Read</span>`
+            : `<button class="btn-sm btn-edit" onclick="markRead(${r.id})">Mark Read</button>`}
+        </td>
+      </tr>
+    `).join("");
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger);padding:1rem">${e.message}</td></tr>`; }
+}
+
+async function markRead(id) {
+  try {
+    await sbFetch(`/rest/v1/pt_feedback?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ is_read: true }) });
+    loadFeedback();
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
 // ── Settings ─────────────────────────────────────────────────────
 let adminPassword = "protech2024!";
 
-function loadSettingsPage() {
-  const info = JSON.parse(localStorage.getItem("pt_store_info") || "{}");
-  document.getElementById("s_email").value = info.email || "";
-  document.getElementById("s_phone").value = info.phone || "";
-  document.getElementById("s_address").value = info.address || "";
-  document.getElementById("s_social").value = info.social || "";
-  document.getElementById("s_store_name").value = info.storeName || "Pro-Tech Store";
-  document.getElementById("s_tagline").value = info.tagline || "";
+async function sbUpsert(key, value) {
+  await sbFetch("/rest/v1/pt_settings", {
+    method: "POST",
+    body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+    headers: { "Prefer": "resolution=merge-duplicates" }
+  });
+}
+
+async function loadSettingsPage() {
   document.getElementById("s_cur_pw").value = "";
   document.getElementById("s_new_pw").value = "";
   document.getElementById("s_confirm_pw").value = "";
+  try {
+    const rows = await sbFetch("/rest/v1/pt_settings?select=key,value");
+    const s = {};
+    rows.forEach(r => s[r.key] = r.value);
+    document.getElementById("s_email").value     = s.email     || "";
+    document.getElementById("s_phone").value     = s.phone     || "";
+    document.getElementById("s_address").value   = s.address   || "";
+    document.getElementById("s_social").value    = s.social    || "";
+    document.getElementById("s_store_name").value = s.storeName || "Pro-Tech Store";
+    document.getElementById("s_tagline").value   = s.tagline   || "";
+  } catch(e) { showToast("Could not load settings: " + e.message, "error"); }
 }
 
 function changePassword() {
   const cur = document.getElementById("s_cur_pw").value;
-  const nw = document.getElementById("s_new_pw").value;
+  const nw  = document.getElementById("s_new_pw").value;
   const conf = document.getElementById("s_confirm_pw").value;
   if (cur !== adminPassword) { showToast("Current password is incorrect", "error"); return; }
-  if (nw.length < 8) { showToast("New password must be at least 8 characters", "error"); return; }
-  if (nw !== conf) { showToast("Passwords do not match", "error"); return; }
+  if (nw.length < 8)  { showToast("New password must be at least 8 characters", "error"); return; }
+  if (nw !== conf)    { showToast("Passwords do not match", "error"); return; }
   adminPassword = nw;
   document.getElementById("s_cur_pw").value = "";
   document.getElementById("s_new_pw").value = "";
   document.getElementById("s_confirm_pw").value = "";
-  showToast("Password updated successfully", "success");
+  showToast("Password updated for this session", "success");
 }
 
-function saveContactInfo() {
-  const info = JSON.parse(localStorage.getItem("pt_store_info") || "{}");
-  info.email   = document.getElementById("s_email").value.trim();
-  info.phone   = document.getElementById("s_phone").value.trim();
-  info.address = document.getElementById("s_address").value.trim();
-  info.social  = document.getElementById("s_social").value.trim();
-  localStorage.setItem("pt_store_info", JSON.stringify(info));
-  showToast("Contact info saved", "success");
+async function saveContactInfo() {
+  try {
+    await Promise.all([
+      sbUpsert("email",   document.getElementById("s_email").value.trim()),
+      sbUpsert("phone",   document.getElementById("s_phone").value.trim()),
+      sbUpsert("address", document.getElementById("s_address").value.trim()),
+      sbUpsert("social",  document.getElementById("s_social").value.trim()),
+    ]);
+    showToast("Contact info saved — live on storefront now", "success");
+  } catch(e) { showToast("Error: " + e.message, "error"); }
 }
 
-function saveStoreIdentity() {
-  const info = JSON.parse(localStorage.getItem("pt_store_info") || "{}");
-  info.storeName = document.getElementById("s_store_name").value.trim();
-  info.tagline   = document.getElementById("s_tagline").value.trim();
-  localStorage.setItem("pt_store_info", JSON.stringify(info));
-  showToast("Store identity saved", "success");
+async function saveStoreIdentity() {
+  try {
+    await Promise.all([
+      sbUpsert("storeName", document.getElementById("s_store_name").value.trim()),
+      sbUpsert("tagline",   document.getElementById("s_tagline").value.trim()),
+    ]);
+    showToast("Store identity saved — live on storefront now", "success");
+  } catch(e) { showToast("Error: " + e.message, "error"); }
 }
 
 // ── Image upload ─────────────────────────────────────────────────
