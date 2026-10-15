@@ -1359,7 +1359,8 @@ async function sbFetch(path, opts = {}) {
     headers: { "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON, "Content-Type": "application/json", ...(opts.headers || {}) }
   });
   if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 // ── State ─────────────────────────────────────────────────────────
