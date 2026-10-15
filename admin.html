@@ -586,13 +586,15 @@ document.querySelectorAll(".nav-item").forEach(item => {
 
 // ── Load all data ────────────────────────────────────────────────
 let allOrders = [];
+let allFeedback = [];
 
 async function loadAll() {
   try {
-    [products, promos, allOrders] = await Promise.all([
+    [products, promos, allOrders, allFeedback] = await Promise.all([
       sbFetch("/rest/v1/pt_products?order=category.asc,name.asc&select=*"),
       sbFetch("/rest/v1/pt_promotions?order=created_at.desc&select=*"),
-      sbFetch("/rest/v1/pt_orders?order=created_at.desc&select=*")
+      sbFetch("/rest/v1/pt_orders?order=created_at.desc&select=*"),
+      sbFetch("/rest/v1/pt_feedback?order=created_at.desc&select=*")
     ]);
     allProducts = [...products];
     renderDashboard();
@@ -610,6 +612,7 @@ function renderDashboard() {
 
   const pendingOrders = allOrders.filter(o => o.status === "pending").length;
   const ordersRevenue = allOrders.filter(o => o.status !== "cancelled").reduce((s,o) => s + parseFloat(o.total), 0);
+  const unreadMsgs = allFeedback.filter(f => !f.is_read).length;
 
   document.getElementById("statsRow").innerHTML = `
     <div class="stat-card"><div class="label">Total Products</div><div class="value">${total}</div><div class="sub">${active} active</div></div>
@@ -617,6 +620,7 @@ function renderDashboard() {
     <div class="stat-card"><div class="label">Active Promos</div><div class="value" style="color:var(--success)">${promos.filter(p=>p.is_active).length}</div><div class="sub">of ${promos.length} total</div></div>
     <div class="stat-card"><div class="label">Total Orders</div><div class="value">${allOrders.length}</div><div class="sub">${pendingOrders} pending</div></div>
     <div class="stat-card"><div class="label">Orders Revenue</div><div class="value">$${ordersRevenue.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="sub">all time</div></div>
+    <div class="stat-card" style="cursor:pointer" onclick="document.querySelector('[data-page=feedback]').click()"><div class="label">Messages</div><div class="value" style="color:${unreadMsgs>0?'var(--accent)':'var(--fg)'}">${allFeedback.length}</div><div class="sub">${unreadMsgs} unread</div></div>
   `;
 
   const tbody = document.getElementById("lowStockBody");
@@ -857,7 +861,9 @@ async function loadFeedback() {
   tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--fg-3)">Loading…</td></tr>`;
   try {
     const rows = await sbFetch("/rest/v1/pt_feedback?order=created_at.desc&select=*");
-    document.getElementById("feedbackCount").textContent = rows.length + " message" + (rows.length !== 1 ? "s" : "");
+    allFeedback = rows;
+    const unread = rows.filter(r => !r.is_read).length;
+    document.getElementById("feedbackCount").textContent = rows.length + " message" + (rows.length !== 1 ? "s" : "") + (unread > 0 ? ` · ${unread} unread` : "");
     if (rows.length === 0) {
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--fg-3)">No feedback yet</td></tr>`;
       return;
