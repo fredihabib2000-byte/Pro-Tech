@@ -1571,7 +1571,7 @@ async function handleContact(e) {
     showToast("Message sent! We'll get back to you soon.");
     e.target.reset();
   } catch(err) {
-    showToast("Error: " + err.message);
+    showToast("Failed to send. Please try again.");
   } finally {
     btn.disabled = false; btn.textContent = "Send Message";
   }
