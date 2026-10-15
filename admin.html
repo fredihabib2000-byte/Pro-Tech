@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro-Tech Admin</title>
+<title>Pro Technology – Admin</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
 <style>
 :root {
@@ -153,7 +153,7 @@ td{padding:.7rem 1rem;vertical-align:middle}
 <!-- ── Login ──────────────────────────────────────────────────────── -->
 <div id="loginScreen">
   <div class="login-box">
-    <h1>Pro-Tech Admin</h1>
+    <h1>Pro Technology – Admin</h1>
     <p>Sign in to manage your store</p>
     <label>Password</label>
     <input type="password" id="pwInput" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
@@ -166,7 +166,7 @@ td{padding:.7rem 1rem;vertical-align:middle}
 <div id="app">
   <nav class="sidebar">
     <div class="sidebar-logo">
-      <span>Pro-Tech</span>
+      <span>Pro Technology</span>
       <small>Admin Dashboard</small>
     </div>
     <div class="nav-items">
@@ -292,15 +292,15 @@ td{padding:.7rem 1rem;vertical-align:middle}
             </div>
             <div class="form-group">
               <label>📸 Instagram username</label>
-              <input type="text" id="s_instagram" placeholder="protechstore (without @)">
+              <input type="text" id="s_instagram" placeholder="protechnology (without @)">
             </div>
             <div class="form-group">
               <label>📘 Facebook page name</label>
-              <input type="text" id="s_facebook" placeholder="protechstore">
+              <input type="text" id="s_facebook" placeholder="protechnology">
             </div>
             <div class="form-group">
               <label>🎵 TikTok username</label>
-              <input type="text" id="s_tiktok" placeholder="protechstore (without @)">
+              <input type="text" id="s_tiktok" placeholder="protechnology (without @)">
             </div>
           </div>
           <button class="btn-save" style="margin-top:.75rem" onclick="saveContactInfo()">Save Contact Info</button>
@@ -312,7 +312,7 @@ td{padding:.7rem 1rem;vertical-align:middle}
           <div class="form-grid" style="grid-template-columns:1fr">
             <div class="form-group">
               <label>Store Name</label>
-              <input type="text" id="s_store_name" placeholder="Pro-Tech Store">
+              <input type="text" id="s_store_name" placeholder="Pro Technology">
             </div>
             <div class="form-group">
               <label>Tagline</label>
@@ -841,7 +841,7 @@ async function loadSettingsPage() {
     document.getElementById("s_instagram").value = s.instagram || "";
     document.getElementById("s_facebook").value  = s.facebook  || "";
     document.getElementById("s_tiktok").value    = s.tiktok    || "";
-    document.getElementById("s_store_name").value = s.storeName || "Pro-Tech Store";
+    document.getElementById("s_store_name").value = s.storeName || "Pro Technology";
     document.getElementById("s_tagline").value   = s.tagline   || "";
   } catch(e) { showToast("Could not load settings: " + e.message, "error"); }
 }
