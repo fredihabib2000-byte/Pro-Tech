@@ -1208,6 +1208,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
       <form id="contactForm" style="display:flex;flex-direction:column;gap:12px" onsubmit="handleContact(event)">
         <input id="fb_name" type="text" placeholder="Your name" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         <input id="fb_email" type="email" placeholder="Email address" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="fb_phone" type="tel" placeholder="Phone number (optional)" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         <textarea id="fb_msg" placeholder="Tell us what you need…" rows="4" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;resize:vertical;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
         <button type="submit" class="btn-primary" style="align-self:flex-start">Send Message</button>
       </form>
@@ -1562,6 +1563,7 @@ async function handleContact(e) {
       body: JSON.stringify({
         name: document.getElementById("fb_name").value.trim(),
         email: document.getElementById("fb_email").value.trim(),
+        phone: document.getElementById("fb_phone").value.trim() || null,
         message: document.getElementById("fb_msg").value.trim()
       })
     });

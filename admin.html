@@ -252,7 +252,7 @@ td{padding:.7rem 1rem;vertical-align:middle}
         </div>
         <div class="table-scroll">
           <table>
-            <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Message</th><th>Status</th></tr></thead>
+            <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Status</th></tr></thead>
             <tbody id="feedbackBody"></tbody>
           </table>
         </div>
@@ -865,23 +865,32 @@ async function loadFeedback() {
     const unread = rows.filter(r => !r.is_read).length;
     document.getElementById("feedbackCount").textContent = rows.length + " message" + (rows.length !== 1 ? "s" : "") + (unread > 0 ? ` · ${unread} unread` : "");
     if (rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--fg-3)">No feedback yet</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--fg-3)">No messages yet</td></tr>`;
       return;
     }
-    tbody.innerHTML = rows.map(r => `
+    tbody.innerHTML = rows.map(r => {
+      const waHref = r.phone ? `https://wa.me/${r.phone.replace(/\D/g,"")}` : "";
+      return `
       <tr style="${r.is_read ? '' : 'background:rgba(77,148,255,.06)'}">
         <td style="white-space:nowrap;font-size:.8rem">${new Date(r.created_at).toLocaleDateString()}<br><span style="color:var(--fg-3)">${new Date(r.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></td>
         <td><strong>${r.name}</strong></td>
         <td style="font-size:.82rem"><a href="mailto:${r.email}" style="color:var(--accent)">${r.email}</a></td>
-        <td style="font-size:.83rem;max-width:320px;white-space:pre-wrap">${r.message}</td>
+        <td style="white-space:nowrap;font-size:.82rem">
+          ${r.phone
+            ? `<div>${r.phone}</div><a href="${waHref}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;margin-top:4px;background:#25D366;color:#fff;border-radius:6px;padding:3px 8px;font-size:.75rem;font-weight:600;text-decoration:none">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.855L0 24l6.335-1.51A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.6a9.555 9.555 0 01-4.893-1.344l-.351-.208-3.624.863.916-3.527-.228-.364A9.555 9.555 0 012.4 12C2.4 6.698 6.698 2.4 12 2.4S21.6 6.698 21.6 12 17.302 21.6 12 21.6z"/></svg>
+                WhatsApp</a>`
+            : `<span style="color:var(--fg-3);font-size:.78rem">—</span>`}
+        </td>
+        <td style="font-size:.83rem;max-width:280px;white-space:pre-wrap">${r.message}</td>
         <td style="white-space:nowrap">
           ${r.is_read
             ? `<span style="color:var(--fg-3);font-size:.78rem">Read</span>`
             : `<button class="btn-sm btn-edit" onclick="markRead(${r.id})">Mark Read</button>`}
         </td>
-      </tr>
-    `).join("");
-  } catch(e) { tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger);padding:1rem">${e.message}</td></tr>`; }
+      </tr>`;
+    }).join("");
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" style="color:var(--danger);padding:1rem">${e.message}</td></tr>`; }
 }
 
 async function markRead(id) {
@@ -920,7 +929,12 @@ function renderOrdersTable(list) {
       <tr>
         <td style="white-space:nowrap;font-size:.8rem">${new Date(o.created_at).toLocaleDateString()}<br><span style="color:var(--fg-3)">${new Date(o.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></td>
         <td><strong>${o.customer_name}</strong></td>
-        <td style="font-size:.82rem">${o.customer_phone}</td>
+        <td style="font-size:.82rem;white-space:nowrap">
+          <div>${o.customer_phone}</div>
+          ${o.customer_phone ? `<a href="https://wa.me/${o.customer_phone.replace(/\D/g,'')}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:3px;margin-top:3px;background:#25D366;color:#fff;border-radius:5px;padding:2px 7px;font-size:.72rem;font-weight:600;text-decoration:none">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.532 5.855L0 24l6.335-1.51A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.6a9.555 9.555 0 01-4.893-1.344l-.351-.208-3.624.863.916-3.527-.228-.364A9.555 9.555 0 012.4 12C2.4 6.698 6.698 2.4 12 2.4S21.6 6.698 21.6 12 17.302 21.6 12 21.6z"/></svg>
+            WA</a>` : ""}
+        </td>
         <td style="font-size:.8rem;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.customer_address}</td>
         <td class="order-items-cell" style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${itemsText}">${itemsText || "—"}</td>
         <td style="font-weight:700;white-space:nowrap">$${parseFloat(o.total).toFixed(2)}</td>
