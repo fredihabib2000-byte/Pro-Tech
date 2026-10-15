@@ -139,6 +139,15 @@ td{padding:.7rem 1rem;vertical-align:middle}
 .promo-badge{display:inline-block;padding:.15rem .5rem;border-radius:20px;font-size:.7rem;font-weight:600;background:rgba(63,185,80,.15);color:var(--success);margin-left:.4rem}
 .promo-inactive .promo-badge{background:var(--surface-2);color:var(--fg-3)}
 
+/* ── Orders status badges ── */
+.status-badge{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600;text-transform:uppercase}
+.status-pending{background:rgba(210,153,34,.15);color:var(--warning)}
+.status-confirmed{background:rgba(77,148,255,.15);color:var(--accent)}
+.status-shipped{background:rgba(63,185,80,.15);color:var(--success)}
+.status-delivered{background:rgba(63,185,80,.25);color:var(--success)}
+.status-cancelled{background:rgba(248,81,73,.12);color:var(--danger)}
+.order-items-cell{font-size:.78rem;color:var(--fg-2);max-width:200px}
+
 @media(max-width:768px){
   .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap}
   .nav-items{display:flex;flex-direction:row;padding:.5rem}
@@ -174,6 +183,7 @@ td{padding:.7rem 1rem;vertical-align:middle}
       <div class="nav-item" data-page="products"><span class="icon">📦</span>Products</div>
       <div class="nav-item" data-page="promotions"><span class="icon">🏷️</span>Promotions</div>
       <div class="nav-item" data-page="feedback"><span class="icon">💬</span>Feedback</div>
+      <div class="nav-item" data-page="orders"><span class="icon">📋</span>Orders</div>
       <div class="nav-item" data-page="settings"><span class="icon">⚙️</span>Settings</div>
     </div>
     <div class="sidebar-footer">
@@ -249,6 +259,33 @@ td{padding:.7rem 1rem;vertical-align:middle}
       </div>
     </div>
 
+    <!-- Orders -->
+    <div id="page-orders" class="page">
+      <div class="topbar">
+        <h2>Orders</h2>
+        <button class="btn-sm btn-edit" onclick="loadOrders()">↻ Refresh</button>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <span id="ordersCount" style="font-size:.8rem;color:var(--fg-2)"></span>
+          <select id="orderStatusFilter" onchange="filterOrders()" style="min-width:140px">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Address</th><th>Items</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Settings -->
     <div id="page-settings" class="page">
       <div class="topbar"><h2>Settings</h2></div>
@@ -291,6 +328,10 @@ td{padding:.7rem 1rem;vertical-align:middle}
               <input type="text" id="s_address" placeholder="123 Main St, City, Country">
             </div>
             <div class="form-group">
+              <label>💬 WhatsApp Number</label>
+              <input type="text" id="s_whatsapp" placeholder="+961 70 000 000">
+            </div>
+            <div class="form-group">
               <label>📸 Instagram username</label>
               <input type="text" id="s_instagram" placeholder="protechnology (without @)">
             </div>
@@ -304,6 +345,26 @@ td{padding:.7rem 1rem;vertical-align:middle}
             </div>
           </div>
           <button class="btn-save" style="margin-top:.75rem" onclick="saveContactInfo()">Save Contact Info</button>
+        </div>
+
+        <!-- Promo Banner -->
+        <div class="table-card" style="padding:1.25rem">
+          <h3 style="font-family:'Syne',sans-serif;font-size:.95rem;margin-bottom:1rem;color:var(--fg)">📢 Promo Banner</h3>
+          <p style="font-size:.8rem;color:var(--fg-2);margin-bottom:.75rem">Show a dismissible announcement banner at the top of the storefront.</p>
+          <div class="form-grid" style="grid-template-columns:1fr">
+            <div class="form-group">
+              <label>Banner Text</label>
+              <input type="text" id="s_promo_text" placeholder="🎉 Free delivery on orders over $200!">
+            </div>
+            <div class="form-group">
+              <label>Show Banner</label>
+              <select id="s_promo_active">
+                <option value="false">No (hidden)</option>
+                <option value="true">Yes (visible)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-save" style="margin-top:.75rem" onclick="savePromoBanner()">Save Banner</button>
         </div>
 
         <!-- Store Name & Tagline -->
@@ -519,15 +580,19 @@ document.querySelectorAll(".nav-item").forEach(item => {
     document.getElementById("page-" + item.dataset.page).classList.add("active");
     if (item.dataset.page === "settings") loadSettingsPage();
     if (item.dataset.page === "feedback") loadFeedback();
+    if (item.dataset.page === "orders") loadOrders();
   });
 });
 
 // ── Load all data ────────────────────────────────────────────────
+let allOrders = [];
+
 async function loadAll() {
   try {
-    [products, promos] = await Promise.all([
+    [products, promos, allOrders] = await Promise.all([
       sbFetch("/rest/v1/pt_products?order=category.asc,name.asc&select=*"),
-      sbFetch("/rest/v1/pt_promotions?order=created_at.desc&select=*")
+      sbFetch("/rest/v1/pt_promotions?order=created_at.desc&select=*"),
+      sbFetch("/rest/v1/pt_orders?order=created_at.desc&select=*")
     ]);
     allProducts = [...products];
     renderDashboard();
@@ -543,11 +608,15 @@ function renderDashboard() {
   const lowStock = products.filter(p => p.quantity <= 5);
   const totalValue = products.reduce((s, p) => s + parseFloat(p.price) * p.quantity, 0);
 
+  const pendingOrders = allOrders.filter(o => o.status === "pending").length;
+  const ordersRevenue = allOrders.filter(o => o.status !== "cancelled").reduce((s,o) => s + parseFloat(o.total), 0);
+
   document.getElementById("statsRow").innerHTML = `
     <div class="stat-card"><div class="label">Total Products</div><div class="value">${total}</div><div class="sub">${active} active</div></div>
     <div class="stat-card"><div class="label">Low Stock</div><div class="value" style="color:var(--warning)">${lowStock.length}</div><div class="sub">≤5 units</div></div>
     <div class="stat-card"><div class="label">Active Promos</div><div class="value" style="color:var(--success)">${promos.filter(p=>p.is_active).length}</div><div class="sub">of ${promos.length} total</div></div>
-    <div class="stat-card"><div class="label">Inventory Value</div><div class="value">$${totalValue.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="sub">estimated</div></div>
+    <div class="stat-card"><div class="label">Total Orders</div><div class="value">${allOrders.length}</div><div class="sub">${pendingOrders} pending</div></div>
+    <div class="stat-card"><div class="label">Orders Revenue</div><div class="value">$${ordersRevenue.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="sub">all time</div></div>
   `;
 
   const tbody = document.getElementById("lowStockBody");
@@ -816,6 +885,64 @@ async function markRead(id) {
   } catch(e) { showToast("Error: " + e.message, "error"); }
 }
 
+// ── Orders ───────────────────────────────────────────────────────
+async function loadOrders() {
+  const tbody = document.getElementById("ordersBody");
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:var(--fg-3)">Loading…</td></tr>`;
+  try {
+    allOrders = await sbFetch("/rest/v1/pt_orders?order=created_at.desc&select=*");
+    document.getElementById("ordersCount").textContent = allOrders.length + " order" + (allOrders.length !== 1 ? "s" : "");
+    renderOrdersTable(allOrders);
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="8" style="color:var(--danger);padding:1rem">${e.message}</td></tr>`; }
+}
+
+function filterOrders() {
+  const status = document.getElementById("orderStatusFilter").value;
+  renderOrdersTable(status ? allOrders.filter(o => o.status === status) : allOrders);
+}
+
+function renderOrdersTable(list) {
+  const tbody = document.getElementById("ordersBody");
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--fg-3);padding:2rem">No orders yet</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(o => {
+    const items = Array.isArray(o.items) ? o.items : [];
+    const itemsText = items.map(i => `${i.name} ×${i.qty}`).join(", ");
+    return `
+      <tr>
+        <td style="white-space:nowrap;font-size:.8rem">${new Date(o.created_at).toLocaleDateString()}<br><span style="color:var(--fg-3)">${new Date(o.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></td>
+        <td><strong>${o.customer_name}</strong></td>
+        <td style="font-size:.82rem">${o.customer_phone}</td>
+        <td style="font-size:.8rem;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.customer_address}</td>
+        <td class="order-items-cell" style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${itemsText}">${itemsText || "—"}</td>
+        <td style="font-weight:700;white-space:nowrap">$${parseFloat(o.total).toFixed(2)}</td>
+        <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+        <td style="white-space:nowrap">
+          <select style="font-size:.75rem;padding:.2rem .4rem" onchange="updateOrderStatus(${o.id}, this.value)">
+            <option value="">Change…</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+async function updateOrderStatus(id, status) {
+  if (!status) return;
+  try {
+    await sbFetch(`/rest/v1/pt_orders?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+    showToast(`Order status updated to "${status}"`, "success");
+    loadOrders();
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
 // ── Settings ─────────────────────────────────────────────────────
 let adminPassword = "protech2024!";
 
@@ -838,11 +965,14 @@ async function loadSettingsPage() {
     document.getElementById("s_email").value     = s.email     || "";
     document.getElementById("s_phone").value     = s.phone     || "";
     document.getElementById("s_address").value   = s.address   || "";
+    document.getElementById("s_whatsapp").value  = s.whatsapp  || "";
     document.getElementById("s_instagram").value = s.instagram || "";
     document.getElementById("s_facebook").value  = s.facebook  || "";
     document.getElementById("s_tiktok").value    = s.tiktok    || "";
     document.getElementById("s_store_name").value = s.storeName || "Pro Technology";
     document.getElementById("s_tagline").value   = s.tagline   || "";
+    document.getElementById("s_promo_text").value   = s.promo_banner_text   || "";
+    document.getElementById("s_promo_active").value = s.promo_banner_active || "false";
   } catch(e) { showToast("Could not load settings: " + e.message, "error"); }
 }
 
@@ -866,11 +996,22 @@ async function saveContactInfo() {
       sbUpsert("email",   document.getElementById("s_email").value.trim()),
       sbUpsert("phone",   document.getElementById("s_phone").value.trim()),
       sbUpsert("address", document.getElementById("s_address").value.trim()),
+      sbUpsert("whatsapp",  document.getElementById("s_whatsapp").value.trim()),
       sbUpsert("instagram", document.getElementById("s_instagram").value.trim()),
       sbUpsert("facebook",  document.getElementById("s_facebook").value.trim()),
       sbUpsert("tiktok",    document.getElementById("s_tiktok").value.trim()),
     ]);
     showToast("Contact info saved — live on storefront now", "success");
+  } catch(e) { showToast("Error: " + e.message, "error"); }
+}
+
+async function savePromoBanner() {
+  try {
+    await Promise.all([
+      sbUpsert("promo_banner_text",   document.getElementById("s_promo_text").value.trim()),
+      sbUpsert("promo_banner_active", document.getElementById("s_promo_active").value),
+    ]);
+    showToast("Promo banner saved — live on storefront now", "success");
   } catch(e) { showToast("Error: " + e.message, "error"); }
 }
 
