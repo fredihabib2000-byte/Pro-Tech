@@ -954,12 +954,27 @@ function renderOrdersTable(list) {
   }).join("");
 }
 
+const waStatusMessages = {
+  confirmed:  o => `مرحباً ${o.customer_name}! ✅ تم تأكيد طلبك من Pro Technology. سنقوم بتحضيره وإيصاله لك في أقرب وقت. شكراً لثقتك بنا!`,
+  shipped:    o => `مرحباً ${o.customer_name}! 🚚 طلبك في الطريق إليك الآن. سنتواصل معك عند الوصول. Pro Technology`,
+  delivered:  o => `مرحباً ${o.customer_name}! 📦 تم توصيل طلبك بنجاح. نتمنى أن تكون راضياً عن منتجاتنا. شكراً لك! Pro Technology`,
+  cancelled:  o => `مرحباً ${o.customer_name}! نأسف لإبلاغك بأن طلبك قد تم إلغاؤه. للاستفسار يرجى التواصل معنا مباشرة. Pro Technology`
+};
+
 async function updateOrderStatus(id, status) {
   if (!status) return;
   try {
     await sbFetch(`/rest/v1/pt_orders?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
-    showToast(`Order status updated to "${status}"`, "success");
+    showToast(`Status updated to "${status}" ✓`, "success");
     loadOrders();
+
+    // Open WhatsApp to customer with pre-filled message
+    const order = allOrders.find(o => o.id === id);
+    if (order && order.customer_phone && waStatusMessages[status]) {
+      const msg = encodeURIComponent(waStatusMessages[status](order));
+      const phone = order.customer_phone.replace(/\D/g, "");
+      setTimeout(() => window.open(`https://wa.me/${phone}?text=${msg}`, "_blank"), 300);
+    }
   } catch(e) { showToast("Error: " + e.message, "error"); }
 }
 

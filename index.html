@@ -1720,10 +1720,19 @@ async function submitOrder() {
         status: "pending"
       })
     });
+    // Build WA message before clearing cart
+    const itemsList = cart.map(i => `• ${i.name} ×${i.qty}`).join("\n");
     cart = [];
     updateCart();
     closeOrderModal();
     showToast("Order placed! We'll contact you shortly. 🎉");
+    // Notify store owner on WhatsApp
+    if (waNumber) {
+      const msg = encodeURIComponent(
+        `🛒 طلب جديد!\n👤 ${name}\n📞 ${phone}\n📍 ${address}\n\n${itemsList}\n\n💰 المجموع: $${total.toFixed(2)}`
+      );
+      setTimeout(() => window.open(`https://wa.me/${waNumber.replace(/\D/g,"")}?text=${msg}`, "_blank"), 500);
+    }
   } catch(e) {
     showToast("Failed to place order. Please try again.");
   } finally {
