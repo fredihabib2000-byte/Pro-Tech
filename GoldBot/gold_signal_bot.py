@@ -15,9 +15,8 @@ log = logging.getLogger(__name__)
 TELEGRAM_TOKEN   = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-SYMBOL      = "XAUUSD=X"
-INTERVAL    = "15m"
-CHECK_EVERY = 60 * 15      # 15 minutes
+TWELVE_API_KEY = os.getenv("TWELVE_API_KEY")
+CHECK_EVERY    = 60 * 15      # 15 minutes
 
 # GainzAlgo settings
 FAST_EMA   = 8
@@ -84,29 +83,29 @@ def atr(highs, lows, closes, period=14):
     return result
 
 
-# ── Fetch OHLCV from Yahoo Finance (raw HTTP, no yfinance lib) ───────────────
+# ── Fetch OHLCV from Twelve Data (free API, reliable, supports XAU/USD) ──────
 
 def fetch_data():
-    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{SYMBOL}"
-           f"?interval={INTERVAL}&range=60d")
-    headers = {"User-Agent": "Mozilla/5.0"}
-    r = requests.get(url, headers=headers, timeout=15)
+    url = (
+        "https://api.twelvedata.com/time_series"
+        f"?symbol=XAU/USD&interval=15min&outputsize=250"
+        f"&apikey={TWELVE_API_KEY}"
+    )
+    r = requests.get(url, timeout=15)
     r.raise_for_status()
-    data = r.json()["chart"]["result"][0]
-    closes = data["indicators"]["quote"][0]["close"]
-    opens  = data["indicators"]["quote"][0]["open"]
-    highs  = data["indicators"]["quote"][0]["high"]
-    lows   = data["indicators"]["quote"][0]["low"]
-    # remove None values
-    rows = [(o, h, l, c) for o, h, l, c in zip(opens, highs, lows, closes)
-            if None not in (o, h, l, c)]
-    if len(rows) < TREND_EMA + 10:
-        raise ValueError(f"Not enough data: {len(rows)} rows")
-    opens_c  = [r[0] for r in rows]
-    highs_c  = [r[1] for r in rows]
-    lows_c   = [r[2] for r in rows]
-    closes_c = [r[3] for r in rows]
-    return opens_c, highs_c, lows_c, closes_c
+    data = r.json()
+    if "values" not in data:
+        raise ValueError(f"API error: {data.get('message', data)}")
+
+    values = list(reversed(data["values"]))   # oldest first
+    if len(values) < TREND_EMA + 10:
+        raise ValueError(f"Not enough data: {len(values)} candles")
+
+    opens  = [float(v["open"])  for v in values]
+    highs  = [float(v["high"])  for v in values]
+    lows   = [float(v["low"])   for v in values]
+    closes = [float(v["close"]) for v in values]
+    return opens, highs, lows, closes
 
 
 # ── Signal logic ─────────────────────────────────────────────────────────────
