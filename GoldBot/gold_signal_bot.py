@@ -209,12 +209,23 @@ def fmt(direction, reason, sl, tp, entry, atr_val, rsi_val):
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
+def is_trading_day():
+    """Mon=0 ... Fri=4, Sat=5, Sun=6 — only run Mon-Fri."""
+    return datetime.utcnow().weekday() < 5
+
+
 def run():
     global last_signal_id
     log.info("GainzAlgo Bot started")
-    send("🤖 <b>GainzAlgo Bot Started ✅</b>\nWatching XAUUSD for signals...")
+    send("🤖 <b>GainzAlgo Bot Started ✅</b>\nWatching XAUUSD — Mon to Fri only.")
 
     while True:
+        if not is_trading_day():
+            now = datetime.utcnow()
+            log.info("Weekend — sleeping. Day=%d", now.weekday())
+            time.sleep(60 * 60)   # sleep 1 hour, check again
+            continue
+
         try:
             direction, reason, sl, tp, price, atr_val, rsi_val = check_signals()
             if direction:
