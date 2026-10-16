@@ -1,191 +1,231 @@
 """
-GainzAlgo V2 Alpha - XAUUSD Telegram Signal Bot
-Sends BUY/SELL signals for Gold directly to your Telegram
+GainzAlgo V2 Alpha - XAUUSD Telegram Bot
+Zero heavy dependencies — only 'requests' (pre-installed on PythonAnywhere)
 """
 
-import os
-import time
-import logging
+import os, time, logging
 from datetime import datetime
-import pandas as pd
-import pandas_ta as ta
-import yfinance as yf
 import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger(__name__)
 
-# ─── CONFIG ───────────────────────────────────────────────────────────────────
-TELEGRAM_TOKEN   = os.getenv("TELEGRAM_TOKEN")   # your bot token
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID") # your chat id
+TELEGRAM_TOKEN   = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-SYMBOL      = "XAUUSD=X"   # Yahoo Finance Gold symbol
-INTERVAL    = "15m"        # M15 candle
-CHECK_EVERY = 60 * 15      # check every 15 minutes (seconds)
+SYMBOL      = "XAUUSD=X"
+INTERVAL    = "15m"
+CHECK_EVERY = 60 * 15      # 15 minutes
 
-# GainzAlgo V2 Alpha settings
-FAST_EMA    = 8
-SLOW_EMA    = 21
-TREND_EMA   = 200
-RSI_PERIOD  = 14
-RSI_OB      = 70
-RSI_OS      = 30
-ATR_PERIOD  = 14
-ATR_MULT    = 1.5
-RR_RATIO    = 2.0          # Take Profit = SL x 2
+# GainzAlgo settings
+FAST_EMA   = 8
+SLOW_EMA   = 21
+TREND_EMA  = 200
+RSI_PERIOD = 14
+ATR_PERIOD = 14
+ATR_MULT   = 1.5
+RR_RATIO   = 2.0
 
-last_signal = {"type": None, "time": None}  # avoid duplicate alerts
-# ──────────────────────────────────────────────────────────────────────────────
+last_signal_id = None
 
 
-def send_telegram(message: str):
-    """Send message to Telegram."""
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"}
-    try:
-        r = requests.post(url, json=payload, timeout=10)
-        if r.status_code != 200:
-            log.error("Telegram error: %s", r.text)
-    except Exception as e:
-        log.error("Telegram send failed: %s", e)
+# ── Pure-Python indicator math (no pandas/numpy needed) ──────────────────────
+
+def ema(prices, period):
+    k = 2 / (period + 1)
+    result = [prices[0]]
+    for p in prices[1:]:
+        result.append(p * k + result[-1] * (1 - k))
+    return result
 
 
-def get_data() -> pd.DataFrame:
-    """Fetch XAUUSD OHLCV data from Yahoo Finance."""
-    df = yf.download(SYMBOL, period="5d", interval=INTERVAL, progress=False, auto_adjust=True)
-    if df.empty or len(df) < TREND_EMA + 5:
-        raise ValueError("Not enough data from Yahoo Finance")
-    df.columns = [c.lower() for c in df.columns]
-    return df
+def rsi(prices, period=14):
+    gains, losses = [], []
+    for i in range(1, len(prices)):
+        d = prices[i] - prices[i - 1]
+        gains.append(max(d, 0))
+        losses.append(max(-d, 0))
+    if len(gains) < period:
+        return [50.0]
+    avg_g = sum(gains[:period]) / period
+    avg_l = sum(losses[:period]) / period
+    result = []
+    for i in range(period, len(gains)):
+        avg_g = (avg_g * (period - 1) + gains[i]) / period
+        avg_l = (avg_l * (period - 1) + losses[i]) / period
+        rs = avg_g / avg_l if avg_l != 0 else 100
+        result.append(100 - 100 / (1 + rs))
+    return result if result else [50.0]
 
 
-def calculate_indicators(df: pd.DataFrame) -> pd.DataFrame:
-    """Add EMA, RSI, MACD, ATR indicators."""
-    df["ema_fast"]  = ta.ema(df["close"], length=FAST_EMA)
-    df["ema_slow"]  = ta.ema(df["close"], length=SLOW_EMA)
-    df["ema_trend"] = ta.ema(df["close"], length=TREND_EMA)
-    df["rsi"]       = ta.rsi(df["close"], length=RSI_PERIOD)
-    df["atr"]       = ta.atr(df["high"], df["low"], df["close"], length=ATR_PERIOD)
-
-    macd = ta.macd(df["close"], fast=12, slow=26, signal=9)
-    df["macd"]        = macd["MACD_12_26_9"]
-    df["macd_signal"] = macd["MACDs_12_26_9"]
-
-    return df.dropna()
+def macd(prices, fast=12, slow=26, signal=9):
+    e_fast   = ema(prices, fast)
+    e_slow   = ema(prices, slow)
+    macd_line = [f - s for f, s in zip(e_fast, e_slow)]
+    sig_line  = ema(macd_line, signal)
+    return macd_line, sig_line
 
 
-def check_signals(df: pd.DataFrame):
-    """
-    Evaluate the 4 GainzAlgo conditions on the last closed candle.
-    Returns ('BUY'|'SELL'|None, reason, sl, tp)
-    """
-    c  = df.iloc[-1]   # last closed candle
-    p  = df.iloc[-2]   # previous candle
+def atr(highs, lows, closes, period=14):
+    trs = []
+    for i in range(1, len(closes)):
+        tr = max(highs[i] - lows[i],
+                 abs(highs[i] - closes[i - 1]),
+                 abs(lows[i]  - closes[i - 1]))
+        trs.append(tr)
+    if not trs:
+        return [1.0]
+    avg = sum(trs[:period]) / min(period, len(trs))
+    result = [avg]
+    for tr in trs[period:]:
+        result.append((result[-1] * (period - 1) + tr) / period)
+    return result
 
-    price     = float(c["close"])
-    atr_val   = float(c["atr"])
-    sl_dist   = atr_val * ATR_MULT
-    tp_dist   = sl_dist * RR_RATIO
 
-    # ── BUY 1: EMA cross + RSI crosses above 50 + above EMA200 ──────────────
-    buy1 = (
-        price > float(c["ema_trend"]) and
-        float(c["ema_fast"]) > float(c["ema_slow"]) and
-        float(p["ema_fast"]) <= float(p["ema_slow"]) and
-        float(c["rsi"]) > 50 and float(p["rsi"]) <= 50
-    )
+# ── Fetch OHLCV from Yahoo Finance (raw HTTP, no yfinance lib) ───────────────
 
-    # ── BUY 2: MACD bullish cross + strong candle + above EMA200 ────────────
-    strong_bull = (float(c["close"]) - float(c["open"])) > atr_val * 0.5
-    macd_bull   = (
-        float(c["macd"]) > float(c["macd_signal"]) and
-        float(p["macd"]) <= float(p["macd_signal"])
-    )
-    buy2 = (
-        price > float(c["ema_trend"]) and
-        macd_bull and
-        strong_bull and
-        float(c["rsi"]) < RSI_OB
-    )
+def fetch_data():
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{SYMBOL}"
+           f"?interval={INTERVAL}&range=60d")
+    headers = {"User-Agent": "Mozilla/5.0"}
+    r = requests.get(url, headers=headers, timeout=15)
+    r.raise_for_status()
+    data = r.json()["chart"]["result"][0]
+    closes = data["indicators"]["quote"][0]["close"]
+    opens  = data["indicators"]["quote"][0]["open"]
+    highs  = data["indicators"]["quote"][0]["high"]
+    lows   = data["indicators"]["quote"][0]["low"]
+    # remove None values
+    rows = [(o, h, l, c) for o, h, l, c in zip(opens, highs, lows, closes)
+            if None not in (o, h, l, c)]
+    if len(rows) < TREND_EMA + 10:
+        raise ValueError(f"Not enough data: {len(rows)} rows")
+    opens_c  = [r[0] for r in rows]
+    highs_c  = [r[1] for r in rows]
+    lows_c   = [r[2] for r in rows]
+    closes_c = [r[3] for r in rows]
+    return opens_c, highs_c, lows_c, closes_c
 
-    # ── SELL 1: EMA cross + RSI crosses below 50 + below EMA200 ─────────────
-    sell1 = (
-        price < float(c["ema_trend"]) and
-        float(c["ema_fast"]) < float(c["ema_slow"]) and
-        float(p["ema_fast"]) >= float(p["ema_slow"]) and
-        float(c["rsi"]) < 50 and float(p["rsi"]) >= 50
-    )
 
-    # ── SELL 2: MACD bearish cross + strong candle + below EMA200 ───────────
-    strong_bear = (float(c["open"]) - float(c["close"])) > atr_val * 0.5
-    macd_bear   = (
-        float(c["macd"]) < float(c["macd_signal"]) and
-        float(p["macd"]) >= float(p["macd_signal"])
-    )
-    sell2 = (
-        price < float(c["ema_trend"]) and
-        macd_bear and
-        strong_bear and
-        float(c["rsi"]) > RSI_OS
-    )
+# ── Signal logic ─────────────────────────────────────────────────────────────
 
-    # ── Determine signal ─────────────────────────────────────────────────────
+def check_signals():
+    opens, highs, lows, closes = fetch_data()
+
+    ema_fast_vals  = ema(closes, FAST_EMA)
+    ema_slow_vals  = ema(closes, SLOW_EMA)
+    ema_trend_vals = ema(closes, TREND_EMA)
+    rsi_vals       = rsi(closes, RSI_PERIOD)
+    macd_main, macd_sig = macd(closes)
+    atr_vals       = atr(highs, lows, closes, ATR_PERIOD)
+
+    # align lengths — use last N common elements
+    n = min(len(ema_fast_vals), len(ema_slow_vals), len(ema_trend_vals),
+            len(rsi_vals), len(macd_main), len(macd_sig), len(atr_vals),
+            len(closes), len(opens))
+
+    ef  = ema_fast_vals[-n:]
+    es  = ema_slow_vals[-n:]
+    et  = ema_trend_vals[-n:]
+    rs  = rsi_vals[-n:]
+    mm  = macd_main[-n:]
+    ms  = macd_sig[-n:]
+    at  = atr_vals[-n:]
+    cl  = closes[-n:]
+    op  = opens[-n:]
+
+    # indices: -1 = last closed candle, -2 = previous
+    price   = cl[-1]
+    atr_val = at[-1]
+    sl_dist = atr_val * ATR_MULT
+    tp_dist = sl_dist * RR_RATIO
+
+    # Candle body strength
+    body_now  = cl[-1] - op[-1]
+    body_prev = cl[-2] - op[-2]
+    strong_bull = body_now  >  atr_val * 0.5
+    strong_bear = body_now  < -atr_val * 0.5
+
+    # BUY 1: trend up + EMA cross + RSI crosses above 50
+    buy1 = (price > et[-1] and
+            ef[-1] > es[-1] and ef[-2] <= es[-2] and
+            rs[-1] > 50 and rs[-2] <= 50)
+
+    # BUY 2: trend up + MACD bullish cross + strong bull candle
+    macd_bull = mm[-1] > ms[-1] and mm[-2] <= ms[-2]
+    buy2 = (price > et[-1] and macd_bull and strong_bull and rs[-1] < 70)
+
+    # SELL 1: trend down + EMA cross + RSI crosses below 50
+    sell1 = (price < et[-1] and
+             ef[-1] < es[-1] and ef[-2] >= es[-2] and
+             rs[-1] < 50 and rs[-2] >= 50)
+
+    # SELL 2: trend down + MACD bearish cross + strong bear candle
+    macd_bear = mm[-1] < ms[-1] and mm[-2] >= ms[-2]
+    sell2 = (price < et[-1] and macd_bear and strong_bear and rs[-1] > 30)
+
     if buy1:
-        return "BUY",  "EMA Cross + RSI > 50",        price - sl_dist, price + tp_dist, price
+        return "BUY",  "EMA Cross + RSI > 50",       price - sl_dist, price + tp_dist, price, atr_val, rs[-1]
     if buy2:
-        return "BUY",  "MACD Cross + Strong Candle",  price - sl_dist, price + tp_dist, price
+        return "BUY",  "MACD Cross + Strong Candle",  price - sl_dist, price + tp_dist, price, atr_val, rs[-1]
     if sell1:
-        return "SELL", "EMA Cross + RSI < 50",        price + sl_dist, price - tp_dist, price
+        return "SELL", "EMA Cross + RSI < 50",        price + sl_dist, price - tp_dist, price, atr_val, rs[-1]
     if sell2:
-        return "SELL", "MACD Cross + Strong Candle",  price + sl_dist, price - tp_dist, price
+        return "SELL", "MACD Cross + Strong Candle",  price + sl_dist, price - tp_dist, price, atr_val, rs[-1]
 
-    return None, None, None, None, price
+    return None, None, None, None, price, atr_val, rs[-1]
 
 
-def format_message(direction: str, reason: str, sl: float, tp: float, entry: float) -> str:
+# ── Telegram ─────────────────────────────────────────────────────────────────
+
+def send(msg):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    try:
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID,
+                                 "text": msg, "parse_mode": "HTML"}, timeout=10)
+    except Exception as e:
+        log.error("Telegram error: %s", e)
+
+
+def fmt(direction, reason, sl, tp, entry, atr_val, rsi_val):
     emoji = "🟢" if direction == "BUY" else "🔴"
     arrow = "📈" if direction == "BUY" else "📉"
     now   = datetime.utcnow().strftime("%H:%M UTC")
-
     return (
         f"{emoji} <b>XAUUSD {direction} SIGNAL</b> {arrow}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"⏰ Time   : {now}\n"
-        f"💡 Reason : {reason}\n"
+        f"⏰ {now}\n"
+        f"💡 {reason}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"💰 Entry  : <b>{entry:.2f}</b>\n"
-        f"🛑 SL     : <b>{sl:.2f}</b>\n"
-        f"🎯 TP     : <b>{tp:.2f}</b>\n"
+        f"💰 Entry : <b>{entry:.2f}</b>\n"
+        f"🛑 SL    : <b>{sl:.2f}</b>\n"
+        f"🎯 TP    : <b>{tp:.2f}</b>\n"
+        f"📊 RSI   : {rsi_val:.1f} | ATR: {atr_val:.2f}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"⚖️ Risk    : ATR x1.5 | RR 1:2\n"
-        f"⚠️ Always confirm before entering!"
+        f"⚠️ Confirm before entering!"
     )
 
 
+# ── Main loop ─────────────────────────────────────────────────────────────────
+
 def run():
-    log.info("GainzAlgo V2 Alpha Bot started — watching XAUUSD %s", INTERVAL)
-    send_telegram("🤖 <b>GainzAlgo Bot Started</b>\nWatching XAUUSD for signals...")
+    global last_signal_id
+    log.info("GainzAlgo Bot started")
+    send("🤖 <b>GainzAlgo Bot Started ✅</b>\nWatching XAUUSD for signals...")
 
     while True:
         try:
-            df   = get_data()
-            df   = calculate_indicators(df)
-            direction, reason, sl, tp, price = check_signals(df)
-
+            direction, reason, sl, tp, price, atr_val, rsi_val = check_signals()
             if direction:
-                # avoid sending same signal twice in a row
-                sig_id = f"{direction}-{df.index[-1]}"
-                if last_signal["time"] != sig_id:
-                    last_signal["type"] = direction
-                    last_signal["time"] = sig_id
-                    msg = format_message(direction, reason, sl, tp, price)
-                    send_telegram(msg)
-                    log.info("Signal sent: %s %s", direction, reason)
+                sig_id = f"{direction}-{datetime.utcnow().strftime('%Y%m%d%H%M')}"
+                if sig_id != last_signal_id:
+                    last_signal_id = sig_id
+                    send(fmt(direction, reason, sl, tp, price, atr_val, rsi_val))
+                    log.info("Signal sent: %s %s @ %.2f", direction, reason, price)
             else:
-                log.info("No signal | Price: %.2f | RSI: %.1f", price, float(df.iloc[-1]["rsi"]))
-
+                log.info("No signal | Price: %.2f | RSI: %.1f", price, rsi_val)
         except Exception as e:
             log.error("Error: %s", e)
 
