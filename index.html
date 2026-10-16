@@ -1037,6 +1037,149 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .btn-wa:hover { background: #1ebe5b; }
 
+/* ── Scroll-reveal ────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1);
+}
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+.rd1 { transition-delay: .08s; }
+.rd2 { transition-delay: .16s; }
+.rd3 { transition-delay: .24s; }
+.rd4 { transition-delay: .32s; }
+.rd5 { transition-delay: .4s; }
+
+/* ── Section accent line ──────────────────────────────────────── */
+.section-accent-line {
+  width: 36px;
+  height: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin-bottom: 14px;
+}
+
+/* ── Enhanced category icons ─────────────────────────────────── */
+.cat-icon.c-blue   { background: linear-gradient(135deg,#dbeafe,#bfdbfe); }
+.cat-icon.c-purple { background: linear-gradient(135deg,#ede9fe,#ddd6fe); }
+.cat-icon.c-green  { background: linear-gradient(135deg,#d1fae5,#a7f3d0); }
+.cat-icon.c-amber  { background: linear-gradient(135deg,#fef3c7,#fde68a); }
+.cat-icon.c-pink   { background: linear-gradient(135deg,#fce7f3,#fbcfe8); }
+.cat-icon.c-teal   { background: linear-gradient(135deg,#ccfbf1,#99f6e4); }
+.cat-icon { font-size: 1.6rem; transition: transform .2s; }
+.category-card:hover .cat-icon { transform: scale(1.15); }
+
+/* ── Enhanced feature cards ──────────────────────────────────── */
+.feature-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.65rem;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  transition: transform .2s;
+}
+.feature-card:hover .feature-icon-wrap { transform: scale(1.1) rotate(-4deg); }
+.fw-amber  { background: linear-gradient(135deg,#fef3c7,#fde68a); }
+.fw-blue   { background: linear-gradient(135deg,#dbeafe,#bfdbfe); }
+.fw-green  { background: linear-gradient(135deg,#d1fae5,#a7f3d0); }
+.fw-purple { background: linear-gradient(135deg,#ede9fe,#ddd6fe); }
+.fw-rose   { background: linear-gradient(135deg,#ffe4e6,#fecdd3); }
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 28px 24px;
+  transition: box-shadow .22s, transform .22s, border-color .22s;
+}
+.feature-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-5px);
+  border-color: var(--accent);
+}
+
+/* ── Product quick-view overlay ──────────────────────────────── */
+.product-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15,23,42,0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .25s;
+}
+.product-card:hover .product-img-overlay { background: rgba(15,23,42,.42); }
+.quick-view-pill {
+  padding: 8px 20px;
+  background: #fff;
+  color: var(--accent);
+  border-radius: 99px;
+  font-size: .78rem;
+  font-weight: 700;
+  transform: translateY(10px);
+  opacity: 0;
+  transition: transform .25s, opacity .25s;
+  border: none;
+  cursor: pointer;
+  letter-spacing: .02em;
+}
+.product-card:hover .quick-view-pill { transform: translateY(0); opacity: 1; }
+
+/* ── Brands marquee ──────────────────────────────────────────── */
+.brands-marquee {
+  overflow: hidden;
+  position: relative;
+}
+.brands-marquee::before, .brands-marquee::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+.brands-marquee::before { left: 0; background: linear-gradient(to right, var(--surface), transparent); }
+.brands-marquee::after  { right: 0; background: linear-gradient(to left, var(--surface), transparent); }
+.brands-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  animation: marqueeLTR 24s linear infinite;
+}
+.brands-track:hover { animation-play-state: paused; }
+@keyframes marqueeLTR {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── CTA banner decoration ───────────────────────────────────── */
+.cta-banner { position: relative; overflow: hidden; }
+.cta-deco {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,.07);
+  pointer-events: none;
+}
+.cta-deco-1 { width: 300px; height: 300px; top: -130px; right: -60px; }
+.cta-deco-2 { width: 200px; height: 200px; bottom: -130px; right: 80px; }
+.cta-deco-3 { width: 100px; height: 100px; top: -10px; left: 200px; }
+
+/* ── Stat animation ──────────────────────────────────────────── */
+@keyframes statFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stats-in-view .stat {
+  animation: statFadeUp .6s ease both;
+}
+.stats-in-view .stat:nth-child(1) { animation-delay: .05s; }
+.stats-in-view .stat:nth-child(2) { animation-delay: .15s; }
+.stats-in-view .stat:nth-child(3) { animation-delay: .25s; }
+.stats-in-view .stat:nth-child(4) { animation-delay: .35s; }
+
 /* ── Order modal ──────────────────────────────────────────────── */
 .order-overlay {
   display: none;
@@ -1190,53 +1333,54 @@ button { cursor: pointer; font-family: inherit; border: none; }
 </section>
 
 <!-- ── STATS ──────────────────────────────────────────────────── -->
-<div class="stats-bar">
+<div class="stats-bar" id="statsBar">
   <div class="stats-inner">
-    <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Products in Stock</div></div>
-    <div class="stat"><div class="stat-num">1,200+</div><div class="stat-label">Happy Customers</div></div>
-    <div class="stat"><div class="stat-num">50+</div><div class="stat-label">Brands Available</div></div>
+    <div class="stat"><div class="stat-num" data-count="500" data-suffix="+">0+</div><div class="stat-label">Products in Stock</div></div>
+    <div class="stat"><div class="stat-num" data-count="1200" data-suffix="+" data-comma="true">0+</div><div class="stat-label">Happy Customers</div></div>
+    <div class="stat"><div class="stat-num" data-count="50" data-suffix="+">0+</div><div class="stat-label">Brands Available</div></div>
     <div class="stat"><div class="stat-num">24h</div><div class="stat-label">Fast Delivery</div></div>
   </div>
 </div>
 
 <!-- ── CATEGORIES ─────────────────────────────────────────────── -->
-<section class="section" id="categories">
+<section class="section reveal" id="categories">
   <div class="container">
+    <div class="section-accent-line"></div>
     <h2 class="section-title">Shop by Category</h2>
     <p class="section-sub">Everything your business needs, organized for easy browsing.</p>
     <div class="categories-grid">
-      <div class="category-card active" data-cat="all">
-        <div class="cat-icon">🏪</div>
+      <div class="category-card active reveal rd1" data-cat="all">
+        <div class="cat-icon c-blue">🏪</div>
         <div class="cat-name">All Products</div>
         <div class="cat-count">24 items</div>
       </div>
-      <div class="category-card" data-cat="laptops">
-        <div class="cat-icon">💻</div>
+      <div class="category-card reveal rd1" data-cat="laptops">
+        <div class="cat-icon c-blue">💻</div>
         <div class="cat-name">Laptops &amp; PCs</div>
         <div class="cat-count">6 items</div>
       </div>
-      <div class="category-card" data-cat="pos">
-        <div class="cat-icon">🏧</div>
+      <div class="category-card reveal rd2" data-cat="pos">
+        <div class="cat-icon c-purple">🏧</div>
         <div class="cat-name">POS Systems</div>
         <div class="cat-count">4 items</div>
       </div>
-      <div class="category-card" data-cat="printers">
-        <div class="cat-icon">🖨️</div>
+      <div class="category-card reveal rd2" data-cat="printers">
+        <div class="cat-icon c-green">🖨️</div>
         <div class="cat-name">Printers</div>
         <div class="cat-count">5 items</div>
       </div>
-      <div class="category-card" data-cat="cash">
-        <div class="cat-icon">💰</div>
+      <div class="category-card reveal rd3" data-cat="cash">
+        <div class="cat-icon c-amber">💰</div>
         <div class="cat-name">Cash Drawers</div>
         <div class="cat-count">3 items</div>
       </div>
-      <div class="category-card" data-cat="scanners">
-        <div class="cat-icon">📡</div>
+      <div class="category-card reveal rd3" data-cat="scanners">
+        <div class="cat-icon c-pink">📡</div>
         <div class="cat-name">Barcode Scanners</div>
         <div class="cat-count">4 items</div>
       </div>
-      <div class="category-card" data-cat="displays">
-        <div class="cat-icon">🖥️</div>
+      <div class="category-card reveal rd4" data-cat="displays">
+        <div class="cat-icon c-teal">🖥️</div>
         <div class="cat-name">Customer Displays</div>
         <div class="cat-count">2 items</div>
       </div>
@@ -1248,17 +1392,32 @@ button { cursor: pointer; font-family: inherit; border: none; }
 <div class="brands-section">
   <div class="brands-inner">
     <div class="brands-label">Trusted Brands We Carry</div>
-    <div class="brands-row">
-      <div class="brand-chip">Epson</div>
-      <div class="brand-chip">HP</div>
-      <div class="brand-chip">Dell</div>
-      <div class="brand-chip">Lenovo</div>
-      <div class="brand-chip">Zebra</div>
-      <div class="brand-chip">Star Micronics</div>
-      <div class="brand-chip">Honeywell</div>
-      <div class="brand-chip">Datalogic</div>
-      <div class="brand-chip">Verifone</div>
-      <div class="brand-chip">PAX</div>
+    <div class="brands-marquee">
+      <div class="brands-track">
+        <div class="brand-chip">Epson</div>
+        <div class="brand-chip">HP</div>
+        <div class="brand-chip">Dell</div>
+        <div class="brand-chip">Lenovo</div>
+        <div class="brand-chip">Zebra</div>
+        <div class="brand-chip">Star Micronics</div>
+        <div class="brand-chip">Honeywell</div>
+        <div class="brand-chip">Datalogic</div>
+        <div class="brand-chip">Verifone</div>
+        <div class="brand-chip">PAX</div>
+        <div class="brand-chip">Asus</div>
+        <!-- duplicate for seamless loop -->
+        <div class="brand-chip">Epson</div>
+        <div class="brand-chip">HP</div>
+        <div class="brand-chip">Dell</div>
+        <div class="brand-chip">Lenovo</div>
+        <div class="brand-chip">Zebra</div>
+        <div class="brand-chip">Star Micronics</div>
+        <div class="brand-chip">Honeywell</div>
+        <div class="brand-chip">Datalogic</div>
+        <div class="brand-chip">Verifone</div>
+        <div class="brand-chip">PAX</div>
+        <div class="brand-chip">Asus</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1268,6 +1427,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   <div class="container">
     <div class="products-header">
       <div>
+        <div class="section-accent-line"></div>
         <h2 class="section-title" style="margin-bottom:4px">Featured Products</h2>
         <p class="section-sub" style="margin-bottom:0">Showing <span id="productCount">24</span> products</p>
       </div>
@@ -1293,33 +1453,34 @@ button { cursor: pointer; font-family: inherit; border: none; }
 </section>
 
 <!-- ── WHY US ─────────────────────────────────────────────────── -->
-<section class="section" id="why-us" style="background: var(--surface); border-top: 1px solid var(--border)">
+<section class="section reveal" id="why-us" style="background: var(--surface); border-top: 1px solid var(--border)">
   <div class="container">
+    <div class="section-accent-line"></div>
     <h2 class="section-title">Why Choose Pro Technology?</h2>
     <p class="section-sub">Business-focused solutions with expert support.</p>
     <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🚀</div>
+      <div class="feature-card reveal rd1">
+        <div class="feature-icon-wrap fw-amber">🚀</div>
         <div class="feature-title">Same-Day Shipping</div>
         <div class="feature-desc">Orders placed before 2 PM ship the same business day. Get your equipment fast.</div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🛠️</div>
+      <div class="feature-card reveal rd2">
+        <div class="feature-icon-wrap fw-blue">🛠️</div>
         <div class="feature-title">Technical Support</div>
         <div class="feature-desc">Our team helps you set up and configure every device you purchase from us.</div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">🏆</div>
+      <div class="feature-card reveal rd3">
+        <div class="feature-icon-wrap fw-green">🏆</div>
         <div class="feature-title">Genuine Products</div>
         <div class="feature-desc">100% authentic products direct from authorized distributors with full warranties.</div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">💼</div>
+      <div class="feature-card reveal rd4">
+        <div class="feature-icon-wrap fw-purple">💼</div>
         <div class="feature-title">Business Accounts</div>
         <div class="feature-desc">Volume discounts and net payment terms for businesses that buy regularly.</div>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon">📞</div>
+      <div class="feature-card reveal rd5">
+        <div class="feature-icon-wrap fw-rose">📞</div>
         <div class="feature-title">Dedicated Account Manager</div>
         <div class="feature-desc">Large orders get a personal point of contact to handle everything end to end.</div>
       </div>
@@ -1331,18 +1492,22 @@ button { cursor: pointer; font-family: inherit; border: none; }
 <section class="section">
   <div class="container">
     <div class="cta-banner">
-      <div>
+      <div class="cta-deco cta-deco-1"></div>
+      <div class="cta-deco cta-deco-2"></div>
+      <div class="cta-deco cta-deco-3"></div>
+      <div style="position:relative;z-index:1">
         <h2>Ready to Upgrade Your Business Tech?</h2>
         <p>Get a free consultation with our specialists. We'll build you the perfect tech stack for your store or restaurant.</p>
       </div>
-      <a href="#contact" class="btn-white">Get Free Quote</a>
+      <a href="#contact" class="btn-white" style="position:relative;z-index:1">Get Free Quote</a>
     </div>
   </div>
 </section>
 
 <!-- ── CONTACT ────────────────────────────────────────────────── -->
-<section class="section" id="contact" style="background: var(--surface); border-top: 1px solid var(--border)">
+<section class="section reveal" id="contact" style="background: var(--surface); border-top: 1px solid var(--border)">
   <div class="container">
+    <div class="section-accent-line"></div>
     <h2 class="section-title">Get in Touch</h2>
     <p class="section-sub">Our team is ready to help you find the right solution.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:800px">
@@ -1421,7 +1586,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
     </div>
   </div>
   <div class="footer-bottom">
-    <span>© 2025 Pro Technology. All rights reserved.</span>
+    <span>© 2026 Pro Technology. All rights reserved.</span>
     <span>Privacy · Terms</span>
   </div>
 </footer>
@@ -1600,6 +1765,9 @@ function renderProducts() {
         ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<span>${p.icon}</span>`}
         ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase() === 'sale' ? 'sale' : p.badge.toLowerCase() === 'new' ? 'new' : ''}">${p.badge}</div>` : ""}
         ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
+        <div class="product-img-overlay">
+          <button class="quick-view-pill" onclick="event.stopPropagation();openProductDetail(${p.id})">Quick View</button>
+        </div>
       </div>
       <div class="product-body">
         <div class="product-cat">${catLabel(p.cat)}</div>
@@ -1928,6 +2096,48 @@ async function submitOrder() {
     btn.disabled = false; btn.textContent = "Place Order";
   }
 }
+
+// ── Scroll-reveal Intersection Observer ─────────────────────────
+(function() {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+})();
+
+// ── Animated stat counters ───────────────────────────────────────
+(function() {
+  const statsBar = document.getElementById('statsBar');
+  if (!statsBar) return;
+  let fired = false;
+  const obs = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting || fired) return;
+    fired = true;
+    statsBar.classList.add('stats-in-view');
+    statsBar.querySelectorAll('.stat-num[data-count]').forEach(el => {
+      const target = parseInt(el.dataset.count, 10);
+      const suffix = el.dataset.suffix || '';
+      const useComma = el.dataset.comma === 'true';
+      const duration = 1200;
+      const start = performance.now();
+      function step(now) {
+        const elapsed = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - elapsed, 3);
+        const val = Math.round(eased * target);
+        el.textContent = (useComma ? val.toLocaleString() : val) + suffix;
+        if (elapsed < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+    obs.disconnect();
+  }, { threshold: 0.5 });
+  obs.observe(statsBar);
+})();
 
 // ── Init ──────────────────────────────────────────────────────────
 loadProducts();
