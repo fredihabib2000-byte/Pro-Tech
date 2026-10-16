@@ -2738,6 +2738,8 @@ loadStoreSettings();
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add(time => lenis.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
+  // Refresh ScrollTrigger positions after Lenis rewires scroll
+  setTimeout(() => ScrollTrigger.refresh(), 400);
 
   // ── Scroll progress bar ───────────────────────────────────────
   const bar = document.getElementById('scrollProgress');
@@ -2779,60 +2781,62 @@ loadStoreSettings();
     if (cards.length) tl.from(cards, { y: 44, opacity: 0, duration: .5, stagger: .1, ease: 'back.out(1.5)' }, .6);
   }
 
+  const st = (trigger, start) => ({ trigger, start: start || 'top bottom', once: true });
+
   // ── Accent lines ─────────────────────────────────────────────
   gsap.utils.toArray('.section-accent-line').forEach(el => {
     gsap.from(el, {
-      scrollTrigger: { trigger: el, start: 'top 90%' },
-      scaleX: 0, transformOrigin: 'left center', duration: .55, ease: 'power2.out',
+      scrollTrigger: st(el),
+      scaleX: 0, transformOrigin: 'left center', duration: .55, ease: 'power2.out', clearProps: 'all',
     });
   });
 
   // ── Section titles ────────────────────────────────────────────
   gsap.utils.toArray('.section-title').forEach(el => {
     gsap.from(el, {
-      scrollTrigger: { trigger: el, start: 'top 90%' },
-      y: 26, opacity: 0, duration: .6, ease: 'power2.out',
+      scrollTrigger: st(el),
+      y: 22, opacity: 0, duration: .55, ease: 'power2.out', clearProps: 'all',
     });
   });
 
   // ── Stats ─────────────────────────────────────────────────────
   gsap.from('.stat', {
-    scrollTrigger: { trigger: '#statsBar', start: 'top 84%' },
-    y: 28, opacity: 0, duration: .55, stagger: .1, ease: 'power2.out',
+    scrollTrigger: st('#statsBar', 'top 85%'),
+    y: 28, opacity: 0, duration: .55, stagger: .1, ease: 'power2.out', clearProps: 'all',
   });
 
   // ── Ink banner ────────────────────────────────────────────────
   gsap.from('.ink-banner-content', {
-    scrollTrigger: { trigger: '.ink-banner', start: 'top 82%' },
-    x: -48, opacity: 0, duration: .7, ease: 'power3.out',
+    scrollTrigger: st('.ink-banner', 'top 85%'),
+    x: -48, opacity: 0, duration: .7, ease: 'power3.out', clearProps: 'all',
   });
   gsap.from('.ink-brand-chip', {
-    scrollTrigger: { trigger: '.ink-brands', start: 'top 86%' },
-    y: 18, opacity: 0, duration: .4, stagger: .06, ease: 'power2.out',
+    scrollTrigger: st('.ink-brands', 'top 90%'),
+    y: 18, opacity: 0, duration: .4, stagger: .06, ease: 'power2.out', clearProps: 'all',
   });
 
   // ── Category cards ────────────────────────────────────────────
   gsap.from('.category-card', {
-    scrollTrigger: { trigger: '.categories-grid', start: 'top 82%' },
-    y: 44, opacity: 0, scale: .88, duration: .5, stagger: .07, ease: 'back.out(1.4)',
+    scrollTrigger: st('.categories-grid', 'top 85%'),
+    y: 44, opacity: 0, scale: .88, duration: .5, stagger: .07, ease: 'back.out(1.4)', clearProps: 'all',
   });
 
   // ── Feature cards ─────────────────────────────────────────────
   gsap.from('.feature-card', {
-    scrollTrigger: { trigger: '.features-grid', start: 'top 82%' },
-    y: 52, opacity: 0, duration: .6, stagger: .1, ease: 'power3.out',
+    scrollTrigger: st('.features-grid', 'top 85%'),
+    y: 52, opacity: 0, duration: .6, stagger: .1, ease: 'power3.out', clearProps: 'all',
   });
 
   // ── CTA banner ────────────────────────────────────────────────
   gsap.from('.cta-banner', {
-    scrollTrigger: { trigger: '.cta-banner', start: 'top 84%' },
-    y: 32, opacity: 0, scale: .98, duration: .7, ease: 'power2.out',
+    scrollTrigger: st('.cta-banner', 'top 88%'),
+    y: 32, opacity: 0, scale: .98, duration: .7, ease: 'power2.out', clearProps: 'all',
   });
 
   // ── Contact section ───────────────────────────────────────────
   gsap.from('#contact .section-title, #contact .section-sub, #contact .section-accent-line, #contact > .container > div', {
-    scrollTrigger: { trigger: '#contact', start: 'top 82%' },
-    y: 30, opacity: 0, duration: .6, stagger: .12, ease: 'power2.out',
+    scrollTrigger: st('#contact', 'top 85%'),
+    y: 30, opacity: 0, duration: .6, stagger: .12, ease: 'power2.out', clearProps: 'all',
   });
 
   // ── Product cards entrance after full re-render (not append) ─
