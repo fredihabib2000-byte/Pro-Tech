@@ -344,6 +344,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
   height: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 24px;
   padding-inline: clamp(20px, 8%, 120px);
   position: relative;
   overflow: hidden;
@@ -431,14 +433,12 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .btn-slide-secondary:hover { background: rgba(255,255,255,.25); transform: translateY(-2px); }
 .slide-visual {
-  position: absolute;
-  right: clamp(20px, 6%, 80px);
-  top: 50%;
-  transform: translateY(-50%);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   z-index: 1;
+  flex-shrink: 0;
+  align-self: center;
 }
 @media (max-width: 860px) { .slide-visual { display: none; } }
 .slide-card {
