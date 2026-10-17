@@ -16,6 +16,23 @@ TELEGRAM_TOKEN   = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 QUIVER_API_KEY   = os.getenv("QUIVER_API_KEY")
 
+# Kalshi integration (optional — only active if credentials are set)
+KALSHI_EMAIL    = os.getenv("KALSHI_EMAIL")
+KALSHI_PASSWORD = os.getenv("KALSHI_PASSWORD")
+KALSHI_DEMO     = os.getenv("KALSHI_DEMO", "false").lower() == "true"
+
+_kalshi = None
+def _get_kalshi():
+    global _kalshi
+    if not KALSHI_EMAIL or not KALSHI_PASSWORD:
+        return None
+    if _kalshi is None:
+        from kalshi_client import KalshiClient
+        _kalshi = KalshiClient(KALSHI_EMAIL, KALSHI_PASSWORD, demo=KALSHI_DEMO)
+        if not _kalshi.login():
+            _kalshi = None
+    return _kalshi
+
 CHECK_EVERY = 60 * 30   # check every 30 minutes
 
 # ── Investors/Institutions to watch ──────────────────────────────────────────
@@ -191,7 +208,15 @@ def watch_congress():
         if not any(w.lower() in name.lower() for w in WATCH_INSIDERS):
             continue
         seen_ids.add(uid)
-        send(fmt_congress(t))
+        msg = fmt_congress(t)
+        ticker = t.get("Ticker", "")
+        if ticker:
+            k = _get_kalshi()
+            if k:
+                from kalshi_client import fmt_kalshi_markets
+                markets = k.find_markets_for_ticker(ticker)
+                msg += fmt_kalshi_markets(markets, ticker)
+        send(msg)
         found += 1
     return found
 
@@ -213,7 +238,15 @@ def watch_insiders():
         if not any(w.lower() in name.lower() for w in WATCH_INSIDERS):
             continue
         seen_ids.add(uid)
-        send(fmt_insider(t))
+        msg = fmt_insider(t)
+        ticker = t.get("Ticker", "")
+        if ticker:
+            k = _get_kalshi()
+            if k:
+                from kalshi_client import fmt_kalshi_markets
+                markets = k.find_markets_for_ticker(ticker)
+                msg += fmt_kalshi_markets(markets, ticker)
+        send(msg)
         found += 1
     return found
 
