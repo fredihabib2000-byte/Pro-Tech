@@ -290,7 +290,10 @@ select.status-sel:focus{border-color:var(--accent)}
       <div class="card">
         <div class="card-header">
           <span class="card-title">Clients</span>
-          <button class="btn btn-ghost btn-sm" onclick="loadClients()">↻ Refresh</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input id="clientSearch" placeholder="Search by name or phone…" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;color:var(--fg);outline:none;width:220px;font-size:.85rem" oninput="filterClients()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            <button class="btn btn-ghost btn-sm" onclick="loadClients()">↻ Refresh</button>
+          </div>
         </div>
         <div class="tbl-wrap" id="clientsWrap"><div class="loading-state">Loading…</div></div>
       </div>
@@ -739,6 +742,7 @@ async function deleteProduct(id,name){
 }
 
 // ── CLIENTS ──────────────────────────────────────────────
+let allClients=[];
 async function loadClients(){
   document.getElementById("clientsWrap").innerHTML='<div class="loading-state">Loading…</div>';
   try{
@@ -746,27 +750,36 @@ async function loadClients(){
     const map={};
     orders.forEach(o=>{
       const k=o.customer_phone||o.customer_name;
-      if(!map[k])map[k]={name:o.customer_name,phone:o.customer_phone,orders:0,spent:0,last:o.created_at,statuses:[]};
+      if(!map[k])map[k]={name:o.customer_name,phone:o.customer_phone,orders:0,spent:0,last:o.created_at};
       map[k].orders++;
       if(o.status!=="cancelled")map[k].spent+=(o.total||0);
-      map[k].statuses.push(o.status);
       if(new Date(o.created_at)>new Date(map[k].last))map[k].last=o.created_at;
     });
-    const clients=Object.values(map).sort((a,b)=>b.spent-a.spent);
-    if(!clients.length){document.getElementById("clientsWrap").innerHTML='<div class="empty-state">No clients yet.</div>';return}
-    const rows=clients.map((c,i)=>{
-      const date=c.last?new Date(c.last).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"—";
-      return `<tr>
-        <td style="color:var(--fg-2)">${i+1}</td>
-        <td><strong>${c.name}</strong></td>
-        <td><a href="https://wa.me/${(c.phone||"").replace(/\D/g,"")}" target="_blank" style="color:var(--accent);text-decoration:none">${c.phone||"—"}</a></td>
-        <td><strong>${c.orders}</strong></td>
-        <td><strong style="color:var(--green)">$${c.spent.toFixed(2)}</strong></td>
-        <td style="color:var(--fg-2);font-size:.82rem">${date}</td>
-      </tr>`;
-    }).join("");
-    document.getElementById("clientsWrap").innerHTML=`<table><thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Orders</th><th>Total Spent</th><th>Last Order</th></tr></thead><tbody>${rows}</tbody></table>`;
+    allClients=Object.values(map).sort((a,b)=>b.spent-a.spent);
+    renderClients(allClients);
   }catch(e){document.getElementById("clientsWrap").innerHTML='<div class="empty-state">Failed to load clients.</div>'}
+}
+
+function filterClients(){
+  const q=(document.getElementById("clientSearch").value||"").toLowerCase().trim();
+  const filtered=q?allClients.filter(c=>(c.name||"").toLowerCase().includes(q)||(c.phone||"").includes(q)):allClients;
+  renderClients(filtered);
+}
+
+function renderClients(clients){
+  if(!clients.length){document.getElementById("clientsWrap").innerHTML='<div class="empty-state">No clients found.</div>';return}
+  const rows=clients.map((c,i)=>{
+    const date=c.last?new Date(c.last).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"—";
+    return `<tr>
+      <td style="color:var(--fg-2)">${i+1}</td>
+      <td><strong>${c.name}</strong></td>
+      <td><a href="https://wa.me/${(c.phone||"").replace(/\D/g,"")}" target="_blank" style="color:var(--accent);text-decoration:none">${c.phone||"—"}</a></td>
+      <td><strong>${c.orders}</strong></td>
+      <td><strong style="color:var(--green)">$${c.spent.toFixed(2)}</strong></td>
+      <td style="color:var(--fg-2);font-size:.82rem">${date}</td>
+    </tr>`;
+  }).join("");
+  document.getElementById("clientsWrap").innerHTML=`<table><thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Orders</th><th>Total Spent</th><th>Last Order</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 // ── MESSAGES ─────────────────────────────────────────────
