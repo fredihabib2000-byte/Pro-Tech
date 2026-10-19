@@ -1,6 +1,7 @@
 """
 GainzAlgo V2 Alpha - XAUUSD Telegram Bot
-Zero heavy dependencies — only 'requests' (pre-installed on PythonAnywhere)
+Session-aware: London (08:00-16:00 UTC) + New York (13:00-21:00 UTC) only.
+Signals require 2+ confluent conditions to fire.
 """
 
 import os, time, logging
@@ -14,23 +15,48 @@ log = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN   = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TWELVE_API_KEY   = os.getenv("TWELVE_API_KEY")
 
-TWELVE_API_KEY = os.getenv("TWELVE_API_KEY")
-CHECK_EVERY    = 60 * 15      # 15 minutes
+CHECK_EVERY = 60 * 15   # 15 minutes
 
-# GainzAlgo settings
+# Indicator periods
 FAST_EMA   = 8
 SLOW_EMA   = 21
 TREND_EMA  = 200
 RSI_PERIOD = 14
 ATR_PERIOD = 14
-ATR_MULT   = 1.5
-RR_RATIO   = 2.0
+
+# Signal filters
+ATR_MULT       = 2.0    # SL = ATR × 2.0  (gold needs room)
+RR_RATIO       = 2.5    # TP = SL × 2.5   (higher reward)
+RSI_BUY_MIN    = 52     # RSI must be above this for buys  (not just 50)
+RSI_SELL_MAX   = 48     # RSI must be below this for sells
+BODY_ATR_RATIO = 0.6    # Candle body must be > 60% of ATR to count as "strong"
 
 last_signal_id = None
 
 
-# ── Pure-Python indicator math (no pandas/numpy needed) ──────────────────────
+# ── Session filter ────────────────────────────────────────────────────────────
+
+def get_session() -> str:
+    """Return active session label, or empty string if outside trading hours."""
+    h = datetime.utcnow().hour
+    london   = 8 <= h < 16
+    newyork  = 13 <= h < 21
+    if london and newyork:
+        return "London/NY Overlap 🔥"
+    if london:
+        return "London 🇬🇧"
+    if newyork:
+        return "New York 🇺🇸"
+    return ""   # Asian / off-hours
+
+
+def is_trading_day() -> bool:
+    return datetime.utcnow().weekday() < 5  # Mon–Fri
+
+
+# ── Indicator math ────────────────────────────────────────────────────────────
 
 def ema(prices, period):
     k = 2 / (period + 1)
@@ -60,8 +86,8 @@ def rsi(prices, period=14):
 
 
 def macd(prices, fast=12, slow=26, signal=9):
-    e_fast   = ema(prices, fast)
-    e_slow   = ema(prices, slow)
+    e_fast    = ema(prices, fast)
+    e_slow    = ema(prices, slow)
     macd_line = [f - s for f, s in zip(e_fast, e_slow)]
     sig_line  = ema(macd_line, signal)
     return macd_line, sig_line
@@ -83,7 +109,7 @@ def atr(highs, lows, closes, period=14):
     return result
 
 
-# ── Fetch OHLCV from Twelve Data (free API, reliable, supports XAU/USD) ──────
+# ── Data fetch ────────────────────────────────────────────────────────────────
 
 def fetch_data():
     url = (
@@ -108,100 +134,117 @@ def fetch_data():
     return opens, highs, lows, closes
 
 
-# ── Signal logic ─────────────────────────────────────────────────────────────
+# ── Signal logic ──────────────────────────────────────────────────────────────
 
 def check_signals():
     opens, highs, lows, closes = fetch_data()
 
-    ema_fast_vals  = ema(closes, FAST_EMA)
-    ema_slow_vals  = ema(closes, SLOW_EMA)
-    ema_trend_vals = ema(closes, TREND_EMA)
-    rsi_vals       = rsi(closes, RSI_PERIOD)
-    macd_main, macd_sig = macd(closes)
-    atr_vals       = atr(highs, lows, closes, ATR_PERIOD)
+    ef_vals = ema(closes, FAST_EMA)
+    es_vals = ema(closes, SLOW_EMA)
+    et_vals = ema(closes, TREND_EMA)
+    rs_vals = rsi(closes, RSI_PERIOD)
+    mm, ms  = macd(closes)
+    at_vals = atr(highs, lows, closes, ATR_PERIOD)
 
-    # align lengths — use last N common elements
-    n = min(len(ema_fast_vals), len(ema_slow_vals), len(ema_trend_vals),
-            len(rsi_vals), len(macd_main), len(macd_sig), len(atr_vals),
+    n = min(len(ef_vals), len(es_vals), len(et_vals),
+            len(rs_vals), len(mm), len(ms), len(at_vals),
             len(closes), len(opens))
 
-    ef  = ema_fast_vals[-n:]
-    es  = ema_slow_vals[-n:]
-    et  = ema_trend_vals[-n:]
-    rs  = rsi_vals[-n:]
-    mm  = macd_main[-n:]
-    ms  = macd_sig[-n:]
-    at  = atr_vals[-n:]
-    cl  = closes[-n:]
-    op  = opens[-n:]
+    ef = ef_vals[-n:]
+    es = es_vals[-n:]
+    et = et_vals[-n:]
+    rs = rs_vals[-n:]
+    mm = mm[-n:]
+    ms = ms[-n:]
+    at = at_vals[-n:]
+    cl = closes[-n:]
+    op = opens[-n:]
 
-    # indices: -1 = last closed candle, -2 = previous
     price   = cl[-1]
     atr_val = at[-1]
+
+    # Skip if ATR is abnormally high (news/spike — 2× median ATR)
+    atr_median = sorted(at[-20:])[10]
+    if atr_val > atr_median * 2.2:
+        log.info("ATR spike — skipping (atr=%.2f median=%.2f)", atr_val, atr_median)
+        return None, None, None, None, price, atr_val, rs[-1], 0, ""
+
     sl_dist = atr_val * ATR_MULT
     tp_dist = sl_dist * RR_RATIO
 
-    # Candle body strength
-    body_now  = cl[-1] - op[-1]
-    body_prev = cl[-2] - op[-2]
-    strong_bull = body_now  >  atr_val * 0.5
-    strong_bear = body_now  < -atr_val * 0.5
+    # Conditions — each is a boolean
+    above_trend = price > et[-1]
+    below_trend = price < et[-1]
 
-    # BUY 1: trend up + EMA cross + RSI crosses above 50
-    buy1 = (price > et[-1] and
-            ef[-1] > es[-1] and ef[-2] <= es[-2] and
-            rs[-1] > 50 and rs[-2] <= 50)
+    ema_bull_cross = ef[-1] > es[-1] and ef[-2] <= es[-2]
+    ema_bear_cross = ef[-1] < es[-1] and ef[-2] >= es[-2]
 
-    # BUY 2: trend up + MACD bullish cross + strong bull candle
     macd_bull = mm[-1] > ms[-1] and mm[-2] <= ms[-2]
-    buy2 = (price > et[-1] and macd_bull and strong_bull and rs[-1] < 70)
-
-    # SELL 1: trend down + EMA cross + RSI crosses below 50
-    sell1 = (price < et[-1] and
-             ef[-1] < es[-1] and ef[-2] >= es[-2] and
-             rs[-1] < 50 and rs[-2] >= 50)
-
-    # SELL 2: trend down + MACD bearish cross + strong bear candle
     macd_bear = mm[-1] < ms[-1] and mm[-2] >= ms[-2]
-    sell2 = (price < et[-1] and macd_bear and strong_bear and rs[-1] > 30)
 
-    if buy1:
-        return "BUY",  "EMA Cross + RSI > 50",       price - sl_dist, price + tp_dist, price, atr_val, rs[-1]
-    if buy2:
-        return "BUY",  "MACD Cross + Strong Candle",  price - sl_dist, price + tp_dist, price, atr_val, rs[-1]
-    if sell1:
-        return "SELL", "EMA Cross + RSI < 50",        price + sl_dist, price - tp_dist, price, atr_val, rs[-1]
-    if sell2:
-        return "SELL", "MACD Cross + Strong Candle",  price + sl_dist, price - tp_dist, price, atr_val, rs[-1]
+    rsi_bull = rs[-1] > RSI_BUY_MIN
+    rsi_bear = rs[-1] < RSI_SELL_MAX
 
-    return None, None, None, None, price, atr_val, rs[-1]
+    body = cl[-1] - op[-1]
+    strong_bull_candle = body >  atr_val * BODY_ATR_RATIO
+    strong_bear_candle = body < -atr_val * BODY_ATR_RATIO
+
+    # Confluence scoring — count how many conditions align
+    buy_score = sum([above_trend, ema_bull_cross, macd_bull, rsi_bull, strong_bull_candle])
+    sel_score = sum([below_trend, ema_bear_cross, macd_bear, rsi_bear, strong_bear_candle])
+
+    def reasons(ema_c, macd_c, rsi_c, candle_c):
+        parts = []
+        if ema_c:   parts.append("EMA Cross")
+        if macd_c:  parts.append("MACD")
+        if rsi_c:   parts.append("RSI")
+        if candle_c: parts.append("Strong Candle")
+        return " + ".join(parts)
+
+    # Require trend alignment AND at least 2 other conditions
+    if above_trend and buy_score >= 3:
+        reason = reasons(ema_bull_cross, macd_bull, rsi_bull, strong_bull_candle)
+        stars  = "⭐⭐⭐" if buy_score >= 4 else "⭐⭐"
+        return "BUY",  reason, price - sl_dist, price + tp_dist, price, atr_val, rs[-1], buy_score, stars
+
+    if below_trend and sel_score >= 3:
+        reason = reasons(ema_bear_cross, macd_bear, rsi_bear, strong_bear_candle)
+        stars  = "⭐⭐⭐" if sel_score >= 4 else "⭐⭐"
+        return "SELL", reason, price + sl_dist, price - tp_dist, price, atr_val, rs[-1], sel_score, stars
+
+    return None, None, None, None, price, atr_val, rs[-1], 0, ""
 
 
-# ── Telegram ─────────────────────────────────────────────────────────────────
+# ── Telegram ──────────────────────────────────────────────────────────────────
 
 def send(msg):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
-        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID,
-                                 "text": msg, "parse_mode": "HTML"}, timeout=10)
+        requests.post(url, json={
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": msg,
+            "parse_mode": "HTML"
+        }, timeout=10)
     except Exception as e:
         log.error("Telegram error: %s", e)
 
 
-def fmt(direction, reason, sl, tp, entry, atr_val, rsi_val):
+def fmt(direction, reason, sl, tp, entry, atr_val, rsi_val, score, stars, session):
     emoji = "🟢" if direction == "BUY" else "🔴"
     arrow = "📈" if direction == "BUY" else "📉"
     now   = datetime.utcnow().strftime("%H:%M UTC")
+    rr    = RR_RATIO
     return (
         f"{emoji} <b>XAUUSD {direction} SIGNAL</b> {arrow}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"⏰ {now}\n"
+        f"⏰ {now}  |  {session}\n"
         f"💡 {reason}\n"
+        f"🏆 Strength: {stars} ({score}/5)\n"
         f"━━━━━━━━━━━━━━━━\n"
         f"💰 Entry : <b>{entry:.2f}</b>\n"
-        f"🛑 SL    : <b>{sl:.2f}</b>\n"
-        f"🎯 TP    : <b>{tp:.2f}</b>\n"
-        f"📊 RSI   : {rsi_val:.1f} | ATR: {atr_val:.2f}\n"
+        f"🛑 SL    : <b>{sl:.2f}</b>  ({atr_val * ATR_MULT:.1f} pts)\n"
+        f"🎯 TP    : <b>{tp:.2f}</b>  (1:{rr})\n"
+        f"📊 RSI   : {rsi_val:.1f}  |  ATR: {atr_val:.2f}\n"
         f"━━━━━━━━━━━━━━━━\n"
         f"⚠️ Confirm before entering!"
     )
@@ -209,33 +252,38 @@ def fmt(direction, reason, sl, tp, entry, atr_val, rsi_val):
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
-def is_trading_day():
-    """Mon=0 ... Fri=4, Sat=5, Sun=6 — only run Mon-Fri."""
-    return datetime.utcnow().weekday() < 5
-
-
 def run():
     global last_signal_id
-    log.info("GainzAlgo Bot started")
-    send("🤖 <b>GainzAlgo Bot Started ✅</b>\nWatching XAUUSD — Mon to Fri only.")
+    log.info("GainzAlgo Bot started (session-aware)")
+    send(
+        "🤖 <b>GainzAlgo Bot Started ✅</b>\n"
+        "XAUUSD — London + NY sessions only\n"
+        "Requires 3+ confluent conditions to signal."
+    )
 
     while True:
         if not is_trading_day():
-            now = datetime.utcnow()
-            log.info("Weekend — sleeping. Day=%d", now.weekday())
-            time.sleep(60 * 60)   # sleep 1 hour, check again
+            log.info("Weekend — sleeping 1h")
+            time.sleep(3600)
+            continue
+
+        session = get_session()
+        if not session:
+            log.info("Outside trading session — sleeping 15min")
+            time.sleep(CHECK_EVERY)
             continue
 
         try:
-            direction, reason, sl, tp, price, atr_val, rsi_val = check_signals()
+            direction, reason, sl, tp, price, atr_val, rsi_val, score, stars = check_signals()
             if direction:
                 sig_id = f"{direction}-{datetime.utcnow().strftime('%Y%m%d%H%M')}"
                 if sig_id != last_signal_id:
                     last_signal_id = sig_id
-                    send(fmt(direction, reason, sl, tp, price, atr_val, rsi_val))
-                    log.info("Signal sent: %s %s @ %.2f", direction, reason, price)
+                    send(fmt(direction, reason, sl, tp, price, atr_val, rsi_val, score, stars, session))
+                    log.info("Signal: %s %s @ %.2f score=%d", direction, reason, price, score)
             else:
-                log.info("No signal | Price: %.2f | RSI: %.1f", price, rsi_val)
+                log.info("No signal | %s | Price=%.2f RSI=%.1f ATR=%.2f",
+                         session, price, rsi_val, atr_val)
         except Exception as e:
             log.error("Error: %s", e)
 
