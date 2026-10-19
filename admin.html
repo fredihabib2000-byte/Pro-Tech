@@ -1284,7 +1284,7 @@ function exportReportsExcel(){
   const prodSales={};
   nonCancelled.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(i=>{prodSales[i.name]=(prodSales[i.name]||0)+(i.qty||1);});});
   const topProds=Object.entries(prodSales).sort((a,b)=>b[1]-a[1]);
-  const ws3=XLSX.utils.json_to_sheet(topProds.map(([n,q],i)=({"#":i+1,"Product":n,"Units Sold":q})));
+  const ws3=XLSX.utils.json_to_sheet(topProds.map(([n,q],i)=>({"#":i+1,"Product":n,"Units Sold":q})));
   ws3["!cols"]=[{wch:4},{wch:36},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws3,"Top Products");
   dlExcel(wb,`ProTech_Reports_${new Date().toISOString().slice(0,10)}.xlsx`);
