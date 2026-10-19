@@ -377,7 +377,20 @@ select.status-sel:focus{border-color:var(--accent)}
       <div class="field"><label>Quantity</label><input id="p_qty" type="number" placeholder="0"></div>
       <div class="field"><label>Badge</label><input id="p_badge" placeholder="e.g. New, Sale, Hot"></div>
     </div>
-    <div class="field"><label>Image URL</label><input id="p_image" placeholder="https://…"></div>
+    <div class="field">
+      <label>Image</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="p_image" placeholder="https://…" style="flex:1">
+        <label for="p_image_file" class="btn btn-sm" style="cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--fg);font-size:.82rem;font-weight:600;transition:background .15s" id="p_image_browse">
+          📁 Browse
+        </label>
+        <input type="file" id="p_image_file" accept="image/*" style="display:none" onchange="uploadProductImage(this)">
+      </div>
+      <div id="p_image_preview" style="margin-top:8px;display:none">
+        <img id="p_image_preview_img" style="max-height:80px;border-radius:6px;border:1px solid var(--border)">
+        <span id="p_image_upload_status" style="font-size:.78rem;color:var(--fg-2);margin-left:8px"></span>
+      </div>
+    </div>
     <div class="field"><label>Description</label><textarea id="p_desc" rows="2" placeholder="Short description…"></textarea></div>
     <div class="field"><label>Specs</label><textarea id="p_specs" rows="2" placeholder="Technical specs…"></textarea></div>
     <div class="field">
@@ -437,6 +450,49 @@ async function sb(path,opts={}){
   const r=await fetch(SB_URL+path,{cache:"no-store",...opts,headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})}});
   if(!r.ok)throw new Error(await r.text());
   const t=await r.text();return t?JSON.parse(t):null;
+}
+
+async function uploadProductImage(input){
+  const file=input.files[0];
+  if(!file)return;
+  const statusEl=document.getElementById("p_image_upload_status");
+  const previewBox=document.getElementById("p_image_preview");
+  const previewImg=document.getElementById("p_image_preview_img");
+  const browseBtn=document.getElementById("p_image_browse");
+  // show local preview immediately
+  previewImg.src=URL.createObjectURL(file);
+  previewBox.style.display="flex";
+  previewBox.style.alignItems="center";
+  statusEl.textContent="Uploading…";
+  browseBtn.style.opacity=".5";
+  browseBtn.style.pointerEvents="none";
+  try{
+    const ext=file.name.split(".").pop().toLowerCase();
+    const fname="products/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
+    const up=await fetch(SB_URL+"/storage/v1/object/pt-images/"+fname,{
+      method:"POST",
+      headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":file.type,"x-upsert":"true"},
+      body:file
+    });
+    if(!up.ok){
+      const err=await up.text();
+      // bucket may not exist yet — try creating it then retry
+      if(err.includes("Bucket not found")||up.status===404||up.status===400){
+        await fetch(SB_URL+"/storage/v1/bucket",{method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json"},body:JSON.stringify({id:"pt-images",name:"pt-images",public:true})});
+        const up2=await fetch(SB_URL+"/storage/v1/object/pt-images/"+fname,{method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":file.type,"x-upsert":"true"},body:file});
+        if(!up2.ok)throw new Error(await up2.text());
+      } else throw new Error(err);
+    }
+    const publicUrl=SB_URL+"/storage/v1/object/public/pt-images/"+fname;
+    document.getElementById("p_image").value=publicUrl;
+    statusEl.textContent="✓ Uploaded";
+    statusEl.style.color="var(--green)";
+  }catch(e){
+    statusEl.textContent="Upload failed: "+e.message;
+    statusEl.style.color="var(--red)";
+  }
+  browseBtn.style.opacity="";browseBtn.style.pointerEvents="";
+  input.value="";
 }
 
 function init(){
@@ -638,6 +694,12 @@ function openProdModal(p){
   document.getElementById("p_qty").value=p?.quantity??0;
   document.getElementById("p_badge").value=p?.badge||"";
   document.getElementById("p_image").value=p?.image_url||"";
+  // reset image preview
+  const prev=document.getElementById("p_image_preview");
+  const prevImg=document.getElementById("p_image_preview_img");
+  const prevStatus=document.getElementById("p_image_upload_status");
+  if(p?.image_url){prev.style.display="flex";prev.style.alignItems="center";prevImg.src=p.image_url;prevStatus.textContent="";}
+  else{prev.style.display="none";prevImg.src="";prevStatus.textContent="";}
   document.getElementById("p_desc").value=p?.description||"";
   document.getElementById("p_specs").value=p?.specs||"";
   document.getElementById("p_active").value=String(p?.is_active!==false);
