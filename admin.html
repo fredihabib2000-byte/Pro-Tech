@@ -488,7 +488,7 @@ async function doLogin(){
   if(!pw){document.getElementById("loginErr").textContent="Enter your password.";return}
   const h=await sha1(pw);
   if(h===getHash()){
-    sessionStorage.setItem("pt_admin","1");
+    localStorage.setItem("pt_admin","1");
     document.getElementById("loginPage").style.display="none";
     document.getElementById("shell").classList.add("show");
     init();
@@ -497,9 +497,9 @@ async function doLogin(){
   }
 }
 document.getElementById("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
-function doLogout(){sessionStorage.removeItem("pt_admin");location.reload()}
+function doLogout(){localStorage.removeItem("pt_admin");location.reload()}
 
-if(sessionStorage.getItem("pt_admin")){
+if(localStorage.getItem("pt_admin")){
   document.getElementById("loginPage").style.display="none";
   document.getElementById("shell").classList.add("show");
   init();
