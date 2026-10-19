@@ -976,6 +976,8 @@ function renderInventory(){
           <button class="ftab${invStatusF==='out'?' active':''}" onclick="invStatus('out')" style="color:var(--red)">Out</button>
           <button class="ftab${invStatusF==='inactive'?' active':''}" onclick="invStatus('inactive')">Inactive</button>
         </div>
+        <button onclick="exportInventoryExcel()" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-size:.8rem;font-weight:600">⬇ Excel</button>
+        <button onclick="exportInventoryPDF()" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-size:.8rem;font-weight:600">⬇ PDF</button>
       </div>
     </div>
     <div style="overflow-x:auto">
@@ -1027,6 +1029,82 @@ async function invAdjust(id){
   try{await sb("/rest/v1/pt_products?id=eq."+id,"PATCH",{quantity:newQty,updated_at:new Date().toISOString()});}
   catch(e){alert("Failed to update stock.");return;}
   renderInventory();
+}
+
+function getInvFiltered(){
+  return allProducts.filter(p=>{
+    const q=invSearchQ.toLowerCase();
+    if(q&&!p.name.toLowerCase().includes(q)&&!(p.category||"").toLowerCase().includes(q))return false;
+    if(invStatusF==="out")return p.is_active&&(p.quantity||0)===0;
+    if(invStatusF==="low")return p.is_active&&(p.quantity||0)>0&&(p.quantity||0)<5;
+    if(invStatusF==="ok")return p.is_active&&(p.quantity||0)>=5;
+    if(invStatusF==="inactive")return !p.is_active;
+    return true;
+  });
+}
+
+function invStatusLabel(p){
+  if(!p.is_active)return "Inactive";
+  const q=p.quantity||0;
+  if(q===0)return "Out of Stock";
+  if(q<5)return "Low Stock";
+  return "In Stock";
+}
+
+function exportInventoryExcel(){
+  if(!allProducts.length){alert("Open Inventory first.");return;}
+  const wb=XLSX.utils.book_new();
+  const rows=getInvFiltered().map((p,i)=>({
+    "#":i+1,
+    "Product":p.name,
+    "Category":p.category||"—",
+    "Status":invStatusLabel(p),
+    "Stock":p.quantity||0,
+    "Price ($)":(p.price||0).toFixed(2),
+    "Stock Value ($)":((p.quantity||0)*(p.price||0)).toFixed(2),
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:4},{wch:34},{wch:16},{wch:14},{wch:8},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,"Inventory");
+  // summary sheet
+  const active=allProducts.filter(p=>p.is_active);
+  const totalValue=active.reduce((s,p)=>s+(p.quantity||0)*(p.price||0),0);
+  const summary=[
+    {"Metric":"Total SKUs (active)","Value":active.length},
+    {"Metric":"In Stock (≥5)","Value":active.filter(p=>(p.quantity||0)>=5).length},
+    {"Metric":"Low Stock (1-4)","Value":active.filter(p=>(p.quantity||0)>0&&(p.quantity||0)<5).length},
+    {"Metric":"Out of Stock","Value":active.filter(p=>(p.quantity||0)===0).length},
+    {"Metric":"Total Stock Value ($)","Value":totalValue.toFixed(2)},
+    {"Metric":"Exported","Value":new Date().toLocaleDateString("en-GB")},
+  ];
+  const ws2=XLSX.utils.json_to_sheet(summary);ws2["!cols"]=[{wch:24},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Summary");
+  dlExcel(wb,`ProTech_Inventory_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportInventoryPDF(){
+  if(!allProducts.length){alert("Open Inventory first.");return;}
+  const doc=makePDF("Inventory Report");
+  const active=allProducts.filter(p=>p.is_active);
+  const totalValue=active.reduce((s,p)=>s+(p.quantity||0)*(p.price||0),0);
+  doc.autoTable({startY:30,head:[["Metric","Value"]],body:[
+    ["Total SKUs (active)",active.length],
+    ["In Stock (≥5)",active.filter(p=>(p.quantity||0)>=5).length],
+    ["Low Stock (1–4)",active.filter(p=>(p.quantity||0)>0&&(p.quantity||0)<5).length],
+    ["Out of Stock",active.filter(p=>(p.quantity||0)===0).length],
+    ["Total Stock Value","$"+totalValue.toFixed(2)],
+    ["Exported",new Date().toLocaleDateString("en-GB")],
+  ],...pdfTheme,columnStyles:{0:{cellWidth:70},1:{cellWidth:50,halign:"right"}}});
+  const rows=getInvFiltered();
+  if(rows.length){
+    const y=doc.lastAutoTable.finalY+10;
+    doc.setTextColor(238,240,255);doc.setFontSize(11);doc.setFont("helvetica","bold");
+    doc.text("Product List",14,y);
+    doc.autoTable({startY:y+4,head:[["#","Product","Category","Status","Stock","Price ($)","Value ($)"]],
+      body:rows.map((p,i)=>[i+1,p.name,p.category||"—",invStatusLabel(p),p.quantity||0,"$"+(p.price||0).toFixed(2),"$"+((p.quantity||0)*(p.price||0)).toFixed(2)]),
+      ...pdfTheme,columnStyles:{0:{cellWidth:8},4:{halign:"right"},5:{halign:"right"},6:{halign:"right"}}});
+  }
+  dlPDF(doc,`ProTech_Inventory_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
 // ── REPORTS ──────────────────────────────────────────────
