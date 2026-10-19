@@ -2690,7 +2690,7 @@ function openOrderModal() {
   document.getElementById("orderSummaryItems").innerHTML =
     cart.map(i => `<div class="order-summary-item"><span>${i.name} × ${i.qty}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join("") +
     `<div class="order-summary-total"><span>Total</span><span>$${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",")}</span></div>`;
-  ["ord_name","ord_phone","ord_address","ord_notes"].forEach(id => { document.getElementById(id).value = ""; });
+  ["ord_name","ord_phone","ord_notes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   document.getElementById("orderModal").classList.add("open");
   document.body.style.overflow = "hidden";
 }
