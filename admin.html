@@ -220,6 +220,7 @@ select.status-sel:focus{border-color:var(--accent)}
       <button class="sb-item" data-page="products" onclick="goto(this)"><span class="icon">📦</span> Products</button>
       <button class="sb-item" data-page="clients" onclick="goto(this)"><span class="icon">👥</span> Clients</button>
       <button class="sb-item" data-page="reports" onclick="goto(this)"><span class="icon">📈</span> Reports</button>
+      <button class="sb-item" data-page="inventory" onclick="goto(this)"><span class="icon">🗃️</span> Inventory <span class="badge-dot" id="lowStockDot" style="display:none"></span></button>
       <div class="sb-section">Other</div>
       <button class="sb-item" data-page="messages" onclick="goto(this)"><span class="icon">💬</span> Messages <span class="badge-dot" id="msgDot" style="display:none"></span></button>
       <button class="sb-item" data-page="settings" onclick="goto(this)"><span class="icon">⚙️</span> Settings</button>
@@ -301,6 +302,11 @@ select.status-sel:focus{border-color:var(--accent)}
     <!-- REPORTS -->
     <div class="page page-hidden" id="page-reports">
       <div id="reportsContent"><div class="loading-state">Loading…</div></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="page page-hidden" id="page-inventory">
+      <div id="inventoryContent"><div class="loading-state">Loading…</div></div>
     </div>
 
     <!-- PRODUCTS -->
@@ -576,7 +582,7 @@ function startClock(){
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open")}
 
 // ── NAVIGATION ───────────────────────────────────────────
-const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",clients:"Clients",reports:"Reports",messages:"Messages",settings:"Settings"};
+const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",clients:"Clients",reports:"Reports",inventory:"Inventory",messages:"Messages",settings:"Settings"};
 function goto(el){
   document.querySelectorAll(".sb-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
@@ -589,6 +595,7 @@ function goto(el){
   if(p==="products")loadProducts();
   if(p==="clients")loadClients();
   if(p==="reports")loadReports();
+  if(p==="inventory")loadInventory();
   if(p==="messages")loadMessages();
 }
 
@@ -611,6 +618,8 @@ async function loadDashboard(){
     document.getElementById("pendingDot").textContent=pending;
     document.getElementById("msgDot").style.display=unread?"":"none";
     document.getElementById("msgDot").textContent=unread;
+    document.getElementById("lowStockDot").style.display=lowStock?"flex":"none";
+    document.getElementById("lowStockDot").textContent=lowStock;
 
     document.getElementById("dashStats").innerHTML=`
       <div class="stat blue"><div class="icon2">🛒</div><div class="lbl">Total Orders</div><div class="val">${o.length}</div></div>
@@ -883,6 +892,141 @@ function renderClients(clients){
     </tr>`;
   }).join("");
   document.getElementById("clientsWrap").innerHTML=`<table><thead><tr><th>#</th><th>Name</th><th>Phone</th><th>Orders</th><th>Total Spent</th><th>Last Order</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ── INVENTORY ────────────────────────────────────────────────
+let invSearchQ='',invStatusF='all';
+
+async function loadInventory(){
+  const cont=document.getElementById("inventoryContent");
+  cont.innerHTML='<div class="loading-state">Loading inventory…</div>';
+  try{
+    const prods=await sb("/rest/v1/pt_products?select=*&order=name.asc")||[];
+    // sync into allProducts so stock edits are reflected everywhere
+    allProducts=prods;
+    renderInventory();
+  }catch(e){cont.innerHTML='<div class="empty-state">Failed to load inventory.</div>';}
+}
+
+function renderInventory(){
+  const prods=allProducts;
+  const outOfStock=prods.filter(p=>p.is_active&&(p.quantity||0)===0);
+  const lowStock=prods.filter(p=>p.is_active&&(p.quantity||0)>0&&(p.quantity||0)<5);
+  const inStock=prods.filter(p=>p.is_active&&(p.quantity||0)>=5);
+  const inactive=prods.filter(p=>!p.is_active);
+  const totalValue=prods.reduce((s,p)=>s+(p.is_active?(p.quantity||0)*(p.price||0):0),0);
+
+  // update sidebar dot
+  const dot=document.getElementById("lowStockDot");
+  const alertCount=outOfStock.length+lowStock.length;
+  if(dot){dot.style.display=alertCount?"flex":"none";dot.textContent=alertCount;}
+
+  let filtered=prods.filter(p=>{
+    const q=invSearchQ.toLowerCase();
+    if(q&&!p.name.toLowerCase().includes(q)&&!(p.category||"").toLowerCase().includes(q))return false;
+    if(invStatusF==="out")return p.is_active&&(p.quantity||0)===0;
+    if(invStatusF==="low")return p.is_active&&(p.quantity||0)>0&&(p.quantity||0)<5;
+    if(invStatusF==="ok")return p.is_active&&(p.quantity||0)>=5;
+    if(invStatusF==="inactive")return !p.is_active;
+    return true;
+  });
+
+  const badge=(p)=>{
+    if(!p.is_active)return `<span style="background:var(--surface-2);color:var(--fg-2);border-radius:99px;padding:2px 9px;font-size:.72rem;font-weight:600">Inactive</span>`;
+    const q=p.quantity||0;
+    if(q===0)return `<span style="background:var(--red-dim);color:var(--red);border-radius:99px;padding:2px 9px;font-size:.72rem;font-weight:600">Out of Stock</span>`;
+    if(q<5)return `<span style="background:#78350f22;color:#fbbf24;border-radius:99px;padding:2px 9px;font-size:.72rem;font-weight:600">Low Stock</span>`;
+    return `<span style="background:var(--green-dim);color:var(--green);border-radius:99px;padding:2px 9px;font-size:.72rem;font-weight:600">In Stock</span>`;
+  };
+
+  document.getElementById("inventoryContent").innerHTML=`
+  <!-- KPI ROW -->
+  <div class="stats" style="margin-bottom:20px">
+    <div class="stat green"><div class="icon2">✅</div><div class="lbl">In Stock</div><div class="val">${inStock.length}</div></div>
+    <div class="stat yellow"><div class="icon2">⚠️</div><div class="lbl">Low Stock (&lt;5)</div><div class="val">${lowStock.length}</div></div>
+    <div class="stat red"><div class="icon2">🚫</div><div class="lbl">Out of Stock</div><div class="val">${outOfStock.length}</div></div>
+    <div class="stat blue"><div class="icon2">📦</div><div class="lbl">Total SKUs</div><div class="val">${prods.filter(p=>p.is_active).length}</div></div>
+    <div class="stat blue"><div class="icon2">💵</div><div class="lbl">Stock Value</div><div class="val">$${totalValue.toFixed(0)}</div></div>
+  </div>
+
+  <!-- LOW STOCK ALERT -->
+  ${outOfStock.length||lowStock.length?`
+  <div class="card" style="margin-bottom:20px;border:1px solid var(--red)">
+    <div class="card-header"><span class="card-title" style="color:var(--red)">⚠️ Stock Alerts</span><span style="font-size:.78rem;color:var(--fg-2)">${alertCount} product${alertCount!==1?'s':''} need attention</span></div>
+    <div style="padding:12px 20px 16px;display:flex;flex-wrap:wrap;gap:10px">
+      ${[...outOfStock,...lowStock].map(p=>`
+      <div style="background:var(--surface-2);border-radius:var(--r-sm);padding:8px 14px;display:flex;align-items:center;gap:10px;min-width:200px">
+        <span style="font-size:.83rem;font-weight:500;flex:1">${p.name}</span>
+        ${badge(p)}
+        <button onclick="invAdjust(${p.id})" style="background:var(--accent);color:#fff;border:none;border-radius:var(--r-sm);padding:4px 10px;cursor:pointer;font-size:.78rem;font-weight:600">+ Stock</button>
+      </div>`).join("")}
+    </div>
+  </div>`:''}
+
+  <!-- TOOLBAR -->
+  <div class="card">
+    <div class="card-header" style="flex-wrap:wrap;gap:10px">
+      <span class="card-title">All Products</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-left:auto">
+        <input id="invSearch" value="${invSearchQ}" placeholder="Search…" oninput="invFilter(this.value)" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;color:var(--fg);outline:none;width:170px;font-size:.83rem">
+        <div class="filter-tabs" id="invTabs">
+          <button class="ftab${invStatusF==='all'?' active':''}" onclick="invStatus('all')">All</button>
+          <button class="ftab${invStatusF==='ok'?' active':''}" onclick="invStatus('ok')" style="color:var(--green)">In Stock</button>
+          <button class="ftab${invStatusF==='low'?' active':''}" onclick="invStatus('low')" style="color:#fbbf24">Low</button>
+          <button class="ftab${invStatusF==='out'?' active':''}" onclick="invStatus('out')" style="color:var(--red)">Out</button>
+          <button class="ftab${invStatusF==='inactive'?' active':''}" onclick="invStatus('inactive')">Inactive</button>
+        </div>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Product</th><th>Category</th><th style="text-align:center">Stock</th><th>Status</th><th style="text-align:right">Price</th><th style="text-align:right">Value</th><th></th></tr></thead>
+        <tbody>
+          ${filtered.length?filtered.map(p=>`
+          <tr>
+            <td style="font-weight:500">${p.name}</td>
+            <td style="color:var(--fg-2);font-size:.82rem">${p.category||"—"}</td>
+            <td style="text-align:center">
+              <div style="display:flex;align-items:center;justify-content:center;gap:6px">
+                <button onclick="invStepStock(${p.id},-1)" style="background:var(--surface-2);border:1px solid var(--border);border-radius:4px;width:22px;height:22px;cursor:pointer;color:var(--fg);font-size:.9rem;line-height:1;padding:0">−</button>
+                <span id="inv_qty_${p.id}" style="font-weight:700;min-width:28px;text-align:center;${(p.quantity||0)===0?'color:var(--red)':((p.quantity||0)<5?'color:#fbbf24':'color:var(--green)')}">${p.quantity||0}</span>
+                <button onclick="invStepStock(${p.id},1)" style="background:var(--surface-2);border:1px solid var(--border);border-radius:4px;width:22px;height:22px;cursor:pointer;color:var(--fg);font-size:.9rem;line-height:1;padding:0">+</button>
+              </div>
+            </td>
+            <td>${badge(p)}</td>
+            <td style="text-align:right;color:var(--fg)">$${(p.price||0).toFixed(2)}</td>
+            <td style="text-align:right;font-weight:600;color:var(--fg-2)">$${((p.quantity||0)*(p.price||0)).toFixed(2)}</td>
+            <td><button onclick="invAdjust(${p.id})" style="background:none;border:1px solid var(--border);border-radius:var(--r-sm);padding:4px 10px;cursor:pointer;color:var(--fg-2);font-size:.78rem">Set</button></td>
+          </tr>`).join(""):`<tr><td colspan="7" style="text-align:center;color:var(--fg-2);padding:24px">No products match.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function invFilter(q){invSearchQ=q;renderInventory();}
+function invStatus(f){invStatusF=f;renderInventory();}
+
+async function invStepStock(id,delta){
+  const p=allProducts.find(x=>x.id==id);if(!p)return;
+  const newQty=Math.max(0,(p.quantity||0)+delta);
+  const span=document.getElementById("inv_qty_"+id);
+  if(span){span.textContent=newQty;span.style.color=newQty===0?'var(--red)':newQty<5?'#fbbf24':'var(--green)';}
+  p.quantity=newQty;
+  try{await sb("/rest/v1/pt_products?id=eq."+id,"PATCH",{quantity:newQty,updated_at:new Date().toISOString()});}
+  catch(e){alert("Failed to update stock.");}
+  renderInventory();
+}
+
+async function invAdjust(id){
+  const p=allProducts.find(x=>x.id==id);if(!p)return;
+  const val=prompt(`Set stock quantity for "${p.name}":`,p.quantity||0);
+  if(val===null)return;
+  const newQty=Math.max(0,parseInt(val)||0);
+  p.quantity=newQty;
+  try{await sb("/rest/v1/pt_products?id=eq."+id,"PATCH",{quantity:newQty,updated_at:new Date().toISOString()});}
+  catch(e){alert("Failed to update stock.");return;}
+  renderInventory();
 }
 
 // ── REPORTS ──────────────────────────────────────────────
