@@ -1679,6 +1679,40 @@ html.lenis, html.lenis body { height: auto; }
 .order-summary-item { display: flex; justify-content: space-between; padding: 3px 0; color: var(--fg-2); }
 .order-summary-total { display: flex; justify-content: space-between; font-weight: 700; font-size: .95rem; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 6px; }
 .order-modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── WhatsApp success overlay ── */
+.wa-success-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center; z-index: 9000;
+}
+.wa-success-overlay.open { display: flex; }
+.wa-success-card {
+  background: var(--surface); border-radius: var(--r-lg); padding: 40px 36px 32px;
+  max-width: 400px; width: calc(100% - 40px); text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,.45);
+  animation: scaleIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes scaleIn { from { transform: scale(.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.wa-success-icon {
+  width: 72px; height: 72px; border-radius: 50%; background: #25d366;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; font-size: 2rem;
+}
+.wa-success-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+.wa-success-card p { color: var(--fg-2); font-size: .92rem; line-height: 1.55; margin-bottom: 24px; }
+.wa-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: #25d366; color: #fff; border: none; border-radius: 99px;
+  padding: 13px 28px; font-size: 1rem; font-weight: 600; cursor: pointer;
+  text-decoration: none; width: 100%; justify-content: center;
+  transition: background .18s, transform .18s;
+}
+.wa-btn:hover { background: #1ebe5d; transform: translateY(-1px); }
+.wa-success-close {
+  display: block; margin-top: 14px; font-size: .82rem; color: var(--fg-2);
+  cursor: pointer; background: none; border: none; width: 100%;
+}
+.wa-success-close:hover { color: var(--fg); }
 </style>
 </head>
 <body>
@@ -2200,10 +2234,6 @@ html.lenis, html.lenis body { height: auto; }
         <input type="tel" id="ord_phone" placeholder="+961 70 000 000">
       </div>
       <div>
-        <label>Delivery Address *</label>
-        <input type="text" id="ord_address" placeholder="Street, City, Region">
-      </div>
-      <div>
         <label>Notes (optional)</label>
         <textarea id="ord_notes" rows="2" placeholder="Any special instructions…"></textarea>
       </div>
@@ -2212,6 +2242,20 @@ html.lenis, html.lenis body { height: auto; }
       <button class="btn-secondary" onclick="closeOrderModal()">Cancel</button>
       <button class="btn-primary" id="placeOrderBtn" onclick="submitOrder()">Place Order</button>
     </div>
+  </div>
+</div>
+
+<!-- ── WHATSAPP SUCCESS OVERLAY ───────────────────────────────── -->
+<div class="wa-success-overlay" id="waSuccessOverlay">
+  <div class="wa-success-card">
+    <div class="wa-success-icon">✅</div>
+    <h3>Order Received!</h3>
+    <p>Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.</p>
+    <a class="wa-btn" id="waSuccessBtn" href="#" target="_blank" rel="noopener">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.116 1.535 5.845L.057 23.49a.75.75 0 0 0 .918.935l5.83-1.527A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.797 9.797 0 0 1-4.99-1.363l-.358-.212-3.712.973.99-3.607-.233-.37A9.794 9.794 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+      Open WhatsApp
+    </a>
+    <button class="wa-success-close" onclick="closeWaSuccess()">Close</button>
   </div>
 </div>
 
@@ -2656,40 +2700,52 @@ function closeOrderModal() {
   document.body.style.overflow = "";
 }
 
+function closeWaSuccess() {
+  document.getElementById("waSuccessOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
 async function submitOrder() {
-  const name    = document.getElementById("ord_name").value.trim();
-  const phone   = document.getElementById("ord_phone").value.trim();
-  const address = document.getElementById("ord_address").value.trim();
-  if (!name || !phone || !address) { showToast("Please fill in all required fields."); return; }
+  const name  = document.getElementById("ord_name").value.trim();
+  const phone = document.getElementById("ord_phone").value.trim();
+  if (!name || !phone) { showToast("Please fill in your name and phone number."); return; }
   const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
   const btn = document.getElementById("placeOrderBtn");
   btn.disabled = true; btn.textContent = "Placing order…";
   try {
+    const itemsList = cart.map(i => `• ${i.name} ×${i.qty}`).join("\n");
     await sbFetch("/rest/v1/pt_orders", {
       method: "POST",
       body: JSON.stringify({
         customer_name: name,
         customer_phone: phone,
-        customer_address: address,
+        customer_address: "",
         notes: document.getElementById("ord_notes").value.trim() || null,
         items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
         total: parseFloat(total.toFixed(2)),
         status: "pending"
       })
     });
-    // Build WA message before clearing cart
-    const itemsList = cart.map(i => `• ${i.name} ×${i.qty}`).join("\n");
+
+    // Build customer WhatsApp message
+    const customerMsg = encodeURIComponent(
+      `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\n💰 Total: $${total.toFixed(2)}\n👤 Name: ${name}\n📞 Phone: ${phone}`
+    );
+    const ownerNum = (waNumber || "96171925840").replace(/\D/g, "");
+    const waLink = `https://wa.me/${ownerNum}?text=${customerMsg}`;
+    document.getElementById("waSuccessBtn").href = waLink;
+
+    // Notify owner on WhatsApp (silent background open)
+    const ownerMsg = encodeURIComponent(
+      `🛒 New Order!\n👤 ${name}\n📞 ${phone}\n\n${itemsList}\n\n💰 Total: $${total.toFixed(2)}`
+    );
+    window.open(`https://wa.me/${ownerNum}?text=${ownerMsg}`, "_blank");
+
     cart = [];
     updateCart();
     closeOrderModal();
-    showToast("Order placed! We'll contact you shortly. 🎉");
-    // Notify store owner on WhatsApp
-    if (waNumber) {
-      const msg = encodeURIComponent(
-        `🛒 طلب جديد!\n👤 ${name}\n📞 ${phone}\n📍 ${address}\n\n${itemsList}\n\n💰 المجموع: $${total.toFixed(2)}`
-      );
-      setTimeout(() => window.open(`https://wa.me/${waNumber.replace(/\D/g,"")}?text=${msg}`, "_blank"), 500);
-    }
+    document.getElementById("waSuccessOverlay").classList.add("open");
+    document.body.style.overflow = "hidden";
   } catch(e) {
     showToast("Failed to place order. Please try again.");
   } finally {
