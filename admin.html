@@ -28,8 +28,8 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 .login-card p{color:var(--fg-2);font-size:.85rem;margin-bottom:32px}
 .login-card input{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:13px 16px;color:var(--fg);margin-bottom:12px;outline:none;transition:border .15s}
 .login-card input:focus{border-color:var(--accent)}
-.login-card button{width:100%;background:var(--accent);border:none;border-radius:8px;padding:13px;color:#fff;font-weight:600;cursor:pointer;transition:opacity .15s}
-.login-card button:hover{opacity:.85}
+.login-card button:not(.btn-eye){width:100%;background:var(--accent);border:none;border-radius:8px;padding:13px;color:#fff;font-weight:600;cursor:pointer;transition:opacity .15s}
+.login-card button:not(.btn-eye):hover{opacity:.85}
 .login-err{color:var(--red);font-size:.82rem;margin-top:10px;min-height:18px}
 
 /* ── SHELL ───────────────────────────── */
@@ -200,7 +200,7 @@ select.status-sel:focus{border-color:var(--accent)}
     <p>Admin Portal — Enter your password to continue</p>
     <div style="position:relative;margin-bottom:12px">
       <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password" style="margin-bottom:0;padding-right:44px">
-      <button type="button" onclick="togglePw('pwInput',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1.1rem;padding:0;line-height:1">👁</button>
+      <button type="button" class="btn-eye" onclick="togglePw('pwInput',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1.1rem;padding:0;line-height:1">👁</button>
     </div>
     <button onclick="doLogin()">Login</button>
     <div class="login-err" id="loginErr"></div>
