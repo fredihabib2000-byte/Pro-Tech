@@ -198,7 +198,10 @@ select.status-sel:focus{border-color:var(--accent)}
     <div class="login-logo">⚙️</div>
     <h1>Pro Technology</h1>
     <p>Admin Portal — Enter your password to continue</p>
-    <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password">
+    <div style="position:relative;margin-bottom:12px">
+      <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password" style="margin-bottom:0;padding-right:44px">
+      <button type="button" onclick="togglePw('pwInput',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1.1rem;padding:0;line-height:1">👁</button>
+    </div>
     <button onclick="doLogin()">Login</button>
     <div class="login-err" id="loginErr"></div>
   </div>
@@ -408,9 +411,9 @@ select.status-sel:focus{border-color:var(--accent)}
         <!-- Password -->
         <div class="settings-card">
           <h4>Change Password</h4>
-          <div class="field"><label>Current Password</label><input type="password" id="cur_pass" placeholder="Current password"></div>
-          <div class="field"><label>New Password</label><input type="password" id="new_pass" placeholder="New password (min 6 chars)"></div>
-          <div class="field"><label>Confirm New</label><input type="password" id="new_pass2" placeholder="Repeat new password"></div>
+          <div class="field"><label>Current Password</label><div style="position:relative"><input type="password" id="cur_pass" placeholder="Current password" style="padding-right:40px"><button type="button" onclick="togglePw('cur_pass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1rem">👁</button></div></div>
+          <div class="field"><label>New Password</label><div style="position:relative"><input type="password" id="new_pass" placeholder="New password (min 6 chars)" style="padding-right:40px"><button type="button" onclick="togglePw('new_pass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1rem">👁</button></div></div>
+          <div class="field"><label>Confirm New</label><div style="position:relative"><input type="password" id="new_pass2" placeholder="Repeat new password" style="padding-right:40px"><button type="button" onclick="togglePw('new_pass2',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1rem">👁</button></div></div>
           <button class="btn btn-primary btn-sm" onclick="changePassword()">Update Password</button>
           <div id="passMsg" style="font-size:.8rem;margin-top:8px;min-height:18px"></div>
         </div>
@@ -478,6 +481,8 @@ select.status-sel:focus{border-color:var(--accent)}
 const SB_URL  = "https://cgmqovyttrjecrbynooo.supabase.co";
 const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnbXFvdnl0dHJqZWNyYnlub29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzg4MDAsImV4cCI6MjEwNjAxNDgwMH0.T0fRGI4e1i0xcfVMdLZo_UTnCIGRaBjYgC_JjzcfjT0";
 const BASE_HASH = "1a32ff273feb5cbe78820bcd5000d5d1a90d8edd"; // sha1(protech2024)
+
+function togglePw(id,btn){const el=document.getElementById(id);el.type=el.type==="password"?"text":"password";btn.textContent=el.type==="password"?"👁":"🙈";}
 
 async function sha1(s){const b=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("")}
 
