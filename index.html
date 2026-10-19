@@ -1492,6 +1492,44 @@ html.lenis, html.lenis body { height: auto; }
   100% { opacity: 0;   transform: translateY(-90px) translateX(var(--hd, 15px)); }
 }
 
+/* ── React Bits: SpotlightCard — radial glow follows cursor ─────── */
+.product-card::before,
+.feature-card::before,
+.category-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    200px circle at var(--spot-x,-9999px) var(--spot-y,-9999px),
+    rgba(99,149,255,.14) 0%,
+    transparent 80%
+  );
+  pointer-events: none;
+  z-index: 3;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.product-card:hover::before,
+.feature-card:hover::before,
+.category-card:hover::before { opacity: 1; }
+
+/* ── 21st.dev: custom cursor ─────────────────────────────────────── */
+.cc {
+  position: fixed;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: width .18s, height .18s, opacity .25s, background .18s;
+}
+.cc.vis { opacity: .75; }
+.cc.big { width: 36px; height: 36px; opacity: .35; }
+@media (hover: none) { .cc { display: none; } }
+
 /* ── Shimmer sweep on product cards (React Bits Shiny) ───────────── */
 .product-card { position: relative; overflow: hidden; }
 @keyframes shimmerSweep {
@@ -2850,9 +2888,108 @@ loadStoreSettings();
           stagger: { each: .04, from: 'start' },
           ease: 'power2.out', clearProps: 'all',
         });
+        attachTiltToNew();
       });
     }
   };
+
+  // ── React Bits: SpotlightCard + TiltCard ────────────────────────
+  const TILT_SEL = '.product-card, .feature-card, .category-card';
+  const TILT_MAX = 7;
+
+  function attachTilt(card) {
+    if (card._t) return;
+    card._t = true;
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      const cx = r.width / 2, cy = r.height / 2;
+      const rx = ((y - cy) / cy) * -TILT_MAX;
+      const ry = ((x - cx) / cx) * TILT_MAX;
+      card.style.setProperty('--spot-x', x + 'px');
+      card.style.setProperty('--spot-y', y + 'px');
+      card.style.transition = 'transform .08s ease';
+      card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.03)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transition = 'transform .45s cubic-bezier(.23,1,.32,1)';
+      card.style.transform = '';
+      card.style.setProperty('--spot-x', '-9999px');
+      card.style.setProperty('--spot-y', '-9999px');
+    });
+  }
+
+  function attachTiltToNew() {
+    document.querySelectorAll(TILT_SEL).forEach(attachTilt);
+  }
+  attachTiltToNew();
+
+  // ── React Bits: Magnet — CTA buttons attract toward cursor ──────
+  document.querySelectorAll('.btn-slide-primary, .btn-slide-secondary, .cta-btn').forEach(btn => {
+    btn.style.display = 'inline-block';
+    btn.addEventListener('mousemove', e => {
+      const r = btn.getBoundingClientRect();
+      const x = (e.clientX - r.left - r.width  / 2) * .32;
+      const y = (e.clientY - r.top  - r.height / 2) * .32;
+      btn.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transition = 'transform .5s cubic-bezier(.23,1,.32,1)';
+      btn.style.transform = '';
+      setTimeout(() => { btn.style.transition = ''; }, 500);
+    });
+  });
+
+  // ── React Bits: DecryptedText — scramble reveal on section titles
+  const RCHARS = 'ABCDEFGHJKMNPQRSTUVWXYZabcdfghjkmnpqrstuvwxyz0123456789@#$%*';
+  function scramble(el, text, dur = 750) {
+    const total = Math.ceil(dur / 33);
+    let f = 0;
+    const iv = setInterval(() => {
+      f++;
+      const p = f / total;
+      const rev = Math.floor(p * text.length);
+      let out = '';
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] === ' ') { out += ' '; continue; }
+        out += i < rev ? text[i] : RCHARS[Math.floor(Math.random() * RCHARS.length)];
+      }
+      el.textContent = out;
+      if (f >= total) { el.textContent = text; clearInterval(iv); }
+    }, 33);
+  }
+
+  const decObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      if (!el._orig) el._orig = el.textContent.trim();
+      setTimeout(() => scramble(el, el._orig, 800), 280);
+      decObs.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.section-title').forEach(el => decObs.observe(el));
+
+  // ── 21st.dev: custom cursor glow dot ────────────────────────────
+  const cc = document.createElement('div');
+  cc.className = 'cc';
+  document.body.appendChild(cc);
+  let cx2 = 0, cy2 = 0, raf2;
+  document.addEventListener('mousemove', e => {
+    cx2 = e.clientX; cy2 = e.clientY;
+    cc.classList.add('vis');
+    cancelAnimationFrame(raf2);
+    raf2 = requestAnimationFrame(() => {
+      cc.style.left = cx2 + 'px';
+      cc.style.top  = cy2 + 'px';
+    });
+  });
+  document.addEventListener('mouseleave', () => cc.classList.remove('vis'));
+  document.querySelectorAll('a,button,.product-card,.category-card,.feature-card,[onclick]')
+    .forEach(el => {
+      el.addEventListener('mouseenter', () => cc.classList.add('big'));
+      el.addEventListener('mouseleave', () => cc.classList.remove('big'));
+    });
 })();
 </script>
 </body>
