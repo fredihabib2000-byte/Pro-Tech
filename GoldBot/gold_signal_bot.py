@@ -1,11 +1,13 @@
 """
 GainzAlgo V2 Alpha - XAUUSD Telegram Bot
-Session-aware: London (08:00-16:00 UTC) + New York (13:00-21:00 UTC) only.
-Signals require 2+ confluent conditions to fire.
+- Session filter: London + NY only (08:00–21:00 UTC = 11:00–00:00 Lebanon)
+- Dual-timeframe: 1h trend must agree with 15m signal
+- Three alert levels: ⚡ Setup (1 cond), 📡 Signal (2 cond), 🚀 Strong (3+ cond)
+- Daily brief at London open (08:00 UTC = 11:00 Lebanon)
 """
 
 import os, time, logging
-from datetime import datetime
+from datetime import datetime, date
 import requests
 from dotenv import load_dotenv
 
@@ -19,44 +21,52 @@ TWELVE_API_KEY   = os.getenv("TWELVE_API_KEY")
 
 CHECK_EVERY = 60 * 15   # 15 minutes
 
-# Indicator periods
+# Indicator settings
 FAST_EMA   = 8
 SLOW_EMA   = 21
 TREND_EMA  = 200
 RSI_PERIOD = 14
 ATR_PERIOD = 14
+ATR_MULT   = 2.0    # SL distance
+RR_RATIO   = 2.5    # TP = SL × 2.5
 
-# Signal filters
-ATR_MULT       = 2.0    # SL = ATR × 2.0  (gold needs room)
-RR_RATIO       = 2.5    # TP = SL × 2.5   (higher reward)
-RSI_BUY_MIN    = 52     # RSI must be above this for buys  (not just 50)
-RSI_SELL_MAX   = 48     # RSI must be below this for sells
-BODY_ATR_RATIO = 0.6    # Candle body must be > 60% of ATR to count as "strong"
+# Thresholds
+RSI_BUY_MIN    = 52
+RSI_SELL_MAX   = 48
+BODY_ATR_RATIO = 0.5
 
-last_signal_id = None
+# Alert levels (how many 15m conditions needed)
+SETUP_LEVEL  = 1   # ⚡ Setup forming — prepare
+SIGNAL_LEVEL = 2   # 📡 Signal — can enter
+STRONG_LEVEL = 3   # 🚀 Strong signal — high confidence
+
+last_signal_key = {}   # tracks last alert level per direction to avoid spam
+last_brief_date = None
 
 
-# ── Session filter ────────────────────────────────────────────────────────────
+# ── Session ───────────────────────────────────────────────────────────────────
 
 def get_session() -> str:
-    """Return active session label, or empty string if outside trading hours."""
     h = datetime.utcnow().hour
-    london   = 8 <= h < 16
-    newyork  = 13 <= h < 21
+    london  = 8 <= h < 16
+    newyork = 13 <= h < 21
     if london and newyork:
         return "London/NY Overlap 🔥"
     if london:
         return "London 🇬🇧"
     if newyork:
         return "New York 🇺🇸"
-    return ""   # Asian / off-hours
-
+    return ""
 
 def is_trading_day() -> bool:
-    return datetime.utcnow().weekday() < 5  # Mon–Fri
+    return datetime.utcnow().weekday() < 5
+
+def is_london_open() -> bool:
+    now = datetime.utcnow()
+    return now.hour == 8 and now.minute < 15
 
 
-# ── Indicator math ────────────────────────────────────────────────────────────
+# ── Math ──────────────────────────────────────────────────────────────────────
 
 def ema(prices, period):
     k = 2 / (period + 1)
@@ -64,7 +74,6 @@ def ema(prices, period):
     for p in prices[1:]:
         result.append(p * k + result[-1] * (1 - k))
     return result
-
 
 def rsi(prices, period=14):
     gains, losses = [], []
@@ -84,21 +93,18 @@ def rsi(prices, period=14):
         result.append(100 - 100 / (1 + rs))
     return result if result else [50.0]
 
-
 def macd(prices, fast=12, slow=26, signal=9):
-    e_fast    = ema(prices, fast)
-    e_slow    = ema(prices, slow)
-    macd_line = [f - s for f, s in zip(e_fast, e_slow)]
-    sig_line  = ema(macd_line, signal)
-    return macd_line, sig_line
-
+    ef = ema(prices, fast)
+    es = ema(prices, slow)
+    ml = [f - s for f, s in zip(ef, es)]
+    return ml, ema(ml, signal)
 
 def atr(highs, lows, closes, period=14):
     trs = []
     for i in range(1, len(closes)):
         tr = max(highs[i] - lows[i],
-                 abs(highs[i] - closes[i - 1]),
-                 abs(lows[i]  - closes[i - 1]))
+                 abs(highs[i] - closes[i-1]),
+                 abs(lows[i]  - closes[i-1]))
         trs.append(tr)
     if not trs:
         return [1.0]
@@ -111,10 +117,10 @@ def atr(highs, lows, closes, period=14):
 
 # ── Data fetch ────────────────────────────────────────────────────────────────
 
-def fetch_data():
+def _fetch(interval: str, size: int = 250):
     url = (
         "https://api.twelvedata.com/time_series"
-        f"?symbol=XAU/USD&interval=15min&outputsize=250"
+        f"?symbol=XAU/USD&interval={interval}&outputsize={size}"
         f"&apikey={TWELVE_API_KEY}"
     )
     r = requests.get(url, timeout=15)
@@ -122,102 +128,117 @@ def fetch_data():
     data = r.json()
     if "values" not in data:
         raise ValueError(f"API error: {data.get('message', data)}")
-
-    values = list(reversed(data["values"]))   # oldest first
-    if len(values) < TREND_EMA + 10:
-        raise ValueError(f"Not enough data: {len(values)} candles")
-
+    values = list(reversed(data["values"]))
     opens  = [float(v["open"])  for v in values]
     highs  = [float(v["high"])  for v in values]
     lows   = [float(v["low"])   for v in values]
     closes = [float(v["close"]) for v in values]
     return opens, highs, lows, closes
 
+def fetch_data():
+    return _fetch("15min", 250)
 
-# ── Signal logic ──────────────────────────────────────────────────────────────
+def fetch_htf():
+    """1-hour data for trend confirmation."""
+    return _fetch("1h", 220)
 
-def check_signals():
+
+# ── 1h trend ─────────────────────────────────────────────────────────────────
+
+def get_htf_trend() -> str:
+    """Return 'UP', 'DOWN', or 'NEUTRAL' based on 1h EMA200 + RSI."""
+    try:
+        _, _, _, closes_1h = fetch_htf()
+        if len(closes_1h) < 205:
+            return "NEUTRAL"
+        et = ema(closes_1h, 200)
+        rs = rsi(closes_1h, 14)
+        price = closes_1h[-1]
+        rsi_v = rs[-1]
+        if price > et[-1] and rsi_v > 50:
+            return "UP"
+        if price < et[-1] and rsi_v < 50:
+            return "DOWN"
+    except Exception as e:
+        log.warning("HTF fetch failed: %s", e)
+    return "NEUTRAL"
+
+
+# ── Signal scoring ────────────────────────────────────────────────────────────
+
+def score_signals():
     opens, highs, lows, closes = fetch_data()
 
-    ef_vals = ema(closes, FAST_EMA)
-    es_vals = ema(closes, SLOW_EMA)
-    et_vals = ema(closes, TREND_EMA)
-    rs_vals = rsi(closes, RSI_PERIOD)
-    mm, ms  = macd(closes)
-    at_vals = atr(highs, lows, closes, ATR_PERIOD)
+    ef_v = ema(closes, FAST_EMA)
+    es_v = ema(closes, SLOW_EMA)
+    et_v = ema(closes, TREND_EMA)
+    rs_v = rsi(closes, RSI_PERIOD)
+    mm, ms = macd(closes)
+    at_v = atr(highs, lows, closes, ATR_PERIOD)
 
-    n = min(len(ef_vals), len(es_vals), len(et_vals),
-            len(rs_vals), len(mm), len(ms), len(at_vals),
-            len(closes), len(opens))
+    n = min(len(ef_v), len(es_v), len(et_v), len(rs_v),
+            len(mm), len(ms), len(at_v), len(closes), len(opens))
 
-    ef = ef_vals[-n:]
-    es = es_vals[-n:]
-    et = et_vals[-n:]
-    rs = rs_vals[-n:]
-    mm = mm[-n:]
-    ms = ms[-n:]
-    at = at_vals[-n:]
-    cl = closes[-n:]
-    op = opens[-n:]
+    ef = ef_v[-n:]; es = es_v[-n:]; et = et_v[-n:]
+    rs = rs_v[-n:]; mm = mm[-n:]; ms = ms[-n:]
+    at = at_v[-n:]; cl = closes[-n:]; op = opens[-n:]
 
     price   = cl[-1]
     atr_val = at[-1]
 
-    # Skip if ATR is abnormally high (news/spike — 2× median ATR)
-    atr_median = sorted(at[-20:])[10]
-    if atr_val > atr_median * 2.2:
-        log.info("ATR spike — skipping (atr=%.2f median=%.2f)", atr_val, atr_median)
-        return None, None, None, None, price, atr_val, rs[-1], 0, ""
+    # ATR spike filter
+    atr_med = sorted(at[-20:])[10]
+    if atr_val > atr_med * 2.2:
+        return None, price, atr_val, rs[-1]
 
-    sl_dist = atr_val * ATR_MULT
-    tp_dist = sl_dist * RR_RATIO
-
-    # Conditions — each is a boolean
-    above_trend = price > et[-1]
-    below_trend = price < et[-1]
-
-    ema_bull_cross = ef[-1] > es[-1] and ef[-2] <= es[-2]
-    ema_bear_cross = ef[-1] < es[-1] and ef[-2] >= es[-2]
-
-    macd_bull = mm[-1] > ms[-1] and mm[-2] <= ms[-2]
-    macd_bear = mm[-1] < ms[-1] and mm[-2] >= ms[-2]
-
-    rsi_bull = rs[-1] > RSI_BUY_MIN
-    rsi_bear = rs[-1] < RSI_SELL_MAX
+    sl = atr_val * ATR_MULT
+    tp = sl * RR_RATIO
 
     body = cl[-1] - op[-1]
-    strong_bull_candle = body >  atr_val * BODY_ATR_RATIO
-    strong_bear_candle = body < -atr_val * BODY_ATR_RATIO
 
-    # Confluence scoring — count how many conditions align
-    buy_score = sum([above_trend, ema_bull_cross, macd_bull, rsi_bull, strong_bull_candle])
-    sel_score = sum([below_trend, ema_bear_cross, macd_bear, rsi_bear, strong_bear_candle])
+    conds_buy = {
+        "EMA Cross":      ef[-1] > es[-1] and ef[-2] <= es[-2],
+        "MACD Bull":      mm[-1] > ms[-1] and mm[-2] <= ms[-2],
+        "RSI > 52":       rs[-1] > RSI_BUY_MIN,
+        "Strong Candle":  body > atr_val * BODY_ATR_RATIO,
+        "Above EMA200":   price > et[-1],
+    }
+    conds_sel = {
+        "EMA Cross":      ef[-1] < es[-1] and ef[-2] >= es[-2],
+        "MACD Bear":      mm[-1] < ms[-1] and mm[-2] >= ms[-2],
+        "RSI < 48":       rs[-1] < RSI_SELL_MAX,
+        "Strong Candle":  body < -atr_val * BODY_ATR_RATIO,
+        "Below EMA200":   price < et[-1],
+    }
 
-    def reasons(ema_c, macd_c, rsi_c, candle_c):
-        parts = []
-        if ema_c:   parts.append("EMA Cross")
-        if macd_c:  parts.append("MACD")
-        if rsi_c:   parts.append("RSI")
-        if candle_c: parts.append("Strong Candle")
-        return " + ".join(parts)
+    buy_hits = {k for k, v in conds_buy.items() if v}
+    sel_hits = {k for k, v in conds_sel.items() if v}
 
-    # Require trend alignment AND at least 2 other conditions
-    if above_trend and buy_score >= 3:
-        reason = reasons(ema_bull_cross, macd_bull, rsi_bull, strong_bull_candle)
-        stars  = "⭐⭐⭐" if buy_score >= 4 else "⭐⭐"
-        return "BUY",  reason, price - sl_dist, price + tp_dist, price, atr_val, rs[-1], buy_score, stars
+    results = []
+    for direction, hits, sl_price, tp_price in [
+        ("BUY",  buy_hits, price - sl, price + tp),
+        ("SELL", sel_hits, price + sl, price - tp),
+    ]:
+        score = len(hits)
+        if score >= SETUP_LEVEL:
+            reason = " + ".join(list(hits)[:3])
+            results.append({
+                "direction": direction,
+                "score": score,
+                "reason": reason,
+                "sl": sl_price,
+                "tp": tp_price,
+                "entry": price,
+            })
 
-    if below_trend and sel_score >= 3:
-        reason = reasons(ema_bear_cross, macd_bear, rsi_bear, strong_bear_candle)
-        stars  = "⭐⭐⭐" if sel_score >= 4 else "⭐⭐"
-        return "SELL", reason, price + sl_dist, price - tp_dist, price, atr_val, rs[-1], sel_score, stars
-
-    return None, None, None, None, price, atr_val, rs[-1], 0, ""
+    results.sort(key=lambda x: x["score"], reverse=True)
+    best = results[0] if results else None
+    return best, price, atr_val, rs[-1]
 
 
 # ── Telegram ──────────────────────────────────────────────────────────────────
 
-def send(msg):
+def send(msg: str):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     try:
         requests.post(url, json={
@@ -226,64 +247,140 @@ def send(msg):
             "parse_mode": "HTML"
         }, timeout=10)
     except Exception as e:
-        log.error("Telegram error: %s", e)
+        log.error("Telegram: %s", e)
 
 
-def fmt(direction, reason, sl, tp, entry, atr_val, rsi_val, score, stars, session):
+def fmt_signal(sig: dict, atr_val: float, rsi_val: float, session: str, htf: str) -> str:
+    score = sig["score"]
+    direction = sig["direction"]
+
+    if score >= STRONG_LEVEL:
+        header = f"🚀 <b>STRONG {direction} — XAUUSD</b>"
+        stars  = "⭐⭐⭐"
+    elif score >= SIGNAL_LEVEL:
+        header = f"📡 <b>{direction} SIGNAL — XAUUSD</b>"
+        stars  = "⭐⭐"
+    else:
+        header = f"⚡ <b>{direction} SETUP FORMING — XAUUSD</b>"
+        stars  = "⭐  (wait for confirmation)"
+
     emoji = "🟢" if direction == "BUY" else "🔴"
-    arrow = "📈" if direction == "BUY" else "📉"
     now   = datetime.utcnow().strftime("%H:%M UTC")
-    rr    = RR_RATIO
+    htf_icon = "📈" if htf == "UP" else "📉" if htf == "DOWN" else "➡️"
+
+    lines = [
+        f"{emoji} {header}",
+        f"━━━━━━━━━━━━━━━━",
+        f"⏰ {now}  |  {session}",
+        f"💡 {sig['reason']}",
+        f"🏆 {stars}  |  1H Trend: {htf_icon} {htf}",
+        f"━━━━━━━━━━━━━━━━",
+    ]
+
+    if score >= SIGNAL_LEVEL:
+        lines += [
+            f"💰 Entry : <b>{sig['entry']:.2f}</b>",
+            f"🛑 SL    : <b>{sig['sl']:.2f}</b>  ({atr_val * ATR_MULT:.1f} pts)",
+            f"🎯 TP    : <b>{sig['tp']:.2f}</b>  (1:{RR_RATIO})",
+            f"📊 RSI   : {rsi_val:.1f}  |  ATR: {atr_val:.2f}",
+        ]
+    else:
+        lines += [
+            f"📍 Price  : {sig['entry']:.2f}",
+            f"📊 RSI    : {rsi_val:.1f}  |  ATR: {atr_val:.2f}",
+            f"👀 Watch for 1 more condition before entering",
+        ]
+
+    lines += [
+        "━━━━━━━━━━━━━━━━",
+        "⚠️ Confirm before entering!" if score >= SIGNAL_LEVEL else "⚡ Not a trade yet — setup only",
+    ]
+    return "\n".join(lines)
+
+
+def fmt_brief(price: float, rsi_val: float, atr_val: float, htf: str) -> str:
+    htf_icon = "📈 Bullish" if htf == "UP" else "📉 Bearish" if htf == "DOWN" else "➡️ Neutral"
     return (
-        f"{emoji} <b>XAUUSD {direction} SIGNAL</b> {arrow}\n"
+        f"🌅 <b>LONDON SESSION OPEN</b>\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"⏰ {now}  |  {session}\n"
-        f"💡 {reason}\n"
-        f"🏆 Strength: {stars} ({score}/5)\n"
+        f"XAUUSD: <b>{price:.2f}</b>\n"
+        f"1H Trend: {htf_icon}\n"
+        f"RSI: {rsi_val:.1f}  |  ATR: {atr_val:.2f}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"💰 Entry : <b>{entry:.2f}</b>\n"
-        f"🛑 SL    : <b>{sl:.2f}</b>  ({atr_val * ATR_MULT:.1f} pts)\n"
-        f"🎯 TP    : <b>{tp:.2f}</b>  (1:{rr})\n"
-        f"📊 RSI   : {rsi_val:.1f}  |  ATR: {atr_val:.2f}\n"
-        f"━━━━━━━━━━━━━━━━\n"
-        f"⚠️ Confirm before entering!"
+        f"Active hours: 11:00–00:00 (Lebanon 🇱🇧)"
     )
 
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
 def run():
-    global last_signal_id
-    log.info("GainzAlgo Bot started (session-aware)")
+    global last_signal_key, last_brief_date
+    log.info("GainzAlgo Bot started (dual-timeframe)")
     send(
         "🤖 <b>GainzAlgo Bot Started ✅</b>\n"
         "XAUUSD — London + NY sessions only\n"
-        "Requires 3+ confluent conditions to signal."
+        "⚡ Setup alerts + 📡 Signals + 🚀 Strong signals\n"
+        "Active: 11:00–00:00 Lebanon time 🇱🇧"
     )
 
     while True:
         if not is_trading_day():
-            log.info("Weekend — sleeping 1h")
             time.sleep(3600)
             continue
 
         session = get_session()
+        today = date.today()
+
+        # Daily brief at London open
+        if is_london_open() and last_brief_date != today:
+            last_brief_date = today
+            try:
+                sig, price, atr_val, rsi_val = score_signals()
+                htf = get_htf_trend()
+                send(fmt_brief(price, rsi_val, atr_val, htf))
+            except Exception as e:
+                log.error("Brief error: %s", e)
+
         if not session:
-            log.info("Outside trading session — sleeping 15min")
             time.sleep(CHECK_EVERY)
             continue
 
         try:
-            direction, reason, sl, tp, price, atr_val, rsi_val, score, stars = check_signals()
-            if direction:
-                sig_id = f"{direction}-{datetime.utcnow().strftime('%Y%m%d%H%M')}"
-                if sig_id != last_signal_id:
-                    last_signal_id = sig_id
-                    send(fmt(direction, reason, sl, tp, price, atr_val, rsi_val, score, stars, session))
-                    log.info("Signal: %s %s @ %.2f score=%d", direction, reason, price, score)
+            htf = get_htf_trend()
+            sig, price, atr_val, rsi_val = score_signals()
+
+            if sig is None:
+                log.info("ATR spike — skipped | Price=%.2f", price)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            direction = sig["direction"]
+            score     = sig["score"]
+
+            # Require 1h trend to agree for full signals
+            htf_agrees = (direction == "BUY"  and htf in ("UP", "NEUTRAL")) or \
+                         (direction == "SELL" and htf in ("DOWN", "NEUTRAL"))
+
+            # For setups (score=1) allow regardless of HTF
+            # For signals (score≥2) require HTF agreement
+            if score >= SIGNAL_LEVEL and not htf_agrees:
+                log.info("HTF disagrees (%s vs %s) — signal suppressed", direction, htf)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # Avoid re-alerting same level in same 15-min candle
+            sig_key = f"{direction}-{score}-{datetime.utcnow().strftime('%Y%m%d%H%M')}"
+            prev    = last_signal_key.get(direction, "")
+            same_lvl_recently = prev.startswith(f"{direction}-{score}-{datetime.utcnow().strftime('%Y%m%d%H')}")
+
+            if not same_lvl_recently:
+                last_signal_key[direction] = sig_key
+                send(fmt_signal(sig, atr_val, rsi_val, session, htf))
+                log.info("Alert: %s score=%d HTF=%s price=%.2f", direction, score, htf, price)
             else:
-                log.info("No signal | %s | Price=%.2f RSI=%.1f ATR=%.2f",
-                         session, price, rsi_val, atr_val)
+                log.info("No new alert | %s | score=%d price=%.2f RSI=%.1f",
+                         session, score, price, rsi_val)
+
         except Exception as e:
             log.error("Error: %s", e)
 
