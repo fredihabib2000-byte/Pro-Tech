@@ -1764,6 +1764,55 @@ html.lenis, html.lenis body { height: auto; }
   flex-direction: column;
   gap: 14px;
 }
+
+/* ── Mobile nav ──────────────────────────────────────────── */
+.hamburger { display: none; flex-direction: column; gap: 4px; padding: 8px; background: none; border: none; cursor: pointer; border-radius: var(--r-sm); transition: background .15s; }
+.hamburger:hover { background: var(--surface-2); }
+.ham-line { width: 22px; height: 2px; background: var(--fg); border-radius: 2px; transition: transform .25s, opacity .25s; }
+.hamburger.open .ham-line:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.hamburger.open .ham-line:nth-child(2) { opacity: 0; }
+.hamburger.open .ham-line:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.mobile-nav { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 150; }
+.mobile-nav.open { display: block; }
+.mobile-nav-panel { position: absolute; top: 0; right: 0; width: min(300px, 85vw); height: 100%; background: var(--surface); padding: 24px 20px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow-lg); overflow-y: auto; }
+.mobile-nav-close { align-self: flex-end; background: var(--surface-2); border: none; border-radius: var(--r-sm); padding: 8px 10px; font-size: 1rem; cursor: pointer; margin-bottom: 12px; }
+.mobile-nav-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: .95rem; color: var(--fg); text-decoration: none; transition: background .15s; }
+.mobile-nav-link:hover { background: var(--surface-2); }
+@media (max-width: 720px) { .hamburger { display: flex; } }
+
+/* ── General mobile fixes ────────────────────────────────── */
+@media (max-width: 640px) {
+  body { overflow-x: hidden; }
+  .section { padding-block: 48px; }
+  .container { padding-inline: 16px; }
+  .products-header { flex-direction: column; align-items: stretch; }
+  .search-bar { min-width: 0; width: 100%; }
+  .products-filter { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; scrollbar-width: none; }
+  .products-filter::-webkit-scrollbar { display: none; }
+  .filter-btn { flex-shrink: 0; white-space: nowrap; }
+  .cat-circle { width: 68px; height: 68px; font-size: 1.7rem; }
+  .category-card { min-width: 72px; }
+  .cat-name { font-size: .72rem; max-width: 72px; }
+  .stats-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cta-banner { padding: 32px 24px; flex-direction: column; }
+  .features-grid { grid-template-columns: 1fr; }
+  .trust-strip-inner { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .trust-strip-inner::-webkit-scrollbar { display: none; }
+  .trust-item { flex-shrink: 0; }
+}
+@media (max-width: 480px) {
+  .nav-inner { padding-inline: 14px; gap: 10px; }
+  .logo { font-size: 1.2rem; }
+  .cart-btn { padding: 8px 12px; font-size: .8rem; gap: 5px; }
+  .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .product-img { font-size: 3rem; }
+  .product-body { padding: 12px; }
+  .product-name { font-size: .875rem; }
+  .product-price { font-size: 1rem; }
+  .add-btn { padding: 7px 10px; font-size: .75rem; }
+  .slide h2 { font-size: 1.5rem; }
+  .section-title { font-size: 1.4rem; }
+}
 </style>
 </head>
 <body>
@@ -1816,6 +1865,11 @@ html.lenis, html.lenis body { height: auto; }
       <li><a href="#why-us">Why Us</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
+    <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMobileNav()">
+      <span class="ham-line"></span>
+      <span class="ham-line"></span>
+      <span class="ham-line"></span>
+    </button>
     <div class="nav-right">
       <button class="theme-btn" id="themeToggle" title="Toggle theme">🌙</button>
       <button class="cart-btn" id="cartBtn">
@@ -1824,6 +1878,17 @@ html.lenis, html.lenis body { height: auto; }
     </div>
   </div>
 </nav>
+
+<!-- ── MOBILE NAV ────────────────────────────────────────── -->
+<div class="mobile-nav" id="mobileNav" onclick="if(event.target===this)closeMobileNav()">
+  <div class="mobile-nav-panel">
+    <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+    <a class="mobile-nav-link" href="#categories" onclick="closeMobileNav()">🏪 Categories</a>
+    <a class="mobile-nav-link" href="#products" onclick="closeMobileNav()">📦 Products</a>
+    <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
+    <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">💬 Contact</a>
+  </div>
+</div>
 
 <!-- ── HERO ───────────────────────────────────────────────────── -->
 <section class="hero-slider" id="hero">
@@ -3113,6 +3178,19 @@ loadStoreSettings();
       el.addEventListener('mouseleave', () => cc.classList.remove('big'));
     });
 })();
+
+function toggleMobileNav() {
+  const nav = document.getElementById('mobileNav');
+  const btn = document.getElementById('hamburger');
+  const open = nav.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeMobileNav() {
+  document.getElementById('mobileNav').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
 </script>
 </body>
 </html>
