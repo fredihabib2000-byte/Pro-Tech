@@ -202,7 +202,7 @@ select.status-sel:focus{border-color:var(--accent)}
       <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password" style="margin-bottom:0;padding-right:44px">
       <button type="button" class="btn-eye" onclick="togglePw('pwInput',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1.1rem;padding:0;line-height:1">👁</button>
     </div>
-    <button onclick="doLogin()">Login</button>
+    <button type="button" onclick="doLogin()">Login</button>
     <div class="login-err" id="loginErr"></div>
   </div>
 </div>
@@ -489,19 +489,22 @@ async function sha1(s){const b=await crypto.subtle.digest("SHA-1",new TextEncode
 function getHash(){return localStorage.getItem("pt_pass_hash")||BASE_HASH}
 
 async function doLogin(){
-  const pw=document.getElementById("pwInput").value;
-  if(!pw){document.getElementById("loginErr").textContent="Enter your password.";return}
-  const h=await sha1(pw);
-  const ok=h===getHash()||h===BASE_HASH;
-  if(ok){
-    if(h===BASE_HASH)localStorage.removeItem("pt_pass_hash"); // reset any stale hash
-    localStorage.setItem("pt_admin","1");
-    document.getElementById("loginPage").style.display="none";
-    document.getElementById("shell").classList.add("show");
-    init();
-  } else {
-    document.getElementById("loginErr").textContent="Incorrect password.";
-  }
+  const errEl=document.getElementById("loginErr");
+  try{
+    const pw=document.getElementById("pwInput").value;
+    if(!pw){errEl.textContent="Enter your password.";return}
+    const h=await sha1(pw);
+    const ok=h===getHash()||h===BASE_HASH;
+    if(ok){
+      if(h===BASE_HASH)localStorage.removeItem("pt_pass_hash");
+      localStorage.setItem("pt_admin","1");
+      document.getElementById("loginPage").style.display="none";
+      document.getElementById("shell").classList.add("show");
+      init();
+    } else {
+      errEl.textContent="Incorrect password.";
+    }
+  }catch(e){errEl.textContent="Error: "+e.message;}
 }
 document.getElementById("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
 function doLogout(){localStorage.removeItem("pt_admin");location.reload()}
