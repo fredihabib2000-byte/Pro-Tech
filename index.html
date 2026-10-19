@@ -130,18 +130,18 @@ button { cursor: pointer; font-family: inherit; border: none; }
   margin-inline: auto;
   padding-inline: 20px;
 }
-.section { padding-block: 80px; }
+.section { padding-block: 96px; }
 .section-title {
   font-family: var(--display);
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
   text-wrap: balance;
 }
 .section-sub {
   color: var(--fg-2);
   font-size: .95rem;
-  margin-bottom: 40px;
+  margin-bottom: 52px;
 }
 
 /* ── Top bar ──────────────────────────────────────────────────── */
@@ -272,8 +272,13 @@ button { cursor: pointer; font-family: inherit; border: none; }
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  will-change: transform;
 }
 .logo-dot { color: var(--fg); }
+.nav-scrolled .logo { color: var(--accent); }
+.nav-scrolled .logo-dot { color: var(--fg); }
+@media (max-width: 400px) { .logo-dot { display: none; } }
 .nav-links {
   display: flex;
   gap: 4px;
@@ -793,7 +798,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
+  gap: 28px;
 }
 .product-card {
   background: var(--surface);
@@ -1783,7 +1788,7 @@ html.lenis, html.lenis body { height: auto; }
 /* ── General mobile fixes ────────────────────────────────── */
 @media (max-width: 640px) {
   body { overflow-x: hidden; }
-  .section { padding-block: 48px; }
+  .section { padding-block: 56px; }
   .container { padding-inline: 16px; }
   .products-header { flex-direction: column; align-items: stretch; }
   .search-bar { min-width: 0; width: 100%; }
