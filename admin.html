@@ -186,6 +186,9 @@ select.status-sel:focus{border-color:var(--accent)}
   th:nth-child(n+4),td:nth-child(n+4){display:none}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -267,6 +270,8 @@ select.status-sel:focus{border-color:var(--accent)}
               </div>
               <button class="btn btn-ghost btn-sm" onclick="clearOrderFilters()">✕ Clear</button>
               <button class="btn btn-ghost btn-sm" onclick="loadOrders()">↻ Refresh</button>
+              <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-size:.8rem;font-weight:600" onclick="exportOrdersExcel()">⬇ Excel</button>
+              <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-size:.8rem;font-weight:600" onclick="exportOrdersPDF()">⬇ PDF</button>
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
@@ -322,6 +327,8 @@ select.status-sel:focus{border-color:var(--accent)}
             <div style="display:flex;gap:8px">
               <button class="btn btn-ghost btn-sm" onclick="clearClientFilters()">✕ Clear</button>
               <button class="btn btn-ghost btn-sm" onclick="loadClients()">↻ Refresh</button>
+              <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-size:.8rem;font-weight:600" onclick="exportClientsExcel()">⬇ Excel</button>
+              <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:var(--r-sm);padding:6px 12px;cursor:pointer;font-size:.8rem;font-weight:600" onclick="exportClientsPDF()">⬇ PDF</button>
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -925,6 +932,11 @@ async function loadReports(){
     const fmtMoney=n=>n>=1000?"$"+(n/1000).toFixed(1)+"k":"$"+n.toFixed(0);
 
     document.getElementById("reportsContent").innerHTML=`
+    <!-- EXPORT TOOLBAR -->
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:20px">
+      <button class="btn btn-sm" style="background:var(--green-dim);color:var(--green);border:1px solid var(--green);border-radius:var(--r-sm);padding:8px 16px;cursor:pointer;font-size:.85rem;font-weight:600" onclick="exportReportsExcel()">⬇ Export Excel</button>
+      <button class="btn btn-sm" style="background:var(--red-dim);color:var(--red);border:1px solid var(--red);border-radius:var(--r-sm);padding:8px 16px;cursor:pointer;font-size:.85rem;font-weight:600" onclick="exportReportsPDF()">⬇ Export PDF</button>
+    </div>
     <!-- KPI CARDS -->
     <div class="stats" style="margin-bottom:24px">
       <div class="stat green"><div class="icon2">💰</div><div class="lbl">Revenue (Delivered)</div><div class="val">${fmtMoney(totalRevenue)}</div></div>
@@ -1115,6 +1127,199 @@ function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s}
 
 // close modals on bg click
 document.querySelectorAll(".modal-bg").forEach(bg=>bg.addEventListener("click",e=>{if(e.target===bg)bg.classList.remove("open")}));
+
+// ── EXPORT HELPERS ───────────────────────────────────────
+function dlExcel(wb, filename){XLSX.writeFile(wb, filename);}
+
+function dlPDF(doc, filename){doc.save(filename);}
+
+const pdfTheme={headStyles:{fillColor:[99,149,255],textColor:255,fontStyle:"bold",fontSize:9},bodyStyles:{fontSize:8,textColor:[238,240,255]},alternateRowStyles:{fillColor:[28,32,48]},tableLineColor:[60,65,90],tableLineWidth:0.2,margin:{left:14,right:14}};
+
+function makePDF(title){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+  doc.setFillColor(11,13,20);doc.rect(0,0,297,210,"F");
+  doc.setTextColor(238,240,255);doc.setFontSize(16);doc.setFont("helvetica","bold");
+  doc.text("Pro Technology",14,16);
+  doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(122,127,154);
+  doc.text(title,14,23);
+  doc.text(new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}),283,23,{align:"right"});
+  doc.setDrawColor(60,65,90);doc.setLineWidth(0.3);doc.line(14,26,283,26);
+  return doc;
+}
+
+// ORDERS EXPORT
+function getOrdersFiltered(){
+  const status=document.querySelector("#orderFilter .ftab.active")?.dataset.f||"all";
+  const name=(document.getElementById("of_name")?.value||"").toLowerCase().trim();
+  const phone=(document.getElementById("of_phone")?.value||"").replace(/\D/g,"");
+  const from=document.getElementById("of_from")?.value;
+  const to=document.getElementById("of_to")?.value;
+  return allOrders.filter(o=>{
+    if(status!=="all"&&o.status!==status)return false;
+    if(name&&!(o.customer_name||"").toLowerCase().includes(name))return false;
+    if(phone&&!(o.customer_phone||"").replace(/\D/g,"").includes(phone))return false;
+    if(from&&o.created_at&&new Date(o.created_at)<new Date(from))return false;
+    if(to&&o.created_at&&new Date(o.created_at)>new Date(to+"T23:59:59"))return false;
+    return true;
+  });
+}
+
+function exportOrdersExcel(){
+  const rows=getOrdersFiltered().map(o=>({
+    "Date":o.created_at?new Date(o.created_at).toLocaleString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"",
+    "Customer":o.customer_name||"",
+    "Phone":o.customer_phone||"",
+    "Items":Array.isArray(o.items)?o.items.map(i=>`${i.name} x${i.qty}`).join(", "):"",
+    "Total ($)":(o.total||0).toFixed(2),
+    "Status":cap(o.status||""),
+    "Notes":o.notes||""
+  }));
+  if(!rows.length){alert("No orders to export.");return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:20},{wch:18},{wch:15},{wch:50},{wch:10},{wch:12},{wch:30}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Orders");
+  dlExcel(wb,`ProTech_Orders_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportOrdersPDF(){
+  const orders=getOrdersFiltered();
+  if(!orders.length){alert("No orders to export.");return;}
+  const doc=makePDF("Orders Report");
+  const rows=orders.map(o=>[
+    o.created_at?new Date(o.created_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"",
+    o.customer_name||"",o.customer_phone||"",
+    Array.isArray(o.items)?o.items.map(i=>`${i.name} x${i.qty}`).join(", "):"",
+    "$"+(o.total||0).toFixed(2),cap(o.status||"")
+  ]);
+  doc.autoTable({startY:30,head:[["Date","Customer","Phone","Items","Total","Status"]],body:rows,...pdfTheme});
+  const total=orders.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+(o.total||0),0);
+  const y=doc.lastAutoTable.finalY+8;
+  doc.setTextColor(34,197,94);doc.setFontSize(9);doc.setFont("helvetica","bold");
+  doc.text(`Total Revenue (excl. cancelled): $${total.toFixed(2)}   |   Orders: ${orders.length}`,14,y);
+  dlPDF(doc,`ProTech_Orders_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// CLIENTS EXPORT
+function getClientsFiltered(){
+  const name=(document.getElementById("cf_name")?.value||"").toLowerCase().trim();
+  const phone=(document.getElementById("cf_phone")?.value||"").replace(/\D/g,"");
+  const from=document.getElementById("cf_from")?.value;
+  const to=document.getElementById("cf_to")?.value;
+  return allClients.filter(c=>{
+    if(name&&!(c.name||"").toLowerCase().includes(name))return false;
+    if(phone&&!(c.phone||"").replace(/\D/g,"").includes(phone))return false;
+    if(from&&c.last&&new Date(c.last)<new Date(from))return false;
+    if(to&&c.last&&new Date(c.last)>new Date(to+"T23:59:59"))return false;
+    return true;
+  });
+}
+
+function exportClientsExcel(){
+  const rows=getClientsFiltered().map((c,i)=>({
+    "#":i+1,"Name":c.name||"","Phone":c.phone||"",
+    "Total Orders":c.orders,"Total Spent ($)":c.spent.toFixed(2),
+    "Last Order":c.last?new Date(c.last).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):""
+  }));
+  if(!rows.length){alert("No clients to export.");return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws["!cols"]=[{wch:4},{wch:20},{wch:16},{wch:12},{wch:14},{wch:16}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Clients");
+  dlExcel(wb,`ProTech_Clients_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportClientsPDF(){
+  const clients=getClientsFiltered();
+  if(!clients.length){alert("No clients to export.");return;}
+  const doc=makePDF("Clients Report");
+  const rows=clients.map((c,i)=>[
+    i+1,c.name||"",c.phone||"",c.orders,"$"+c.spent.toFixed(2),
+    c.last?new Date(c.last).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):""
+  ]);
+  doc.autoTable({startY:30,head:[["#","Name","Phone","Orders","Total Spent","Last Order"]],body:rows,...pdfTheme});
+  dlPDF(doc,`ProTech_Clients_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// REPORTS EXPORT
+function exportReportsExcel(){
+  if(!allOrders.length){alert("Load Reports first.");return;}
+  const wb=XLSX.utils.book_new();
+  // Sheet 1: Summary
+  const delivered=allOrders.filter(o=>o.status==="delivered");
+  const nonCancelled=allOrders.filter(o=>o.status!=="cancelled");
+  const revenue=delivered.reduce((s,o)=>s+(o.total||0),0);
+  const totalRev=nonCancelled.reduce((s,o)=>s+(o.total||0),0);
+  const summary=[
+    {"Metric":"Total Revenue (Delivered)","Value":"$"+revenue.toFixed(2)},
+    {"Metric":"Total Revenue (excl. Cancelled)","Value":"$"+totalRev.toFixed(2)},
+    {"Metric":"Total Orders","Value":allOrders.length},
+    {"Metric":"Delivered","Value":delivered.length},
+    {"Metric":"Pending","Value":allOrders.filter(o=>o.status==="pending").length},
+    {"Metric":"Confirmed","Value":allOrders.filter(o=>o.status==="confirmed").length},
+    {"Metric":"Cancelled","Value":allOrders.filter(o=>o.status==="cancelled").length},
+    {"Metric":"Avg Order Value","Value":"$"+(nonCancelled.length?(totalRev/nonCancelled.length).toFixed(2):"0.00")},
+  ];
+  const ws1=XLSX.utils.json_to_sheet(summary);ws1["!cols"]=[{wch:32},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws1,"Summary");
+  // Sheet 2: Monthly
+  const now=new Date();const months=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    const label=d.toLocaleDateString("en-GB",{month:"short",year:"numeric"});
+    months.push({key,label,revenue:0,count:0});
+  }
+  nonCancelled.forEach(o=>{if(!o.created_at)return;const key=o.created_at.slice(0,7);const m=months.find(x=>x.key===key);if(m){m.revenue+=(o.total||0);m.count++;}});
+  const ws2=XLSX.utils.json_to_sheet(months.map(m=({"Month":m.label,"Orders":m.count,"Revenue ($)":m.revenue.toFixed(2)})));
+  ws2["!cols"]=[{wch:14},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Monthly Revenue");
+  // Sheet 3: Top Products
+  const prodSales={};
+  nonCancelled.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(i=>{prodSales[i.name]=(prodSales[i.name]||0)+(i.qty||1);});});
+  const topProds=Object.entries(prodSales).sort((a,b)=>b[1]-a[1]);
+  const ws3=XLSX.utils.json_to_sheet(topProds.map(([n,q],i)=({"#":i+1,"Product":n,"Units Sold":q})));
+  ws3["!cols"]=[{wch:4},{wch:36},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws3,"Top Products");
+  dlExcel(wb,`ProTech_Reports_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportReportsPDF(){
+  if(!allOrders.length){alert("Load Reports first.");return;}
+  const doc=makePDF("Sales & Revenue Report");
+  const delivered=allOrders.filter(o=>o.status==="delivered");
+  const nonCancelled=allOrders.filter(o=>o.status!=="cancelled");
+  const revenue=delivered.reduce((s,o)=>s+(o.total||0),0);
+  const totalRev=nonCancelled.reduce((s,o)=>s+(o.total||0),0);
+  // KPI table
+  doc.autoTable({startY:30,head:[["Metric","Value"]],body:[
+    ["Revenue (Delivered)","$"+revenue.toFixed(2)],
+    ["Revenue (excl. Cancelled)","$"+totalRev.toFixed(2)],
+    ["Total Orders",allOrders.length],
+    ["Delivered / Pending / Confirmed / Cancelled",`${delivered.length} / ${allOrders.filter(o=>o.status==="pending").length} / ${allOrders.filter(o=>o.status==="confirmed").length} / ${allOrders.filter(o=>o.status==="cancelled").length}`],
+    ["Avg Order Value","$"+(nonCancelled.length?(totalRev/nonCancelled.length).toFixed(2):"0.00")],
+  ],...pdfTheme,columnStyles:{0:{cellWidth:80},1:{cellWidth:60,halign:"right"}}});
+  // Monthly table
+  const now=new Date();const months=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    months.push({key,label:d.toLocaleDateString("en-GB",{month:"short",year:"numeric"}),revenue:0,count:0});
+  }
+  nonCancelled.forEach(o=>{if(!o.created_at)return;const key=o.created_at.slice(0,7);const m=months.find(x=>x.key===key);if(m){m.revenue+=(o.total||0);m.count++;}});
+  let y=doc.lastAutoTable.finalY+10;
+  doc.setTextColor(238,240,255);doc.setFontSize(11);doc.setFont("helvetica","bold");doc.text("Monthly Revenue",14,y);
+  doc.autoTable({startY:y+4,head:[["Month","Orders","Revenue ($)"]],body:months.map(m=>[m.label,m.count,"$"+m.revenue.toFixed(2)]),...pdfTheme,columnStyles:{2:{halign:"right"}}});
+  // Top products
+  const prodSales={};
+  nonCancelled.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(i=>{prodSales[i.name]=(prodSales[i.name]||0)+(i.qty||1);});});
+  const topProds=Object.entries(prodSales).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if(topProds.length){
+    y=doc.lastAutoTable.finalY+10;
+    doc.setTextColor(238,240,255);doc.setFontSize(11);doc.setFont("helvetica","bold");doc.text("Top Products by Units Sold",14,y);
+    doc.autoTable({startY:y+4,head:[["#","Product","Units Sold"]],body:topProds.map(([n,q],i)=>[i+1,n,q]),...pdfTheme,columnStyles:{2:{halign:"right"}}});
+  }
+  dlPDF(doc,`ProTech_Reports_${new Date().toISOString().slice(0,10)}.pdf`);
+}
 </script>
 </body>
 </html>
