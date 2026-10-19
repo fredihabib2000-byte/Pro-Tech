@@ -2738,19 +2738,18 @@ async function submitOrder() {
     // Notify owner on WhatsApp (silent background open)
     const now = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
     const ownerMsg = encodeURIComponent(
-`━━━━━━━━━━━━━━━━━━━━
-🛒  NEW ORDER — Pro Technology
-━━━━━━━━━━━━━━━━━━━━
-👤  Customer:  ${name}
-📞  Phone:       ${phone}
-🕐  Time:         ${now}
-━━━━━━━━━━━━━━━━━━━━
-📦  Items:
+`🛒 *NEW ORDER - Pro Technology*
+-----------------------------
+👤 *Customer:* ${name}
+📱 *Phone:* ${phone}
+🕐 *Time:* ${now}
+-----------------------------
+📦 *Items:*
 ${itemsList}
-━━━━━━━━━━━━━━━━━━━━
-💰  Total:  $${total.toFixed(2)}
-━━━━━━━━━━━━━━━━━━━━
-⚠️  Please confirm delivery location with the customer.`
+-----------------------------
+💰 *Total: $${total.toFixed(2)}*
+-----------------------------
+⚠ Confirm delivery location with customer.`
     );
     window.open(`https://wa.me/${ownerNum}?text=${ownerMsg}`, "_blank");
 
