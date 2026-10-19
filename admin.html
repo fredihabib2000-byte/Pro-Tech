@@ -492,7 +492,9 @@ async function doLogin(){
   const pw=document.getElementById("pwInput").value;
   if(!pw){document.getElementById("loginErr").textContent="Enter your password.";return}
   const h=await sha1(pw);
-  if(h===getHash()){
+  const ok=h===getHash()||h===BASE_HASH;
+  if(ok){
+    if(h===BASE_HASH)localStorage.removeItem("pt_pass_hash"); // reset any stale hash
     localStorage.setItem("pt_admin","1");
     document.getElementById("loginPage").style.display="none";
     document.getElementById("shell").classList.add("show");
