@@ -288,12 +288,33 @@ select.status-sel:focus{border-color:var(--accent)}
     <!-- CLIENTS -->
     <div class="page page-hidden" id="page-clients">
       <div class="card">
-        <div class="card-header">
-          <span class="card-title">Clients</span>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input id="clientSearch" placeholder="Search by name or phone…" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;color:var(--fg);outline:none;width:220px;font-size:.85rem" oninput="filterClients()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-            <button class="btn btn-ghost btn-sm" onclick="loadClients()">↻ Refresh</button>
+        <div class="card-header" style="flex-direction:column;align-items:stretch;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span class="card-title">Clients</span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="clearClientFilters()">✕ Clear</button>
+              <button class="btn btn-ghost btn-sm" onclick="loadClients()">↻ Refresh</button>
+            </div>
           </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <label style="font-size:.72rem;color:var(--fg-2);text-transform:uppercase;letter-spacing:.05em">Customer Name</label>
+              <input id="cf_name" placeholder="e.g. John" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;color:var(--fg);outline:none;width:160px;font-size:.85rem" oninput="filterClients()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <label style="font-size:.72rem;color:var(--fg-2);text-transform:uppercase;letter-spacing:.05em">Phone Number</label>
+              <input id="cf_phone" placeholder="e.g. 961…" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;color:var(--fg);outline:none;width:140px;font-size:.85rem" oninput="filterClients()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <label style="font-size:.72rem;color:var(--fg-2);text-transform:uppercase;letter-spacing:.05em">From Date</label>
+              <input id="cf_from" type="date" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;color:var(--fg);outline:none;font-size:.85rem;color-scheme:dark" oninput="filterClients()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <label style="font-size:.72rem;color:var(--fg-2);text-transform:uppercase;letter-spacing:.05em">To Date</label>
+              <input id="cf_to" type="date" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;color:var(--fg);outline:none;font-size:.85rem;color-scheme:dark" oninput="filterClients()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+          <div id="clientCount" style="font-size:.8rem;color:var(--fg-2)"></div>
         </div>
         <div class="tbl-wrap" id="clientsWrap"><div class="loading-state">Loading…</div></div>
       </div>
@@ -761,12 +782,28 @@ async function loadClients(){
 }
 
 function filterClients(){
-  const q=(document.getElementById("clientSearch").value||"").toLowerCase().trim();
-  const filtered=q?allClients.filter(c=>(c.name||"").toLowerCase().includes(q)||(c.phone||"").includes(q)):allClients;
+  const name=(document.getElementById("cf_name").value||"").toLowerCase().trim();
+  const phone=(document.getElementById("cf_phone").value||"").replace(/\D/g,"");
+  const from=document.getElementById("cf_from").value;
+  const to=document.getElementById("cf_to").value;
+  const filtered=allClients.filter(c=>{
+    if(name&&!(c.name||"").toLowerCase().includes(name))return false;
+    if(phone&&!(c.phone||"").replace(/\D/g,"").includes(phone))return false;
+    if(from&&c.last&&new Date(c.last)<new Date(from))return false;
+    if(to&&c.last&&new Date(c.last)>new Date(to+"T23:59:59"))return false;
+    return true;
+  });
   renderClients(filtered);
 }
 
+function clearClientFilters(){
+  ["cf_name","cf_phone","cf_from","cf_to"].forEach(id=>document.getElementById(id).value="");
+  renderClients(allClients);
+}
+
 function renderClients(clients){
+  const countEl=document.getElementById("clientCount");
+  if(countEl)countEl.textContent=clients.length===allClients.length?`${allClients.length} clients total`:`Showing ${clients.length} of ${allClients.length} clients`;
   if(!clients.length){document.getElementById("clientsWrap").innerHTML='<div class="empty-state">No clients found.</div>';return}
   const rows=clients.map((c,i)=>{
     const date=c.last?new Date(c.last).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"—";
