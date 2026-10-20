@@ -917,6 +917,44 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .add-btn:hover { background: var(--accent-hover); transform: scale(1.04); }
 .add-btn.added { background: var(--success); }
 
+/* ── Swipe-to-cart (mobile) ───────────────────────────────── */
+.swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r);
+}
+.swipe-action-strip {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 80px;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  z-index: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-action-strip-icon { font-size: 1.5rem; line-height: 1; }
+.swipe-wrap .product-card {
+  position: relative;
+  z-index: 2;
+  border-radius: var(--r);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  touch-action: pan-y;
+}
+.swipe-wrap .product-card.sw-open {
+  transform: translateX(-80px);
+  box-shadow: -4px 0 16px rgba(0,0,0,.15);
+}
+
 /* ── Brands ───────────────────────────────────────────────────── */
 .brands-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding-block: 32px; }
 .brands-inner { max-width: 1200px; margin-inline: auto; padding-inline: 20px; }
@@ -2454,29 +2492,34 @@ async function loadProducts() {
 // ── Render products ───────────────────────────────────────────────
 function productCardHTML(p) {
   return `
-    <div class="product-card" onclick="openProductDetail(${p.id})">
-      <div class="shimmer-layer" aria-hidden="true"></div>
-      <div class="product-img">
-        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">` : `<span>${p.icon}</span>`}
-        ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${p.badge}</div>` : ""}
-        ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
-        <div class="product-img-overlay">
-          <button class="quick-view-pill" onclick="event.stopPropagation();openProductDetail(${p.id})">Quick View</button>
-        </div>
+    <div class="swipe-wrap">
+      <div class="swipe-action-strip" onclick="swipeAddToCart(${p.id},this)">
+        <span class="swipe-action-strip-icon">🛒</span>Add
       </div>
-      <div class="product-body">
-        <div class="product-cat">${catLabel(p.cat)}</div>
-        <div class="product-name">${p.name}</div>
-        <div class="product-desc">${p.desc}</div>
-        ${p.specs ? `<ul class="product-specs">${p.specs.split('\n').filter(Boolean).slice(0,4).map(s=>`<li>${s}</li>`).join('')}</ul>` : ""}
-        <div class="product-footer">
-          <div>
-            <span class="product-price">$${p.price.toLocaleString()}</span>
-            ${p.oldPrice ? `<span class="product-price-old">$${p.oldPrice.toLocaleString()}</span>` : ""}
+      <div class="product-card" onclick="openProductDetail(${p.id})">
+        <div class="shimmer-layer" aria-hidden="true"></div>
+        <div class="product-img">
+          ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">` : `<span>${p.icon}</span>`}
+          ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${p.badge}</div>` : ""}
+          ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
+          <div class="product-img-overlay">
+            <button class="quick-view-pill" onclick="event.stopPropagation();openProductDetail(${p.id})">Quick View</button>
           </div>
-          <button class="add-btn" id="addbtn-${p.id}" onclick="event.stopPropagation();addToCart(${p.id})">
-            + Add
-          </button>
+        </div>
+        <div class="product-body">
+          <div class="product-cat">${catLabel(p.cat)}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-desc">${p.desc}</div>
+          ${p.specs ? `<ul class="product-specs">${p.specs.split('\n').filter(Boolean).slice(0,4).map(s=>`<li>${s}</li>`).join('')}</ul>` : ""}
+          <div class="product-footer">
+            <div>
+              <span class="product-price">$${p.price.toLocaleString()}</span>
+              ${p.oldPrice ? `<span class="product-price-old">$${p.oldPrice.toLocaleString()}</span>` : ""}
+            </div>
+            <button class="add-btn" id="addbtn-${p.id}" onclick="event.stopPropagation();addToCart(${p.id})">
+              + Add
+            </button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -2505,7 +2548,7 @@ function renderProducts(appendFrom) {
     // append only the new cards (avoid full re-render flicker)
     const newCards = filtered.slice(appendFrom, visibleCount).map(productCardHTML).join("");
     grid.insertAdjacentHTML("beforeend", newCards);
-    const added = grid.querySelectorAll(".product-card:nth-child(n+" + (appendFrom + 1) + ")");
+    const added = grid.querySelectorAll(".swipe-wrap:nth-child(n+" + (appendFrom + 1) + ") .product-card");
     if (typeof gsap !== "undefined" && added.length) {
       gsap.from(added, { y: 32, opacity: 0, duration: .42, stagger: .04, ease: "power2.out", clearProps: "all" });
     }
@@ -3183,6 +3226,62 @@ loadStoreSettings();
       el.addEventListener('mouseleave', () => cc.classList.remove('big'));
     });
 })();
+
+// ── Swipe-to-cart touch handling ─────────────────────────────
+(function initSwipe() {
+  if (!('ontouchstart' in window)) return;
+  let card = null, startX = 0, startY = 0, curX = 0, dir = null;
+
+  function closeAll(except) {
+    document.querySelectorAll('.swipe-wrap .product-card.sw-open').forEach(c => {
+      if (c !== except) { c.classList.remove('sw-open'); c.style.transform = ''; }
+    });
+  }
+
+  document.addEventListener('touchstart', e => {
+    card = e.target.closest('.swipe-wrap .product-card');
+    if (!card) { closeAll(null); return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    curX = startX;
+    dir = null;
+    card.style.transition = 'none';
+  }, {passive: true});
+
+  document.addEventListener('touchmove', e => {
+    if (!card) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (dir === null) {
+      if (Math.abs(dx) > Math.abs(dy) + 4) dir = 'h';
+      else if (Math.abs(dy) > Math.abs(dx) + 4) dir = 'v';
+      else return;
+    }
+    if (dir !== 'h') return;
+    e.preventDefault();
+    curX = e.touches[0].clientX;
+    const base = card.classList.contains('sw-open') ? -80 : 0;
+    const tx = Math.max(-80, Math.min(0, base + dx));
+    card.style.transform = `translateX(${tx}px)`;
+  }, {passive: false});
+
+  document.addEventListener('touchend', () => {
+    if (!card || dir !== 'h') { card = null; return; }
+    card.style.transition = '';
+    card.style.transform = '';
+    const dx = curX - startX;
+    if (dx < -36) { closeAll(card); card.classList.add('sw-open'); }
+    else if (dx > 20) { card.classList.remove('sw-open'); }
+    else if (!card.classList.contains('sw-open')) { /* tiny move, no change */ }
+    card = null;
+  }, {passive: true});
+})();
+
+function swipeAddToCart(id, btn) {
+  addToCart(id);
+  const card = btn.closest('.swipe-wrap').querySelector('.product-card');
+  card.classList.remove('sw-open');
+}
 
 function toggleMobileNav() {
   const nav = document.getElementById('mobileNav');
