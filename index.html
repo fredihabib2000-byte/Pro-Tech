@@ -922,6 +922,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
   position: relative;
   overflow: hidden;
   border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
 }
 .swipe-action-strip {
   position: absolute;
@@ -949,6 +951,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   border-radius: var(--r);
   transition: transform .25s cubic-bezier(.4,0,.2,1);
   touch-action: pan-y;
+  flex: 1;
 }
 .swipe-wrap .product-card.sw-open {
   transform: translateX(-80px);
@@ -2513,7 +2516,7 @@ function productCardHTML(p) {
           <div class="product-cat">${catLabel(p.cat)}</div>
           <div class="product-name">${p.name}</div>
           <div class="product-desc">${p.desc}</div>
-          ${p.specs ? `<ul class="product-specs">${p.specs.split('\n').filter(Boolean).slice(0,4).map(s=>`<li>${s}</li>`).join('')}</ul>` : ""}
+          ${p.specs ? `<ul class="product-specs">${p.specs.split(/\n|\\n/).filter(Boolean).slice(0,4).map(s=>`<li>${s}</li>`).join('')}</ul>` : ""}
           <div class="product-footer">
             <div>
               <span class="product-price">$${p.price.toLocaleString()}</span>
@@ -2824,7 +2827,7 @@ function openProductDetail(id) {
   document.getElementById("pmDesc").textContent = p.desc || "";
   const specsEl = document.getElementById("pmSpecs");
   if (p.specs) {
-    specsEl.innerHTML = p.specs.split("\n").filter(Boolean).map(s => `<li>${s}</li>`).join("");
+    specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${s}</li>`).join("");
     specsEl.style.display = "";
   } else {
     specsEl.innerHTML = ""; specsEl.style.display = "none";

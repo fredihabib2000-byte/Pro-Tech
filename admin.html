@@ -532,9 +532,16 @@ if(localStorage.getItem("pt_admin")){
 }
 
 async function sb(path,opts={}){
-  const r=await fetch(SB_URL+path,{cache:"no-store",...opts,headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})}});
-  if(!r.ok){const body=await r.text();throw new Error(`HTTP ${r.status}: ${body.slice(0,300)}`);}
-  const t=await r.text();return t?JSON.parse(t):null;
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),15000);
+  try{
+    const r=await fetch(SB_URL+path,{...opts,signal:ctrl.signal,headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})}});
+    if(!r.ok){const body=await r.text();throw new Error(`HTTP ${r.status}: ${body.slice(0,300)}`);}
+    const t=await r.text();return t?JSON.parse(t):null;
+  }catch(e){
+    if(e.name==="AbortError")throw new Error("Timeout — Supabase did not respond in 15s. Check your internet connection.");
+    throw e;
+  }finally{clearTimeout(timer);}
 }
 
 async function uploadProductImage(input){
