@@ -533,7 +533,7 @@ if(localStorage.getItem("pt_admin")){
 
 async function sb(path,opts={}){
   const r=await fetch(SB_URL+path,{cache:"no-store",...opts,headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})}});
-  if(!r.ok)throw new Error(await r.text());
+  if(!r.ok){const body=await r.text();throw new Error(`HTTP ${r.status}: ${body.slice(0,300)}`);}
   const t=await r.text();return t?JSON.parse(t):null;
 }
 
@@ -965,7 +965,7 @@ async function loadClients(){
     });
     allClients=Object.values(map).sort((a,b)=>b.spent-a.spent);
     renderClients(allClients);
-  }catch(e){document.getElementById("clientsWrap").innerHTML='<div class="empty-state">Failed to load clients.</div>'}
+  }catch(e){console.error("loadClients error:",e);document.getElementById("clientsWrap").innerHTML=`<div class="empty-state">Failed to load clients: ${e.message}</div>`}
 }
 
 function filterClients(){
@@ -1017,7 +1017,7 @@ async function loadInventory(){
     // sync into allProducts so stock edits are reflected everywhere
     allProducts=prods;
     renderInventory();
-  }catch(e){cont.innerHTML='<div class="empty-state">Failed to load inventory.</div>';}
+  }catch(e){console.error("loadInventory error:",e);cont.innerHTML=`<div class="empty-state">Failed to load inventory: ${e.message}</div>`;}
 }
 
 function renderInventory(){
@@ -1231,7 +1231,7 @@ async function loadReports(){
     rptAllOrders=allOrders.length?allOrders:(await sb("/rest/v1/pt_orders?select=*&order=created_at.asc")||[]);
     renderReportsShell();
     renderReportTab();
-  }catch(e){cont.innerHTML='<div class="empty-state">Failed to load reports.</div>';}
+  }catch(e){console.error("loadReports error:",e);cont.innerHTML=`<div class="empty-state">Failed to load reports: ${e.message}</div>`;}
 }
 
 function renderReportsShell(){
@@ -1462,7 +1462,7 @@ async function loadMessages(){
     const unread=allMsgs.filter(m=>!m.is_read).length;
     document.getElementById("msgDot").style.display=unread?"":"none";
     document.getElementById("msgDot").textContent=unread;
-  }catch(e){document.getElementById("msgsWrap").innerHTML='<div class="empty-state">Failed to load messages.</div>'}
+  }catch(e){console.error("loadMessages error:",e);document.getElementById("msgsWrap").innerHTML=`<div class="empty-state">Failed to load messages: ${e.message}</div>`}
 }
 
 function filterMsgs(el){
