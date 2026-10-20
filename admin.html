@@ -496,6 +496,7 @@ select.status-sel:focus{border-color:var(--accent)}
 const SB_URL  = "https://cgmqovyttrjecrbynooo.supabase.co";
 const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnbXFvdnl0dHJqZWNyYnlub29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzg4MDAsImV4cCI6MjEwNjAxNDgwMH0.T0fRGI4e1i0xcfVMdLZo_UTnCIGRaBjYgC_JjzcfjT0";
 const BASE_HASH = "1a32ff273feb5cbe78820bcd5000d5d1a90d8edd"; // sha1(protech2024)
+const num = v => parseFloat(v) || 0; // Supabase returns numeric as string; coerce everywhere
 
 function togglePw(id,btn){const el=document.getElementById(id);el.type=el.type==="password"?"text":"password";btn.textContent=el.type==="password"?"👁":"🙈";}
 
@@ -719,7 +720,7 @@ async function loadDashboard(){
       sb("/rest/v1/pt_feedback?select=is_read")
     ]);
     const o=orders||[],p=products||[],m=msgs||[];
-    const revenue=o.filter(x=>x.status!=="cancelled").reduce((s,x)=>s+(x.total||0),0);
+    const revenue=o.filter(x=>x.status!=="cancelled").reduce((s,x)=>s+num(x.total),0);
     const pending=o.filter(x=>x.status==="pending").length;
     const lowStock=p.filter(x=>x.is_active&&(x.quantity||0)<5).length;
     const unread=m.filter(x=>!x.is_read).length;
@@ -803,7 +804,7 @@ function renderOrdersTable(orders,wrapId,compact){
       <td style="color:var(--fg-2);font-size:.78rem;white-space:nowrap">${date}</td>
       <td><strong>${o.customer_name||"—"}</strong><br><span style="color:var(--fg-2);font-size:.78rem">${o.customer_phone||""}</span></td>
       <td style="max-width:220px;color:var(--fg-2);font-size:.82rem">${items}</td>
-      <td><strong>$${(o.total||0).toFixed(2)}</strong></td>
+      <td><strong>$${num(o.total).toFixed(2)}</strong></td>
       <td>${statusSel}</td>
       ${!compact?`<td><button class="btn btn-ghost btn-sm" onclick="viewOrder(${o.id})">View</button></td>`:""}
     </tr>`;
@@ -821,7 +822,7 @@ async function updateOrderStatus(sel){
 
 function viewOrder(id){
   const o=allOrders.find(x=>x.id==id);if(!o)return;
-  const items=Array.isArray(o.items)?o.items.map(i=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>${i.name} ×${i.qty}</span><strong>$${((i.price||0)*i.qty).toFixed(2)}</strong></div>`).join(""):"";
+  const items=Array.isArray(o.items)?o.items.map(i=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>${i.name} ×${i.qty}</span><strong>$${(num(i.price)*i.qty).toFixed(2)}</strong></div>`).join(""):"";
   const date=o.created_at?new Date(o.created_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"}):"—";
   document.getElementById("orderDetailContent").innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
@@ -831,7 +832,7 @@ function viewOrder(id){
       <div><div style="font-size:.73rem;color:var(--fg-2);margin-bottom:3px">STATUS</div><span class="badge ${o.status}">${cap(o.status)}</span></div>
     </div>
     <div style="margin-bottom:16px">${items}</div>
-    <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700;padding-top:10px;border-top:1px solid var(--border)"><span>Total</span><span>$${(o.total||0).toFixed(2)}</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700;padding-top:10px;border-top:1px solid var(--border)"><span>Total</span><span>$${num(o.total).toFixed(2)}</span></div>
     ${o.notes?`<div style="margin-top:12px;background:var(--surface-2);border-radius:var(--r-sm);padding:10px 14px;font-size:.85rem;color:var(--fg-2)"><strong style="color:var(--fg)">Note:</strong> ${o.notes}</div>`:""}
   `;
   document.getElementById("orderModal").classList.add("open");
@@ -861,7 +862,7 @@ function renderProductsTable(prods){
       <td>${p.image_url?`<img src="${p.image_url}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;background:var(--surface-2)">`:`<div style="width:42px;height:42px;border-radius:6px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.2rem">${p.icon||"📦"}</div>`}</td>
       <td><strong>${p.name}</strong>${p.badge?`<br><span style="font-size:.72rem;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:99px">${p.badge}</span>`:""}</td>
       <td style="color:var(--fg-2)">${p.category||"—"}</td>
-      <td><strong>$${(p.price||0).toFixed(2)}</strong>${p.old_price?`<br><span style="text-decoration:line-through;color:var(--fg-2);font-size:.78rem">$${p.old_price}</span>`:""}</td>
+      <td><strong>$${num(p.price).toFixed(2)}</strong>${p.old_price?`<br><span style="text-decoration:line-through;color:var(--fg-2);font-size:.78rem">$${p.old_price}</span>`:""}</td>
       <td>
         <div class="stock-wrap">
           <input class="stock-input" type="number" value="${p.quantity||0}" min="0" data-id="${p.id}" onchange="markStockDirty(this)">
@@ -959,7 +960,7 @@ async function loadClients(){
       const k=o.customer_phone||o.customer_name;
       if(!map[k])map[k]={name:o.customer_name,phone:o.customer_phone,orders:0,spent:0,last:o.created_at};
       map[k].orders++;
-      if(o.status!=="cancelled")map[k].spent+=(o.total||0);
+      if(o.status!=="cancelled")map[k].spent+=num(o.total);
       if(new Date(o.created_at)>new Date(map[k].last))map[k].last=o.created_at;
     });
     allClients=Object.values(map).sort((a,b)=>b.spent-a.spent);
@@ -1025,7 +1026,7 @@ function renderInventory(){
   const lowStock=prods.filter(p=>p.is_active&&(p.quantity||0)>0&&(p.quantity||0)<5);
   const inStock=prods.filter(p=>p.is_active&&(p.quantity||0)>=5);
   const inactive=prods.filter(p=>!p.is_active);
-  const totalValue=prods.reduce((s,p)=>s+(p.is_active?(p.quantity||0)*(p.price||0):0),0);
+  const totalValue=prods.reduce((s,p)=>s+(p.is_active?(p.quantity||0)*num(p.price):0),0);
 
   // update sidebar dot
   const dot=document.getElementById("lowStockDot");
@@ -1107,8 +1108,8 @@ function renderInventory(){
               </div>
             </td>
             <td>${badge(p)}</td>
-            <td style="text-align:right;color:var(--fg)">$${(p.price||0).toFixed(2)}</td>
-            <td style="text-align:right;font-weight:600;color:var(--fg-2)">$${((p.quantity||0)*(p.price||0)).toFixed(2)}</td>
+            <td style="text-align:right;color:var(--fg)">$${num(p.price).toFixed(2)}</td>
+            <td style="text-align:right;font-weight:600;color:var(--fg-2)">$${((p.quantity||0)*num(p.price)).toFixed(2)}</td>
             <td><button onclick="invAdjust(${p.id})" style="background:none;border:1px solid var(--border);border-radius:var(--r-sm);padding:4px 10px;cursor:pointer;color:var(--fg-2);font-size:.78rem">Set</button></td>
           </tr>`).join(""):`<tr><td colspan="7" style="text-align:center;color:var(--fg-2);padding:24px">No products match.</td></tr>`}
         </tbody>
@@ -1171,15 +1172,15 @@ function exportInventoryExcel(){
     "Category":p.category||"—",
     "Status":invStatusLabel(p),
     "Stock":p.quantity||0,
-    "Price ($)":(p.price||0).toFixed(2),
-    "Stock Value ($)":((p.quantity||0)*(p.price||0)).toFixed(2),
+    "Price ($)":num(p.price).toFixed(2),
+    "Stock Value ($)":((p.quantity||0)*num(p.price)).toFixed(2),
   }));
   const ws=XLSX.utils.json_to_sheet(rows);
   ws["!cols"]=[{wch:4},{wch:34},{wch:16},{wch:14},{wch:8},{wch:10},{wch:14}];
   XLSX.utils.book_append_sheet(wb,ws,"Inventory");
   // summary sheet
   const active=allProducts.filter(p=>p.is_active);
-  const totalValue=active.reduce((s,p)=>s+(p.quantity||0)*(p.price||0),0);
+  const totalValue=active.reduce((s,p)=>s+(p.quantity||0)*num(p.price),0);
   const summary=[
     {"Metric":"Total SKUs (active)","Value":active.length},
     {"Metric":"In Stock (≥5)","Value":active.filter(p=>(p.quantity||0)>=5).length},
@@ -1197,7 +1198,7 @@ function exportInventoryPDF(){
   if(!allProducts.length){alert("Open Inventory first.");return;}
   const doc=makePDF("Inventory Report");
   const active=allProducts.filter(p=>p.is_active);
-  const totalValue=active.reduce((s,p)=>s+(p.quantity||0)*(p.price||0),0);
+  const totalValue=active.reduce((s,p)=>s+(p.quantity||0)*num(p.price),0);
   doc.autoTable({startY:30,head:[["Metric","Value"]],body:[
     ["Total SKUs (active)",active.length],
     ["In Stock (≥5)",active.filter(p=>(p.quantity||0)>=5).length],
@@ -1212,7 +1213,7 @@ function exportInventoryPDF(){
     doc.setTextColor(238,240,255);doc.setFontSize(11);doc.setFont("helvetica","bold");
     doc.text("Product List",14,y);
     doc.autoTable({startY:y+4,head:[["#","Product","Category","Status","Stock","Price ($)","Value ($)"]],
-      body:rows.map((p,i)=>[i+1,p.name,p.category||"—",invStatusLabel(p),p.quantity||0,"$"+(p.price||0).toFixed(2),"$"+((p.quantity||0)*(p.price||0)).toFixed(2)]),
+      body:rows.map((p,i)=>[i+1,p.name,p.category||"—",invStatusLabel(p),p.quantity||0,"$"+num(p.price).toFixed(2),"$"+((p.quantity||0)*num(p.price)).toFixed(2)]),
       ...pdfTheme,columnStyles:{0:{cellWidth:8},4:{halign:"right"},5:{halign:"right"},6:{halign:"right"}}});
   }
   dlPDF(doc,`ProTech_Inventory_${new Date().toISOString().slice(0,10)}.pdf`);
@@ -1316,8 +1317,8 @@ function buildSalesRpt(orders,lbl){
   const confirmed=orders.filter(o=>o.status==="confirmed");
   const cancelled=orders.filter(o=>o.status==="cancelled");
   const nonCancelled=orders.filter(o=>o.status!=="cancelled");
-  const revenue=delivered.reduce((s,o)=>s+(o.total||0),0);
-  const totalRev=nonCancelled.reduce((s,o)=>s+(o.total||0),0);
+  const revenue=delivered.reduce((s,o)=>s+num(o.total),0);
+  const totalRev=nonCancelled.reduce((s,o)=>s+num(o.total),0);
   const avgOrder=nonCancelled.length?totalRev/nonCancelled.length:0;
   const fmtMoney=n=>n>=1000?"$"+(n/1000).toFixed(1)+"k":"$"+n.toFixed(0);
   const statusData=[
@@ -1329,7 +1330,7 @@ function buildSalesRpt(orders,lbl){
   const maxCount=Math.max(...statusData.map(s=>s.count),1);
   // daily breakdown (last 14 days within range)
   const dayMap={};
-  nonCancelled.forEach(o=>{if(!o.created_at)return;const d=o.created_at.slice(0,10);dayMap[d]=(dayMap[d]||0)+(o.total||0);});
+  nonCancelled.forEach(o=>{if(!o.created_at)return;const d=o.created_at.slice(0,10);dayMap[d]=(dayMap[d]||0)+num(o.total);});
   const dayKeys=Object.keys(dayMap).sort().slice(-14);
   const maxDay=Math.max(...dayKeys.map(k=>dayMap[k]),1);
   return `
@@ -1385,7 +1386,7 @@ function buildProductsRpt(orders,lbl){
     o.items.forEach(i=>{
       if(!prodMap[i.name])prodMap[i.name]={qty:0,revenue:0};
       prodMap[i.name].qty+=(i.qty||1);
-      prodMap[i.name].revenue+=(i.qty||1)*(i.price||0);
+      prodMap[i.name].revenue+=(i.qty||1)*num(i.price);
     });
   });
   const prods=Object.entries(prodMap).sort((a,b)=>b[1].qty-a[1].qty);
@@ -1424,7 +1425,7 @@ function buildClientsRpt(orders,lbl){
   orders.filter(o=>o.status!=="cancelled").forEach(o=>{
     const key=(o.phone||o.customer_name||"unknown").toLowerCase();
     if(!map[key])map[key]={name:o.customer_name||"—",phone:o.phone||"—",orders:0,spent:0,last:""};
-    map[key].orders++;map[key].spent+=(o.total||0);
+    map[key].orders++;map[key].spent+=num(o.total);
     if(!map[key].last||o.created_at>map[key].last)map[key].last=o.created_at;
   });
   const clients=Object.values(map).sort((a,b)=>b.spent-a.spent);
@@ -1617,7 +1618,7 @@ function exportOrdersExcel(){
     "Customer":o.customer_name||"",
     "Phone":o.customer_phone||"",
     "Items":Array.isArray(o.items)?o.items.map(i=>`${i.name} x${i.qty}`).join(", "):"",
-    "Total ($)":(o.total||0).toFixed(2),
+    "Total ($)":num(o.total).toFixed(2),
     "Status":cap(o.status||""),
     "Notes":o.notes||""
   }));
@@ -1636,10 +1637,10 @@ function exportOrdersPDF(){
     o.created_at?new Date(o.created_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}):"",
     o.customer_name||"",o.customer_phone||"",
     Array.isArray(o.items)?o.items.map(i=>`${i.name} x${i.qty}`).join(", "):"",
-    "$"+(o.total||0).toFixed(2),cap(o.status||"")
+    "$"+num(o.total).toFixed(2),cap(o.status||"")
   ]);
   doc.autoTable({startY:30,head:[["Date","Customer","Phone","Items","Total","Status"]],body:rows,...pdfTheme});
-  const total=orders.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+(o.total||0),0);
+  const total=orders.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+num(o.total),0);
   const y=doc.lastAutoTable.finalY+8;
   doc.setTextColor(34,197,94);doc.setFontSize(9);doc.setFont("helvetica","bold");
   doc.text(`Total Revenue (excl. cancelled): $${total.toFixed(2)}   |   Orders: ${orders.length}`,14,y);
@@ -1694,8 +1695,8 @@ function exportReportsExcel(){
   const wb=XLSX.utils.book_new();
   // Sheet 1: Summary
   const delivered=orders.filter(o=>o.status==="delivered");
-  const revenue=delivered.reduce((s,o)=>s+(o.total||0),0);
-  const totalRev=nonCancelled.reduce((s,o)=>s+(o.total||0),0);
+  const revenue=delivered.reduce((s,o)=>s+num(o.total),0);
+  const totalRev=nonCancelled.reduce((s,o)=>s+num(o.total),0);
   const summary=[
     {"Metric":"Period","Value":(rptFrom||"start")+" → "+(rptTo||"now")},
     {"Metric":"Total Revenue (Delivered)","Value":"$"+revenue.toFixed(2)},
@@ -1711,14 +1712,14 @@ function exportReportsExcel(){
   XLSX.utils.book_append_sheet(wb,ws1,"Summary");
   // Sheet 2: Products
   const prodMap={};
-  nonCancelled.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(i=>{if(!prodMap[i.name])prodMap[i.name]={qty:0,revenue:0};prodMap[i.name].qty+=(i.qty||1);prodMap[i.name].revenue+=(i.qty||1)*(i.price||0);});});
+  nonCancelled.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(i=>{if(!prodMap[i.name])prodMap[i.name]={qty:0,revenue:0};prodMap[i.name].qty+=(i.qty||1);prodMap[i.name].revenue+=(i.qty||1)*num(i.price);});});
   const prods=Object.entries(prodMap).sort((a,b)=>b[1].qty-a[1].qty);
   const ws2=XLSX.utils.json_to_sheet(prods.map(([n,v],i)=>({"#":i+1,"Product":n,"Units Sold":v.qty,"Revenue ($)":v.revenue.toFixed(2)})));
   ws2["!cols"]=[{wch:4},{wch:36},{wch:12},{wch:14}];
   XLSX.utils.book_append_sheet(wb,ws2,"Products");
   // Sheet 3: Clients
   const cMap={};
-  nonCancelled.forEach(o=>{const key=(o.phone||o.customer_name||"?").toLowerCase();if(!cMap[key])cMap[key]={name:o.customer_name||"—",phone:o.phone||"—",orders:0,spent:0,last:""};cMap[key].orders++;cMap[key].spent+=(o.total||0);if(!cMap[key].last||o.created_at>cMap[key].last)cMap[key].last=o.created_at;});
+  nonCancelled.forEach(o=>{const key=(o.phone||o.customer_name||"?").toLowerCase();if(!cMap[key])cMap[key]={name:o.customer_name||"—",phone:o.phone||"—",orders:0,spent:0,last:""};cMap[key].orders++;cMap[key].spent+=num(o.total);if(!cMap[key].last||o.created_at>cMap[key].last)cMap[key].last=o.created_at;});
   const clients=Object.values(cMap).sort((a,b)=>b.spent-a.spent);
   const ws3=XLSX.utils.json_to_sheet(clients.map((c,i)=>({"#":i+1,"Name":c.name,"Phone":c.phone,"Orders":c.orders,"Total Spent ($)":c.spent.toFixed(2),"Last Order":c.last?new Date(c.last).toLocaleDateString("en-GB"):"—"})));
   ws3["!cols"]=[{wch:4},{wch:24},{wch:16},{wch:8},{wch:14},{wch:14}];
@@ -1731,8 +1732,8 @@ function exportReportsPDF(){
   const orders=getRptOrders();
   const nonCancelled=orders.filter(o=>o.status!=="cancelled");
   const delivered=orders.filter(o=>o.status==="delivered");
-  const revenue=delivered.reduce((s,o)=>s+(o.total||0),0);
-  const totalRev=nonCancelled.reduce((s,o)=>s+(o.total||0),0);
+  const revenue=delivered.reduce((s,o)=>s+num(o.total),0);
+  const totalRev=nonCancelled.reduce((s,o)=>s+num(o.total),0);
   const periodLbl=(rptFrom||"start")+" → "+(rptTo||"now");
   const doc=makePDF("Sales & Revenue Report — "+periodLbl);
   doc.autoTable({startY:30,head:[["Metric","Value"]],body:[
@@ -1745,7 +1746,7 @@ function exportReportsPDF(){
   ],...pdfTheme,columnStyles:{0:{cellWidth:80},1:{cellWidth:70,halign:"right"}}});
   // Products table
   const prodMap={};
-  nonCancelled.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(i=>{if(!prodMap[i.name])prodMap[i.name]={qty:0,revenue:0};prodMap[i.name].qty+=(i.qty||1);prodMap[i.name].revenue+=(i.qty||1)*(i.price||0);});});
+  nonCancelled.forEach(o=>{if(!Array.isArray(o.items))return;o.items.forEach(i=>{if(!prodMap[i.name])prodMap[i.name]={qty:0,revenue:0};prodMap[i.name].qty+=(i.qty||1);prodMap[i.name].revenue+=(i.qty||1)*num(i.price);});});
   const prods=Object.entries(prodMap).sort((a,b)=>b[1].qty-a[1].qty).slice(0,20);
   if(prods.length){
     let y=doc.lastAutoTable.finalY+10;
@@ -1754,7 +1755,7 @@ function exportReportsPDF(){
   }
   // Clients table
   const cMap={};
-  nonCancelled.forEach(o=>{const key=(o.phone||o.customer_name||"?").toLowerCase();if(!cMap[key])cMap[key]={name:o.customer_name||"—",phone:o.phone||"—",orders:0,spent:0};cMap[key].orders++;cMap[key].spent+=(o.total||0);});
+  nonCancelled.forEach(o=>{const key=(o.phone||o.customer_name||"?").toLowerCase();if(!cMap[key])cMap[key]={name:o.customer_name||"—",phone:o.phone||"—",orders:0,spent:0};cMap[key].orders++;cMap[key].spent+=num(o.total);});
   const clients=Object.values(cMap).sort((a,b)=>b.spent-a.spent).slice(0,20);
   if(clients.length){
     let y=doc.lastAutoTable.finalY+10;
