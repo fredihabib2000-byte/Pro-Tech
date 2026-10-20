@@ -498,6 +498,15 @@ const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
 const BASE_HASH = "1a32ff273feb5cbe78820bcd5000d5d1a90d8edd"; // sha1(protech2024)
 const num = v => parseFloat(v) || 0; // Supabase returns numeric as string; coerce everywhere
 
+// ── GLOBAL STATE (declared here to avoid TDZ when init() runs at auto-login) ──
+let bellCount=0,realtimeWs=null;
+let allOrders=[],allProducts=[],editProdId=null;
+let allClients=[];
+let invSearchQ='',invStatusF='all';
+let rptAllOrders=[],rptFrom='',rptTo='',rptTab='sales';
+let allMsgs=[];
+let settingsData={};
+
 function togglePw(id,btn){const el=document.getElementById(id);el.type=el.type==="password"?"text":"password";btn.textContent=el.type==="password"?"👁":"🙈";}
 
 async function sha1(s){const b=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("")}
@@ -602,9 +611,6 @@ function startClock(){
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
-let bellCount=0;
-let realtimeWs=null;
-
 function showToast(title,body,onClick){
   const wrap=document.getElementById("toastWrap");
   if(!wrap)return;
@@ -753,7 +759,6 @@ async function loadDashboard(){
 }
 
 // ── ORDERS ───────────────────────────────────────────────
-let allOrders=[];
 async function loadOrders(){
   document.getElementById("ordersWrap").innerHTML='<div class="loading-state">Loading…</div>';
   try{
@@ -846,7 +851,6 @@ function viewOrder(id){
 }
 
 // ── PRODUCTS ─────────────────────────────────────────────
-let allProducts=[];
 async function loadProducts(){
   document.getElementById("productsWrap").innerHTML='<div class="loading-state">Loading…</div>';
   try{
@@ -901,7 +905,6 @@ async function saveStock(btn){
   }catch(e){alert("Failed to save stock.")}
 }
 
-let editProdId=null;
 function openProdModal(p){
   editProdId=p?p.id:null;
   document.getElementById("prodModalTitle").textContent=p?"Edit Product":"Add Product";
@@ -957,7 +960,6 @@ async function deleteProduct(id,name){
 }
 
 // ── CLIENTS ──────────────────────────────────────────────
-let allClients=[];
 async function loadClients(){
   document.getElementById("clientsWrap").innerHTML='<div class="loading-state">Loading…</div>';
   try{
@@ -1014,8 +1016,6 @@ function renderClients(clients){
 }
 
 // ── INVENTORY ────────────────────────────────────────────────
-let invSearchQ='',invStatusF='all';
-
 async function loadInventory(){
   const cont=document.getElementById("inventoryContent");
   cont.innerHTML='<div class="loading-state">Loading inventory…</div>';
@@ -1228,9 +1228,6 @@ function exportInventoryPDF(){
 
 // ── REPORTS ──────────────────────────────────────────────
 // ── REPORTS STATE ────────────────────────────────────────────
-let rptAllOrders=[];
-let rptFrom='',rptTo='',rptTab='sales';
-
 async function loadReports(){
   const cont=document.getElementById("reportsContent");
   cont.innerHTML='<div class="loading-state">Loading reports…</div>';
@@ -1459,7 +1456,6 @@ function buildClientsRpt(orders,lbl){
   </div>`;
 }
 // ── MESSAGES ─────────────────────────────────────────────
-let allMsgs=[];
 async function loadMessages(){
   document.getElementById("msgsWrap").innerHTML='<div class="loading-state">Loading…</div>';
   try{
@@ -1502,7 +1498,6 @@ async function markRead(id){
 }
 
 // ── SETTINGS ─────────────────────────────────────────────
-let settingsData={};
 async function loadSettings(){
   try{
     const rows=await sb("/rest/v1/pt_settings?select=key,value")||[];
