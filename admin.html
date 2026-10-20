@@ -742,7 +742,7 @@ async function loadDashboard(){
       ${unread?`<div class="stat red"><div class="icon2">💬</div><div class="lbl">Unread Msgs</div><div class="val">${unread}</div></div>`:""}
     `;
     renderOrdersTable(o.slice(0,8),"recentOrdersWrap",true);
-  }catch(e){document.getElementById("dashStats").innerHTML='<div style="color:var(--red);padding:12px">Failed to load dashboard.</div>'}
+  }catch(e){console.error("loadDashboard error:",e);document.getElementById("dashStats").innerHTML=`<div style="color:var(--red);padding:12px">Failed to load dashboard: ${e.message}</div>`}
 }
 
 // ── ORDERS ───────────────────────────────────────────────
@@ -753,7 +753,7 @@ async function loadOrders(){
     allOrders=await sb("/rest/v1/pt_orders?select=*&order=created_at.desc")||[];
     const f=document.querySelector("#orderFilter .ftab.active")?.dataset.f||"all";
     renderOrdersFiltered(f);
-  }catch(e){document.getElementById("ordersWrap").innerHTML='<div class="empty-state">Failed to load orders.</div>'}
+  }catch(e){console.error("loadOrders error:",e);document.getElementById("ordersWrap").innerHTML=`<div class="empty-state">Failed to load orders: ${e.message}</div>`}
 }
 
 function filterOrders(el){
@@ -845,7 +845,7 @@ async function loadProducts(){
   try{
     allProducts=await sb("/rest/v1/pt_products?select=*&order=name.asc")||[];
     renderProductsTable(allProducts);
-  }catch(e){document.getElementById("productsWrap").innerHTML='<div class="empty-state">Failed to load.</div>'}
+  }catch(e){console.error("loadProducts error:",e);document.getElementById("productsWrap").innerHTML=`<div class="empty-state">Failed to load products: ${e.message}</div>`}
 }
 
 function filterProducts(q){
