@@ -47,6 +47,10 @@
 }
 </script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
+<!-- Animation libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.1/dist/lenis.min.js"></script>
 <style>
 /* ── Design tokens ────────────────────────────────────────────── */
 :root {
@@ -107,7 +111,7 @@
 
 /* ── Reset & base ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: auto; } /* Lenis handles smooth scroll */
 body {
   font-family: var(--body);
   background: var(--bg);
@@ -126,18 +130,18 @@ button { cursor: pointer; font-family: inherit; border: none; }
   margin-inline: auto;
   padding-inline: 20px;
 }
-.section { padding-block: 64px; }
+.section { padding-block: 96px; }
 .section-title {
   font-family: var(--display);
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
   text-wrap: balance;
 }
 .section-sub {
   color: var(--fg-2);
   font-size: .95rem;
-  margin-bottom: 40px;
+  margin-bottom: 52px;
 }
 
 /* ── Top bar ──────────────────────────────────────────────────── */
@@ -268,8 +272,13 @@ button { cursor: pointer; font-family: inherit; border: none; }
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  will-change: transform;
 }
 .logo-dot { color: var(--fg); }
+.nav-scrolled .logo { color: var(--accent); }
+.nav-scrolled .logo-dot { color: var(--fg); }
+@media (max-width: 400px) { .logo-dot { display: none; } }
 .nav-links {
   display: flex;
   gap: 4px;
@@ -340,6 +349,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
   height: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 24px;
   padding-inline: clamp(20px, 8%, 120px);
   position: relative;
   overflow: hidden;
@@ -427,14 +438,12 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .btn-slide-secondary:hover { background: rgba(255,255,255,.25); transform: translateY(-2px); }
 .slide-visual {
-  position: absolute;
-  right: clamp(20px, 6%, 80px);
-  top: 50%;
-  transform: translateY(-50%);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   z-index: 1;
+  flex-shrink: 0;
+  align-self: center;
 }
 @media (max-width: 860px) { .slide-visual { display: none; } }
 .slide-card {
@@ -789,7 +798,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
+  gap: 28px;
 }
 .product-card {
   background: var(--surface);
@@ -907,6 +916,47 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .add-btn:hover { background: var(--accent-hover); transform: scale(1.04); }
 .add-btn.added { background: var(--success); }
+
+/* ── Swipe-to-cart (mobile) ───────────────────────────────── */
+.swipe-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+}
+.swipe-action-strip {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 80px;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  z-index: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.swipe-action-strip-icon { font-size: 1.5rem; line-height: 1; }
+.swipe-wrap .product-card {
+  position: relative;
+  z-index: 2;
+  border-radius: var(--r);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  touch-action: pan-y;
+  flex: 1;
+}
+.swipe-wrap .product-card.sw-open {
+  transform: translateX(-80px);
+  box-shadow: -4px 0 16px rgba(0,0,0,.15);
+}
 
 /* ── Brands ───────────────────────────────────────────────────── */
 .brands-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding-block: 32px; }
@@ -1410,6 +1460,221 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .stats-in-view .stat:nth-child(3) { animation-delay: .25s; }
 .stats-in-view .stat:nth-child(4) { animation-delay: .35s; }
 
+/* ══ GSAP · Lenis · React Bits visual layer ══════════════════════ */
+
+/* Lenis integration */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+/* Scroll progress bar */
+#scrollProgress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #7dd3fc, #a5f3fc);
+  z-index: 999;
+  width: 0%;
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(96,165,250,.5);
+}
+
+/* ── Aurora hero (React Bits Aurora) ─────────────────────────────── */
+.hero-aurora {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  will-change: transform;
+  animation: blobDrift ease-in-out infinite alternate;
+}
+.aurora-blob-1 {
+  width: 560px; height: 380px;
+  background: radial-gradient(ellipse, rgba(59,130,246,.55), transparent 70%);
+  top: -120px; left: -80px;
+  animation-duration: 11s;
+}
+.aurora-blob-2 {
+  width: 400px; height: 340px;
+  background: radial-gradient(ellipse, rgba(6,182,212,.45), transparent 70%);
+  bottom: -60px; right: -40px;
+  animation-duration: 9s; animation-delay: -3.5s;
+}
+.aurora-blob-3 {
+  width: 290px; height: 290px;
+  background: radial-gradient(ellipse, rgba(139,92,246,.4), transparent 70%);
+  top: 25%; right: 28%;
+  animation-duration: 13s; animation-delay: -6s;
+}
+@keyframes blobDrift {
+  0%   { transform: translate(0,   0)   scale(1);    }
+  100% { transform: translate(28px, 18px) scale(1.06); }
+}
+.slide-content, .slide-visual, .slider-btn, .slider-dots { position: relative; z-index: 2; }
+
+/* ── Hero floating particles ──────────────────────────────────────── */
+.hero-particles {
+  position: absolute;
+  inset: 0; overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.h-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,.55);
+  animation: particleRise linear infinite;
+}
+@keyframes particleRise {
+  0%   { opacity: 0;   transform: translateY(0)     translateX(0); }
+  15%  { opacity: .75; }
+  85%  { opacity: .3;  }
+  100% { opacity: 0;   transform: translateY(-90px) translateX(var(--hd, 15px)); }
+}
+
+/* ── React Bits: SpotlightCard — radial glow follows cursor ─────── */
+.product-card::before,
+.feature-card::before,
+.category-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    200px circle at var(--spot-x,-9999px) var(--spot-y,-9999px),
+    rgba(99,149,255,.14) 0%,
+    transparent 80%
+  );
+  pointer-events: none;
+  z-index: 3;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.product-card:hover::before,
+.feature-card:hover::before,
+.category-card:hover::before { opacity: 1; }
+
+/* ── 21st.dev: custom cursor ─────────────────────────────────────── */
+.cc {
+  position: fixed;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: width .18s, height .18s, opacity .25s, background .18s;
+}
+.cc.vis { opacity: .75; }
+.cc.big { width: 36px; height: 36px; opacity: .35; }
+@media (hover: none) { .cc { display: none; } }
+
+/* ── Shimmer sweep on product cards (React Bits Shiny) ───────────── */
+.product-card { position: relative; overflow: hidden; }
+@keyframes shimmerSweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  100% { transform: translateX(250%)  skewX(-12deg); }
+}
+.product-card .shimmer-layer {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.08) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 6;
+  transform: translateX(-120%) skewX(-12deg);
+}
+.product-card:hover .shimmer-layer {
+  animation: shimmerSweep .65s ease forwards;
+}
+
+/* ── Gradient text on section titles (React Bits GradientText) ───── */
+.section-title {
+  background: linear-gradient(135deg, var(--fg) 0%, var(--fg) 60%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.slide h2 { -webkit-text-fill-color: #fff; }
+.slide h2 em { -webkit-text-fill-color: transparent; }
+
+/* ── Glow on CTA buttons ─────────────────────────────────────────── */
+@keyframes btnGlow {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,.2); }
+  50%       { box-shadow: 0 4px 28px rgba(255,255,255,.18), 0 0 36px rgba(96,165,250,.25); }
+}
+.btn-slide-primary:hover { animation: btnGlow 1.6s ease infinite; }
+
+/* ── Feature card hover glow ─────────────────────────────────────── */
+.feature-card:hover {
+  box-shadow: var(--shadow-md), 0 0 32px rgba(30,58,138,.12);
+}
+
+/* ── Category active ring pulse ──────────────────────────────────── */
+@keyframes ringPulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft); }
+  50%       { box-shadow: 0 0 0 8px var(--accent-soft), 0 0 20px rgba(96,165,250,.22); }
+}
+.category-card.active .cat-circle { animation: ringPulse 2.2s ease-in-out infinite; }
+
+/* ── Stats bar enhanced ──────────────────────────────────────────── */
+.stats-bar { position: relative; overflow: hidden; }
+.stats-bar::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+.stats-inner { position: relative; z-index: 1; }
+.stat-num { text-shadow: 0 0 32px rgba(255,255,255,.28); }
+
+/* ── CTA banner gradient ─────────────────────────────────────────── */
+.cta-banner { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 55%, #2563eb 100%); }
+
+/* ── Brand chips micro hover ─────────────────────────────────────── */
+.brand-chip { transition: border-color .2s, color .2s, transform .2s, box-shadow .2s; }
+.brand-chip:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+
+/* ── Nav blur on scroll ──────────────────────────────────────────── */
+.nav { transition: box-shadow .3s, background .3s, backdrop-filter .3s; }
+.nav.nav-scrolled {
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.08);
+}
+[data-theme="dark"] .nav.nav-scrolled { background: rgba(22,27,34,.88); }
+
+/* ── GSAP controls reveal animations ────────────────────────────── */
+.reveal { opacity: 1; transform: none; transition: none; }
+.reveal.in-view { opacity: 1; transform: none; }
+
+/* ── Accessories category colour ─────────────────────────────────── */
+.cat-circle.c-orange { background: linear-gradient(135deg,#ffedd5,#fed7aa); border-color: #fed7aa; }
+.category-card.active .cat-circle.c-orange { background: #fed7aa; }
+
+/* ── Load More button ────────────────────────────────────────────── */
+.load-more-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 36px;
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--body); font-weight: 600; font-size: .95rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background .22s, color .22s, transform .18s, box-shadow .22s;
+  letter-spacing: .01em;
+}
+.load-more-btn:hover {
+  background: var(--accent); color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(30,58,138,.22);
+}
+
 /* ── Order modal ──────────────────────────────────────────────── */
 .order-overlay {
   display: none;
@@ -1460,9 +1725,147 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .order-summary-item { display: flex; justify-content: space-between; padding: 3px 0; color: var(--fg-2); }
 .order-summary-total { display: flex; justify-content: space-between; font-weight: 700; font-size: .95rem; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 6px; }
 .order-modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── WhatsApp success overlay ── */
+.wa-success-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(8px);
+  display: none; align-items: center; justify-content: center; z-index: 9000;
+}
+.wa-success-overlay.open { display: flex; }
+.wa-success-card {
+  background: var(--surface); border-radius: var(--r-lg); padding: 40px 36px 32px;
+  max-width: 400px; width: calc(100% - 40px); text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,.45);
+  animation: scaleIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes scaleIn { from { transform: scale(.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.wa-success-icon {
+  width: 72px; height: 72px; border-radius: 50%; background: #25d366;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px; font-size: 2rem;
+}
+.wa-success-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+.wa-success-card p { color: var(--fg-2); font-size: .92rem; line-height: 1.55; margin-bottom: 24px; }
+.wa-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: #25d366; color: #fff; border: none; border-radius: 99px;
+  padding: 13px 28px; font-size: 1rem; font-weight: 600; cursor: pointer;
+  text-decoration: none; width: 100%; justify-content: center;
+  transition: background .18s, transform .18s;
+}
+.wa-btn:hover { background: #1ebe5d; transform: translateY(-1px); }
+.wa-success-close {
+  display: block; margin-top: 14px; font-size: .82rem; color: var(--fg-2);
+  cursor: pointer; background: none; border: none; width: 100%;
+}
+.wa-success-close:hover { color: var(--fg); }
+
+/* ── Contact grid ─────────────────────────────────────────────── */
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 768px) { .contact-grid { grid-template-columns: 1fr; } }
+.contact-info-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.contact-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.contact-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+}
+.contact-item-label {
+  font-weight: 600;
+  font-size: .875rem;
+  margin-bottom: 3px;
+}
+.contact-item-value { color: var(--fg-2); font-size: .875rem; }
+.contact-form-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 28px;
+}
+.contact-form-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Mobile nav ──────────────────────────────────────────── */
+.hamburger { display: none; flex-direction: column; gap: 4px; padding: 8px; background: none; border: none; cursor: pointer; border-radius: var(--r-sm); transition: background .15s; }
+.hamburger:hover { background: var(--surface-2); }
+.ham-line { width: 22px; height: 2px; background: var(--fg); border-radius: 2px; transition: transform .25s, opacity .25s; }
+.hamburger.open .ham-line:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.hamburger.open .ham-line:nth-child(2) { opacity: 0; }
+.hamburger.open .ham-line:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.mobile-nav { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 150; }
+.mobile-nav.open { display: block; }
+.mobile-nav-panel { position: absolute; top: 0; right: 0; width: min(300px, 85vw); height: 100%; background: var(--surface); padding: 24px 20px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow-lg); overflow-y: auto; }
+.mobile-nav-close { align-self: flex-end; background: var(--surface-2); border: none; border-radius: var(--r-sm); padding: 8px 10px; font-size: 1rem; cursor: pointer; margin-bottom: 12px; }
+.mobile-nav-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: .95rem; color: var(--fg); text-decoration: none; transition: background .15s; }
+.mobile-nav-link:hover { background: var(--surface-2); }
+@media (max-width: 720px) { .hamburger { display: flex; } }
+
+/* ── General mobile fixes ────────────────────────────────── */
+@media (max-width: 640px) {
+  body { overflow-x: hidden; }
+  .section { padding-block: 56px; }
+  .container { padding-inline: 16px; }
+  .products-header { flex-direction: column; align-items: stretch; }
+  .search-bar { min-width: 0; width: 100%; }
+  .products-filter { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 6px; scrollbar-width: none; }
+  .products-filter::-webkit-scrollbar { display: none; }
+  .categories-grid { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-content: flex-start; padding-bottom: 8px; }
+  .categories-grid::-webkit-scrollbar { display: none; }
+  .cat-name { max-width: 72px; }
+  .filter-btn { flex-shrink: 0; white-space: nowrap; }
+  .cat-circle { width: 68px; height: 68px; font-size: 1.7rem; }
+  .category-card { min-width: 72px; }
+  .cat-name { font-size: .72rem; max-width: 72px; }
+  .stats-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cta-banner { padding: 32px 24px; flex-direction: column; }
+  .features-grid { grid-template-columns: 1fr; }
+  .trust-strip-inner { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .trust-strip-inner::-webkit-scrollbar { display: none; }
+  .trust-item { flex-shrink: 0; }
+}
+@media (max-width: 480px) {
+  .nav-inner { padding-inline: 14px; gap: 10px; }
+  .logo { font-size: 1.2rem; }
+  .cart-btn { padding: 8px 12px; font-size: .8rem; gap: 5px; }
+  .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .product-img { font-size: 3rem; }
+  .product-body { padding: 12px; }
+  .product-name { font-size: .875rem; }
+  .product-price { font-size: 1rem; }
+  .add-btn { padding: 7px 10px; font-size: .75rem; }
+  .slide h2 { font-size: 1.5rem; }
+  .section-title { font-size: 1.4rem; }
+}
 </style>
 </head>
 <body>
+<div id="scrollProgress" aria-hidden="true"></div>
 
 <!-- ── TOP BAR ─────────────────────────────────────────────────── -->
 <div class="top-bar">
@@ -1511,6 +1914,11 @@ button { cursor: pointer; font-family: inherit; border: none; }
       <li><a href="#why-us">Why Us</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
+    <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMobileNav()">
+      <span class="ham-line"></span>
+      <span class="ham-line"></span>
+      <span class="ham-line"></span>
+    </button>
     <div class="nav-right">
       <button class="theme-btn" id="themeToggle" title="Toggle theme">🌙</button>
       <button class="cart-btn" id="cartBtn">
@@ -1520,8 +1928,27 @@ button { cursor: pointer; font-family: inherit; border: none; }
   </div>
 </nav>
 
+<!-- ── MOBILE NAV ────────────────────────────────────────── -->
+<div class="mobile-nav" id="mobileNav" onclick="if(event.target===this)closeMobileNav()">
+  <div class="mobile-nav-panel">
+    <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+    <a class="mobile-nav-link" href="#categories" onclick="closeMobileNav()">🏪 Categories</a>
+    <a class="mobile-nav-link" href="#products" onclick="closeMobileNav()">📦 Products</a>
+    <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
+    <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">💬 Contact</a>
+  </div>
+</div>
+
 <!-- ── HERO ───────────────────────────────────────────────────── -->
 <section class="hero-slider" id="hero">
+  <!-- Aurora bg (React Bits Aurora) -->
+  <div class="hero-aurora" aria-hidden="true">
+    <div class="aurora-blob aurora-blob-1"></div>
+    <div class="aurora-blob aurora-blob-2"></div>
+    <div class="aurora-blob aurora-blob-3"></div>
+  </div>
+  <!-- Floating particles -->
+  <div class="hero-particles" id="heroParticles" aria-hidden="true"></div>
   <div class="slider-track" id="sliderTrack">
     <!-- Slide 1 -->
     <div class="slide slide-1">
@@ -1623,6 +2050,83 @@ button { cursor: pointer; font-family: inherit; border: none; }
   </div>
 </div>
 
+<!-- ── CATEGORIES ─────────────────────────────────────────────── -->
+<section class="section reveal" id="categories" style="background:var(--surface);border-top:1px solid var(--border)">
+  <div class="container">
+    <div class="section-accent-line"></div>
+    <h2 class="section-title">Shop by Category</h2>
+    <p class="section-sub">Everything your business needs, organized for easy browsing.</p>
+    <div class="categories-grid">
+      <div class="category-card active" data-cat="all">
+        <div class="cat-circle c-blue">🏪</div>
+        <div class="cat-name">All Products</div>
+      </div>
+      <div class="category-card" data-cat="laptops">
+        <div class="cat-circle c-blue">💻</div>
+        <div class="cat-name">Laptops &amp; PCs</div>
+      </div>
+      <div class="category-card" data-cat="pos-systems">
+        <div class="cat-circle c-purple">🏧</div>
+        <div class="cat-name">POS Systems</div>
+      </div>
+      <div class="category-card" data-cat="printers">
+        <div class="cat-circle c-green">🖨️</div>
+        <div class="cat-name">Printers</div>
+      </div>
+      <div class="category-card" data-cat="cash-drawers">
+        <div class="cat-circle c-amber">💰</div>
+        <div class="cat-name">Cash Drawers</div>
+      </div>
+      <div class="category-card" data-cat="scanners">
+        <div class="cat-circle c-pink">📡</div>
+        <div class="cat-name">Scanners</div>
+      </div>
+      <div class="category-card" data-cat="displays">
+        <div class="cat-circle c-teal">🖥️</div>
+        <div class="cat-name">Displays</div>
+      </div>
+      <div class="category-card" data-cat="accessories">
+        <div class="cat-circle c-orange">🎧</div>
+        <div class="cat-name">Accessories</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRODUCTS ───────────────────────────────────────────────── -->
+<section class="section" id="products" style="background: var(--bg)">
+  <div class="container">
+    <div class="products-header">
+      <div>
+        <div class="section-accent-line"></div>
+        <h2 class="section-title" style="margin-bottom:4px">Featured Products</h2>
+        <p class="section-sub" style="margin-bottom:0">Showing <span id="productCount">24</span> products</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div class="search-bar">
+          <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="Search products…">
+        </div>
+      </div>
+    </div>
+    <div class="products-filter">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="laptops">Laptops</button>
+      <button class="filter-btn" data-filter="pos-systems">POS</button>
+      <button class="filter-btn" data-filter="printers">Printers</button>
+      <button class="filter-btn" data-filter="cash-drawers">Cash Drawers</button>
+      <button class="filter-btn" data-filter="scanners">Scanners</button>
+      <button class="filter-btn" data-filter="displays">Displays</button>
+      <button class="filter-btn" data-filter="accessories">Accessories</button>
+    </div>
+    <br>
+    <div class="products-grid" id="productsGrid"></div>
+    <div id="loadMoreWrap" style="display:none;justify-content:center;margin-top:2.5rem;">
+      <button id="loadMoreBtn" class="load-more-btn">Load More</button>
+    </div>
+  </div>
+</section>
+
 <!-- ── INK & TONER BANNER ──────────────────────────────────────── -->
 <div class="ink-banner">
   <div class="ink-banner-inner">
@@ -1648,45 +2152,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
     </div>
   </div>
 </div>
-
-<!-- ── CATEGORIES ─────────────────────────────────────────────── -->
-<section class="section reveal" id="categories">
-  <div class="container">
-    <div class="section-accent-line"></div>
-    <h2 class="section-title">Shop by Category</h2>
-    <p class="section-sub">Everything your business needs, organized for easy browsing.</p>
-    <div class="categories-grid">
-      <div class="category-card active reveal rd1" data-cat="all">
-        <div class="cat-circle c-blue">🏪</div>
-        <div class="cat-name">All Products</div>
-      </div>
-      <div class="category-card reveal rd1" data-cat="laptops">
-        <div class="cat-circle c-blue">💻</div>
-        <div class="cat-name">Laptops &amp; PCs</div>
-      </div>
-      <div class="category-card reveal rd2" data-cat="pos">
-        <div class="cat-circle c-purple">🏧</div>
-        <div class="cat-name">POS Systems</div>
-      </div>
-      <div class="category-card reveal rd2" data-cat="printers">
-        <div class="cat-circle c-green">🖨️</div>
-        <div class="cat-name">Printers</div>
-      </div>
-      <div class="category-card reveal rd3" data-cat="cash">
-        <div class="cat-circle c-amber">💰</div>
-        <div class="cat-name">Cash Drawers</div>
-      </div>
-      <div class="category-card reveal rd3" data-cat="scanners">
-        <div class="cat-circle c-pink">📡</div>
-        <div class="cat-name">Scanners</div>
-      </div>
-      <div class="category-card reveal rd4" data-cat="displays">
-        <div class="cat-circle c-teal">🖥️</div>
-        <div class="cat-name">Displays</div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ── BRANDS ─────────────────────────────────────────────────── -->
 <div class="brands-section">
@@ -1721,36 +2186,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
     </div>
   </div>
 </div>
-
-<!-- ── PRODUCTS ───────────────────────────────────────────────── -->
-<section class="section" id="products" style="background: var(--bg)">
-  <div class="container">
-    <div class="products-header">
-      <div>
-        <div class="section-accent-line"></div>
-        <h2 class="section-title" style="margin-bottom:4px">Featured Products</h2>
-        <p class="section-sub" style="margin-bottom:0">Showing <span id="productCount">24</span> products</p>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <div class="search-bar">
-          <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          <input type="text" id="searchInput" placeholder="Search products…">
-        </div>
-      </div>
-    </div>
-    <div class="products-filter">
-      <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="laptops">Laptops</button>
-      <button class="filter-btn" data-filter="pos">POS</button>
-      <button class="filter-btn" data-filter="printers">Printers</button>
-      <button class="filter-btn" data-filter="cash">Cash Drawers</button>
-      <button class="filter-btn" data-filter="scanners">Scanners</button>
-      <button class="filter-btn" data-filter="displays">Displays</button>
-    </div>
-    <br>
-    <div class="products-grid" id="productsGrid"></div>
-  </div>
-</section>
 
 <!-- ── WHY US ─────────────────────────────────────────────────── -->
 <section class="section reveal" id="why-us" style="background: var(--surface); border-top: 1px solid var(--border)">
@@ -1810,20 +2245,20 @@ button { cursor: pointer; font-family: inherit; border: none; }
     <div class="section-accent-line"></div>
     <h2 class="section-title">Get in Touch</h2>
     <p class="section-sub">Our team is ready to help you find the right solution.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:800px">
-      <div style="display:flex;flex-direction:column;gap:16px">
-        <div style="display:flex;gap:12px;align-items:flex-start">
-          <div style="font-size:1.3rem;margin-top:2px">📧</div>
+    <div class="contact-grid">
+      <div class="contact-info-card">
+        <div class="contact-item">
+          <div class="contact-item-icon">📧</div>
           <div>
-            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Email</div>
-            <div style="color:var(--fg-2);font-size:.875rem" id="contact-email">—</div>
+            <div class="contact-item-label">Email</div>
+            <div class="contact-item-value" id="contact-email">—</div>
           </div>
         </div>
-        <div style="display:flex;gap:12px;align-items:flex-start">
-          <div style="font-size:1.3rem;margin-top:2px">📞</div>
+        <div class="contact-item">
+          <div class="contact-item-icon">📞</div>
           <div>
-            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Phone / WhatsApp</div>
-            <div style="color:var(--fg-2);font-size:.875rem" id="contact-phone">—</div>
+            <div class="contact-item-label">Phone / WhatsApp</div>
+            <div class="contact-item-value" id="contact-phone">—</div>
             <a id="whatsapp-contact-link" href="#" target="_blank" rel="noopener"
                style="display:none;align-items:center;gap:6px;margin-top:8px;background:#25D366;color:#fff;border-radius:8px;padding:8px 16px;font-size:.85rem;font-weight:600;text-decoration:none;width:fit-content">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
@@ -1831,22 +2266,24 @@ button { cursor: pointer; font-family: inherit; border: none; }
             </a>
           </div>
         </div>
-        <div style="display:flex;gap:12px;align-items:flex-start">
-          <div style="font-size:1.3rem;margin-top:2px">📍</div>
+        <div class="contact-item">
+          <div class="contact-item-icon">📍</div>
           <div>
-            <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">Address</div>
-            <div style="color:var(--fg-2);font-size:.875rem" id="contact-address">—</div>
+            <div class="contact-item-label">Address</div>
+            <div class="contact-item-value" id="contact-address">—</div>
           </div>
         </div>
         <div id="contact-social-row" style="display:none;gap:10px;flex-wrap:wrap;margin-top:4px"></div>
       </div>
-      <form id="contactForm" style="display:flex;flex-direction:column;gap:12px" onsubmit="handleContact(event)">
+      <div class="contact-form-card">
+      <form id="contactForm" onsubmit="handleContact(event)">
         <input id="fb_name" type="text" placeholder="Your name" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         <input id="fb_phone" type="tel" placeholder="Phone number" required style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         <input id="fb_email" type="email" placeholder="Email address (optional)" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
         <textarea id="fb_msg" placeholder="Tell us what you need…" rows="4" style="padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--bg);color:var(--fg);font-family:var(--body);font-size:.875rem;resize:vertical;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
         <button type="submit" class="btn-primary" style="align-self:flex-start">Send Message</button>
       </form>
+      </div>
     </div>
   </div>
 </section>
@@ -1964,10 +2401,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
         <input type="tel" id="ord_phone" placeholder="+961 70 000 000">
       </div>
       <div>
-        <label>Delivery Address *</label>
-        <input type="text" id="ord_address" placeholder="Street, City, Region">
-      </div>
-      <div>
         <label>Notes (optional)</label>
         <textarea id="ord_notes" rows="2" placeholder="Any special instructions…"></textarea>
       </div>
@@ -1976,6 +2409,20 @@ button { cursor: pointer; font-family: inherit; border: none; }
       <button class="btn-secondary" onclick="closeOrderModal()">Cancel</button>
       <button class="btn-primary" id="placeOrderBtn" onclick="submitOrder()">Place Order</button>
     </div>
+  </div>
+</div>
+
+<!-- ── WHATSAPP SUCCESS OVERLAY ───────────────────────────────── -->
+<div class="wa-success-overlay" id="waSuccessOverlay">
+  <div class="wa-success-card">
+    <div class="wa-success-icon">✅</div>
+    <h3>Order Received!</h3>
+    <p>Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.</p>
+    <a class="wa-btn" id="waSuccessBtn" href="#" target="_blank" rel="noopener">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.116 1.535 5.845L.057 23.49a.75.75 0 0 0 .918.935l5.83-1.527A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.797 9.797 0 0 1-4.99-1.363l-.358-.212-3.712.973.99-3.607-.233-.37A9.794 9.794 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+      Open WhatsApp
+    </a>
+    <button class="wa-success-close" onclick="closeWaSuccess()">Close</button>
   </div>
 </div>
 
@@ -2023,6 +2470,8 @@ let PROMOS = [];
 let cart = [];
 let activeFilter = "all";
 let searchTerm = "";
+const PAGE_SIZE = 24;
+let visibleCount = PAGE_SIZE;
 
 // ── Load products from Supabase ───────────────────────────────────
 async function loadProducts() {
@@ -2047,49 +2496,82 @@ async function loadProducts() {
 }
 
 // ── Render products ───────────────────────────────────────────────
-function renderProducts() {
+function productCardHTML(p) {
+  return `
+    <div class="swipe-wrap">
+      <div class="swipe-action-strip" onclick="swipeAddToCart(${p.id},this)">
+        <span class="swipe-action-strip-icon">🛒</span>Add
+      </div>
+      <div class="product-card" onclick="openProductDetail(${p.id})">
+        <div class="shimmer-layer" aria-hidden="true"></div>
+        <div class="product-img">
+          ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">` : `<span>${p.icon}</span>`}
+          ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${p.badge}</div>` : ""}
+          ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
+          <div class="product-img-overlay">
+            <button class="quick-view-pill" onclick="event.stopPropagation();openProductDetail(${p.id})">Quick View</button>
+          </div>
+        </div>
+        <div class="product-body">
+          <div class="product-cat">${catLabel(p.cat)}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-desc">${p.desc}</div>
+          ${p.specs ? `<ul class="product-specs">${p.specs.split(/\n|\\n/).filter(Boolean).slice(0,4).map(s=>`<li>${s}</li>`).join('')}</ul>` : ""}
+          <div class="product-footer">
+            <div>
+              <span class="product-price">$${p.price.toLocaleString()}</span>
+              ${p.oldPrice ? `<span class="product-price-old">$${p.oldPrice.toLocaleString()}</span>` : ""}
+            </div>
+            <button class="add-btn" id="addbtn-${p.id}" onclick="event.stopPropagation();addToCart(${p.id})">
+              + Add
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderProducts(appendFrom) {
   const grid = document.getElementById("productsGrid");
+  const lmWrap = document.getElementById("loadMoreWrap");
   const filtered = PRODUCTS.filter(p => {
     const matchCat = activeFilter === "all" || p.cat === activeFilter;
     const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || (p.desc||"").toLowerCase().includes(searchTerm);
     return matchCat && matchSearch && p.quantity > 0;
   });
-  document.getElementById("productCount").textContent = filtered.length;
-  if (filtered.length === 0) {
+
+  const total = filtered.length;
+  const showing = Math.min(visibleCount, total);
+  document.getElementById("productCount").textContent = showing + (total > showing ? ` of ${total}` : "");
+
+  if (total === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">No products found.</div>`;
+    if (lmWrap) lmWrap.style.display = "none";
     return;
   }
-  grid.innerHTML = filtered.map(p => `
-    <div class="product-card" onclick="openProductDetail(${p.id})">
-      <div class="product-img">
-        ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;display:block">` : `<span>${p.icon}</span>`}
-        ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase() === 'sale' ? 'sale' : p.badge.toLowerCase() === 'new' ? 'new' : ''}">${p.badge}</div>` : ""}
-        ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
-        <div class="product-img-overlay">
-          <button class="quick-view-pill" onclick="event.stopPropagation();openProductDetail(${p.id})">Quick View</button>
-        </div>
-      </div>
-      <div class="product-body">
-        <div class="product-cat">${catLabel(p.cat)}</div>
-        <div class="product-name">${p.name}</div>
-        <div class="product-desc">${p.desc}</div>
-        ${p.specs ? `<ul class="product-specs">${p.specs.split('\n').filter(Boolean).slice(0,4).map(s=>`<li>${s}</li>`).join('')}</ul>` : ""}
-        <div class="product-footer">
-          <div>
-            <span class="product-price">$${p.price.toLocaleString()}</span>
-            ${p.oldPrice ? `<span class="product-price-old">$${p.oldPrice.toLocaleString()}</span>` : ""}
-          </div>
-          <button class="add-btn" id="addbtn-${p.id}" onclick="event.stopPropagation();addToCart(${p.id})">
-            + Add
-          </button>
-        </div>
-      </div>
-    </div>
-  `).join("");
+
+  if (appendFrom != null) {
+    // append only the new cards (avoid full re-render flicker)
+    const newCards = filtered.slice(appendFrom, visibleCount).map(productCardHTML).join("");
+    grid.insertAdjacentHTML("beforeend", newCards);
+    const added = grid.querySelectorAll(".swipe-wrap:nth-child(n+" + (appendFrom + 1) + ") .product-card");
+    if (typeof gsap !== "undefined" && added.length) {
+      gsap.from(added, { y: 32, opacity: 0, duration: .42, stagger: .04, ease: "power2.out", clearProps: "all" });
+    }
+  } else {
+    grid.innerHTML = filtered.slice(0, visibleCount).map(productCardHTML).join("");
+  }
+
+  if (lmWrap) {
+    const hasMore = visibleCount < total;
+    lmWrap.style.display = hasMore ? "flex" : "none";
+    const lmBtn = document.getElementById("loadMoreBtn");
+    if (lmBtn) lmBtn.textContent = `Load More  (${total - showing} more)`;
+  }
 }
 
 function catLabel(cat) {
-  return { laptops:"Laptops & PCs", "pos-systems":"POS Systems", printers:"Printers", "cash-drawers":"Cash Drawers", scanners:"Scanners", displays:"Customer Displays" }[cat] || cat;
+  return { laptops:"Laptops & PCs", "pos-systems":"POS Systems", printers:"Printers", "cash-drawers":"Cash Drawers", scanners:"Scanners", displays:"Customer Displays", accessories:"Accessories" }[cat] || cat;
 }
 
 // ── Filter & search ───────────────────────────────────────────────
@@ -2098,6 +2580,7 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
     document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     activeFilter = btn.dataset.filter;
+    visibleCount = PAGE_SIZE;
     renderProducts();
   });
 });
@@ -2109,15 +2592,22 @@ document.querySelectorAll(".category-card").forEach(card => {
     document.querySelectorAll(".filter-btn").forEach(b => {
       b.classList.toggle("active", b.dataset.filter === activeFilter);
     });
+    visibleCount = PAGE_SIZE;
     renderProducts();
     document.getElementById("products").scrollIntoView({ behavior: "smooth" });
   });
 });
 document.getElementById("searchInput").addEventListener("input", e => {
   searchTerm = e.target.value.trim().toLowerCase();
+  visibleCount = PAGE_SIZE;
   const navSrch = document.getElementById('navSearchInput');
   if (navSrch) navSrch.value = e.target.value;
   renderProducts();
+});
+document.getElementById("loadMoreBtn").addEventListener("click", () => {
+  const prev = visibleCount;
+  visibleCount += PAGE_SIZE;
+  renderProducts(prev);
 });
 
 // ── Cart logic ────────────────────────────────────────────────────
@@ -2337,7 +2827,7 @@ function openProductDetail(id) {
   document.getElementById("pmDesc").textContent = p.desc || "";
   const specsEl = document.getElementById("pmSpecs");
   if (p.specs) {
-    specsEl.innerHTML = p.specs.split("\n").filter(Boolean).map(s => `<li>${s}</li>`).join("");
+    specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${s}</li>`).join("");
     specsEl.style.display = "";
   } else {
     specsEl.innerHTML = ""; specsEl.style.display = "none";
@@ -2372,7 +2862,7 @@ function openOrderModal() {
   document.getElementById("orderSummaryItems").innerHTML =
     cart.map(i => `<div class="order-summary-item"><span>${i.name} × ${i.qty}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join("") +
     `<div class="order-summary-total"><span>Total</span><span>$${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",")}</span></div>`;
-  ["ord_name","ord_phone","ord_address","ord_notes"].forEach(id => { document.getElementById(id).value = ""; });
+  ["ord_name","ord_phone","ord_notes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   document.getElementById("orderModal").classList.add("open");
   document.body.style.overflow = "hidden";
 }
@@ -2382,40 +2872,65 @@ function closeOrderModal() {
   document.body.style.overflow = "";
 }
 
+function closeWaSuccess() {
+  document.getElementById("waSuccessOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
 async function submitOrder() {
-  const name    = document.getElementById("ord_name").value.trim();
-  const phone   = document.getElementById("ord_phone").value.trim();
-  const address = document.getElementById("ord_address").value.trim();
-  if (!name || !phone || !address) { showToast("Please fill in all required fields."); return; }
+  const name  = document.getElementById("ord_name").value.trim();
+  const phone = document.getElementById("ord_phone").value.trim();
+  if (!name || !phone) { showToast("Please fill in your name and phone number."); return; }
   const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
   const btn = document.getElementById("placeOrderBtn");
   btn.disabled = true; btn.textContent = "Placing order…";
   try {
+    const itemsList = cart.map(i => `• ${i.name} ×${i.qty}`).join("\n");
     await sbFetch("/rest/v1/pt_orders", {
       method: "POST",
       body: JSON.stringify({
         customer_name: name,
         customer_phone: phone,
-        customer_address: address,
+        customer_address: "",
         notes: document.getElementById("ord_notes").value.trim() || null,
         items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
         total: parseFloat(total.toFixed(2)),
         status: "pending"
       })
     });
-    // Build WA message before clearing cart
-    const itemsList = cart.map(i => `• ${i.name} ×${i.qty}`).join("\n");
+
+    // Build customer WhatsApp message
+    const customerMsg = encodeURIComponent(
+      `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\n💰 Total: $${total.toFixed(2)}\n👤 Name: ${name}\n📞 Phone: ${phone}`
+    );
+    const ownerNum = (waNumber || "96171925840").replace(/\D/g, "");
+    const waLink = `https://wa.me/${ownerNum}?text=${customerMsg}`;
+    document.getElementById("waSuccessBtn").href = waLink;
+
+    // Notify owner on WhatsApp (silent background open)
+    const now = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const notes = document.getElementById("ord_notes").value.trim();
+    const ownerMsg = encodeURIComponent(
+`*NEW ORDER - Pro Technology*
+-----------------------------
+*Customer:* ${name}
+*Phone:* ${phone}
+*Time:* ${now}
+-----------------------------
+*Items:*
+${itemsList}
+-----------------------------
+*Total: $${total.toFixed(2)}*${notes ? `\n*Note:* ${notes}` : ''}
+-----------------------------
+Please confirm delivery location.`
+    );
+    window.open(`https://wa.me/${ownerNum}?text=${ownerMsg}`, "_blank");
+
     cart = [];
     updateCart();
     closeOrderModal();
-    showToast("Order placed! We'll contact you shortly. 🎉");
-    // Notify store owner on WhatsApp
-    if (waNumber) {
-      const msg = encodeURIComponent(
-        `🛒 طلب جديد!\n👤 ${name}\n📞 ${phone}\n📍 ${address}\n\n${itemsList}\n\n💰 المجموع: $${total.toFixed(2)}`
-      );
-      setTimeout(() => window.open(`https://wa.me/${waNumber.replace(/\D/g,"")}?text=${msg}`, "_blank"), 500);
-    }
+    document.getElementById("waSuccessOverlay").classList.add("open");
+    document.body.style.overflow = "hidden";
   } catch(e) {
     showToast("Failed to place order. Please try again.");
   } finally {
@@ -2438,8 +2953,9 @@ document.getElementById('searchInput').addEventListener('input', e => {
   if (navSearch) navSearch.value = e.target.value;
 });
 
-// ── Scroll-reveal Intersection Observer ─────────────────────────
+// ── Scroll-reveal Intersection Observer (fallback when GSAP not loaded) ─
 (function() {
+  if (typeof gsap !== 'undefined') return;
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -2483,6 +2999,308 @@ document.getElementById('searchInput').addEventListener('input', e => {
 // ── Init ──────────────────────────────────────────────────────────
 loadProducts();
 loadStoreSettings();
+
+// ══ LENIS + GSAP ══════════════════════════════════════════════════
+(function() {
+  if (typeof gsap === 'undefined' || typeof Lenis === 'undefined') return;
+
+  // ── Register plugins ──────────────────────────────────────────
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ── Init Lenis smooth scroll ─────────────────────────────────
+  const lenis = new Lenis({
+    duration: 1.15,
+    easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    touchMultiplier: 0,
+  });
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add(time => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+  // Refresh ScrollTrigger positions after Lenis rewires scroll
+  setTimeout(() => ScrollTrigger.refresh(), 400);
+
+  // ── Scroll progress bar ───────────────────────────────────────
+  const bar = document.getElementById('scrollProgress');
+  if (bar) lenis.on('scroll', ({ progress }) => { bar.style.width = (progress * 100) + '%'; });
+
+  // ── Nav: blur/shadow on scroll ────────────────────────────────
+  const nav = document.querySelector('.nav');
+  lenis.on('scroll', ({ scroll }) => { nav.classList.toggle('nav-scrolled', scroll > 80); });
+
+  // ── Override anchor links with Lenis ─────────────────────────
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const el = document.querySelector(a.getAttribute('href'));
+      if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: -72 }); }
+    });
+  });
+
+  // ── Floating hero particles ───────────────────────────────────
+  const pc = document.getElementById('heroParticles');
+  if (pc) {
+    for (let i = 0; i < 20; i++) {
+      const p = document.createElement('div');
+      p.className = 'h-particle';
+      const sz = 1.5 + Math.random() * 3;
+      p.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${35+Math.random()*65}%;--hd:${(Math.random()-.5)*30}px;animation-duration:${5+Math.random()*9}s;animation-delay:-${Math.random()*9}s;`;
+      pc.appendChild(p);
+    }
+  }
+
+  // ── Hero entrance animation ───────────────────────────────────
+  const firstSlide = document.querySelector('.slide-1');
+  if (firstSlide) {
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.from(firstSlide.querySelector('.slide-eyebrow'), { y: 22, opacity: 0, duration: .6 }, .25)
+      .from(firstSlide.querySelector('h2'),            { y: 36, opacity: 0, duration: .7 }, .42)
+      .from(firstSlide.querySelector('p'),             { y: 18, opacity: 0, duration: .55 }, .6)
+      .from(firstSlide.querySelector('.slide-ctas'),   { y: 14, opacity: 0, duration: .5 }, .75);
+    const cards = firstSlide.querySelectorAll('.slide-card');
+    if (cards.length) tl.from(cards, { y: 44, opacity: 0, duration: .5, stagger: .1, ease: 'back.out(1.5)' }, .6);
+  }
+
+  const st = (trigger, start) => ({ trigger, start: start || 'top bottom', once: true });
+
+  // ── Accent lines ─────────────────────────────────────────────
+  gsap.utils.toArray('.section-accent-line').forEach(el => {
+    gsap.from(el, {
+      scrollTrigger: st(el),
+      scaleX: 0, transformOrigin: 'left center', duration: .55, ease: 'power2.out', clearProps: 'all',
+    });
+  });
+
+  // ── Section titles ────────────────────────────────────────────
+  gsap.utils.toArray('.section-title').forEach(el => {
+    gsap.from(el, {
+      scrollTrigger: st(el),
+      y: 22, opacity: 0, duration: .55, ease: 'power2.out', clearProps: 'all',
+    });
+  });
+
+  // ── Stats ─────────────────────────────────────────────────────
+  gsap.from('.stat', {
+    scrollTrigger: st('#statsBar', 'top 85%'),
+    y: 28, opacity: 0, duration: .55, stagger: .1, ease: 'power2.out', clearProps: 'all',
+  });
+
+  // ── Ink banner ────────────────────────────────────────────────
+  gsap.from('.ink-banner-content', {
+    scrollTrigger: st('.ink-banner', 'top 85%'),
+    x: -48, opacity: 0, duration: .7, ease: 'power3.out', clearProps: 'all',
+  });
+  gsap.from('.ink-brand-chip', {
+    scrollTrigger: st('.ink-brands', 'top 90%'),
+    y: 18, opacity: 0, duration: .4, stagger: .06, ease: 'power2.out', clearProps: 'all',
+  });
+
+  // ── Category cards ────────────────────────────────────────────
+  gsap.from('.category-card', {
+    scrollTrigger: st('.categories-grid', 'top 85%'),
+    y: 44, opacity: 0, scale: .88, duration: .5, stagger: .07, ease: 'back.out(1.4)', clearProps: 'all',
+  });
+
+  // ── Feature cards ─────────────────────────────────────────────
+  gsap.from('.feature-card', {
+    scrollTrigger: st('.features-grid', 'top 85%'),
+    y: 52, opacity: 0, duration: .6, stagger: .1, ease: 'power3.out', clearProps: 'all',
+  });
+
+  // ── CTA banner ────────────────────────────────────────────────
+  gsap.from('.cta-banner', {
+    scrollTrigger: st('.cta-banner', 'top 88%'),
+    y: 32, opacity: 0, scale: .98, duration: .7, ease: 'power2.out', clearProps: 'all',
+  });
+
+  // ── Contact section ───────────────────────────────────────────
+  gsap.from('#contact .section-title, #contact .section-sub, #contact .section-accent-line, #contact > .container > div', {
+    scrollTrigger: st('#contact', 'top 85%'),
+    y: 30, opacity: 0, duration: .6, stagger: .12, ease: 'power2.out', clearProps: 'all',
+  });
+
+  // ── Product cards entrance after full re-render (not append) ─
+  const _origRender = renderProducts;
+  renderProducts = function(appendFrom) {
+    _origRender.call(this, appendFrom);
+    if (appendFrom == null) {
+      requestAnimationFrame(() => {
+        gsap.from('.product-card', {
+          y: 32, opacity: 0, duration: .45,
+          stagger: { each: .04, from: 'start' },
+          ease: 'power2.out', clearProps: 'all',
+        });
+        attachTiltToNew();
+      });
+    }
+  };
+
+  // ── React Bits: SpotlightCard + TiltCard ────────────────────────
+  const TILT_SEL = '.product-card, .feature-card, .category-card';
+  const TILT_MAX = 7;
+
+  function attachTilt(card) {
+    if (card._t) return;
+    card._t = true;
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      const cx = r.width / 2, cy = r.height / 2;
+      const rx = ((y - cy) / cy) * -TILT_MAX;
+      const ry = ((x - cx) / cx) * TILT_MAX;
+      card.style.setProperty('--spot-x', x + 'px');
+      card.style.setProperty('--spot-y', y + 'px');
+      card.style.transition = 'transform .08s ease';
+      card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) scale(1.03)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transition = 'transform .45s cubic-bezier(.23,1,.32,1)';
+      card.style.transform = '';
+      card.style.setProperty('--spot-x', '-9999px');
+      card.style.setProperty('--spot-y', '-9999px');
+    });
+  }
+
+  function attachTiltToNew() {
+    document.querySelectorAll(TILT_SEL).forEach(attachTilt);
+  }
+  attachTiltToNew();
+
+  // ── React Bits: Magnet — CTA buttons attract toward cursor ──────
+  document.querySelectorAll('.btn-slide-primary, .btn-slide-secondary, .cta-btn').forEach(btn => {
+    btn.style.display = 'inline-block';
+    btn.addEventListener('mousemove', e => {
+      const r = btn.getBoundingClientRect();
+      const x = (e.clientX - r.left - r.width  / 2) * .32;
+      const y = (e.clientY - r.top  - r.height / 2) * .32;
+      btn.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transition = 'transform .5s cubic-bezier(.23,1,.32,1)';
+      btn.style.transform = '';
+      setTimeout(() => { btn.style.transition = ''; }, 500);
+    });
+  });
+
+  // ── React Bits: DecryptedText — scramble reveal on section titles
+  const RCHARS = 'ABCDEFGHJKMNPQRSTUVWXYZabcdfghjkmnpqrstuvwxyz0123456789@#$%*';
+  function scramble(el, text, dur = 750) {
+    const total = Math.ceil(dur / 33);
+    let f = 0;
+    const iv = setInterval(() => {
+      f++;
+      const p = f / total;
+      const rev = Math.floor(p * text.length);
+      let out = '';
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] === ' ') { out += ' '; continue; }
+        out += i < rev ? text[i] : RCHARS[Math.floor(Math.random() * RCHARS.length)];
+      }
+      el.textContent = out;
+      if (f >= total) { el.textContent = text; clearInterval(iv); }
+    }, 33);
+  }
+
+  const decObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      if (!el._orig) el._orig = el.textContent.trim();
+      setTimeout(() => scramble(el, el._orig, 800), 280);
+      decObs.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.section-title').forEach(el => decObs.observe(el));
+
+  // ── 21st.dev: custom cursor glow dot ────────────────────────────
+  const cc = document.createElement('div');
+  cc.className = 'cc';
+  document.body.appendChild(cc);
+  let cx2 = 0, cy2 = 0, raf2;
+  document.addEventListener('mousemove', e => {
+    cx2 = e.clientX; cy2 = e.clientY;
+    cc.classList.add('vis');
+    cancelAnimationFrame(raf2);
+    raf2 = requestAnimationFrame(() => {
+      cc.style.left = cx2 + 'px';
+      cc.style.top  = cy2 + 'px';
+    });
+  });
+  document.addEventListener('mouseleave', () => cc.classList.remove('vis'));
+  document.querySelectorAll('a,button,.product-card,.category-card,.feature-card,[onclick]')
+    .forEach(el => {
+      el.addEventListener('mouseenter', () => cc.classList.add('big'));
+      el.addEventListener('mouseleave', () => cc.classList.remove('big'));
+    });
+})();
+
+// ── Swipe-to-cart touch handling ─────────────────────────────
+(function initSwipe() {
+  if (!('ontouchstart' in window)) return;
+  let card = null, startX = 0, startY = 0, curX = 0, dir = null;
+
+  function closeAll(except) {
+    document.querySelectorAll('.swipe-wrap .product-card.sw-open').forEach(c => {
+      if (c !== except) { c.classList.remove('sw-open'); c.style.transform = ''; }
+    });
+  }
+
+  document.addEventListener('touchstart', e => {
+    card = e.target.closest('.swipe-wrap .product-card');
+    if (!card) { closeAll(null); return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    curX = startX;
+    dir = null;
+    card.style.transition = 'none';
+  }, {passive: true});
+
+  document.addEventListener('touchmove', e => {
+    if (!card) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (dir === null) {
+      if (Math.abs(dx) > Math.abs(dy) + 4) dir = 'h';
+      else if (Math.abs(dy) > Math.abs(dx) + 4) dir = 'v';
+      else return;
+    }
+    if (dir !== 'h') return;
+    e.preventDefault();
+    curX = e.touches[0].clientX;
+    const base = card.classList.contains('sw-open') ? -80 : 0;
+    const tx = Math.max(-80, Math.min(0, base + dx));
+    card.style.transform = `translateX(${tx}px)`;
+  }, {passive: false});
+
+  document.addEventListener('touchend', () => {
+    if (!card || dir !== 'h') { card = null; return; }
+    card.style.transition = '';
+    card.style.transform = '';
+    const dx = curX - startX;
+    if (dx < -36) { closeAll(card); card.classList.add('sw-open'); }
+    else if (dx > 20) { card.classList.remove('sw-open'); }
+    else if (!card.classList.contains('sw-open')) { /* tiny move, no change */ }
+    card = null;
+  }, {passive: true});
+})();
+
+function swipeAddToCart(id, btn) {
+  addToCart(id);
+  const card = btn.closest('.swipe-wrap').querySelector('.product-card');
+  card.classList.remove('sw-open');
+}
+
+function toggleMobileNav() {
+  const nav = document.getElementById('mobileNav');
+  const btn = document.getElementById('hamburger');
+  const open = nav.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeMobileNav() {
+  document.getElementById('mobileNav').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
 </script>
 </body>
 </html>
