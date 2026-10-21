@@ -328,6 +328,7 @@ select.status-sel:focus{border-color:var(--accent)}
           <div class="card-actions">
             <input class="search-input" placeholder="Search products…" oninput="filterProducts(this.value)">
             <button class="btn btn-ghost btn-sm" onclick="loadProducts()">↻ Refresh</button>
+            <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="deleteAllProducts()">🗑 Delete All</button>
             <button class="btn btn-primary btn-sm" onclick="openProdModal()">+ Add Product</button>
           </div>
         </div>
@@ -857,6 +858,17 @@ async function loadProducts(){
     allProducts=await sb("/rest/v1/pt_products?select=*&order=name.asc")||[];
     renderProductsTable(allProducts);
   }catch(e){console.error("loadProducts error:",e);document.getElementById("productsWrap").innerHTML=`<div class="empty-state">Failed to load products: ${e.message}</div>`}
+}
+
+async function deleteAllProducts(){
+  if(!confirm(`Delete ALL ${allProducts.length} products? This cannot be undone.`))return;
+  const wrap=document.getElementById("productsWrap");
+  wrap.innerHTML='<div class="loading-state">Deleting all products…</div>';
+  try{
+    await sb("/rest/v1/pt_products?id=gt.0",{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    allProducts=[];
+    wrap.innerHTML='<div class="empty-state">All products deleted. Click + Add Product to start fresh.</div>';
+  }catch(e){wrap.innerHTML=`<div class="empty-state">Error: ${e.message}</div>`;}
 }
 
 function filterProducts(q){
