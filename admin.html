@@ -473,17 +473,23 @@ select.status-sel:focus{border-color:var(--accent)}
     </div>
     <div class="field">
       <label>Image</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="p_image" placeholder="https://…" style="flex:1">
-        <label for="p_image_file" class="btn btn-sm" style="cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--fg);font-size:.82rem;font-weight:600;transition:background .15s" id="p_image_browse">
-          📁 Browse
-        </label>
-        <input type="file" id="p_image_file" accept="image/*" style="display:none" onchange="uploadProductImage(this)">
+      <input type="hidden" id="p_image">
+      <div id="imgUploadZone" onclick="document.getElementById('p_image_file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';uploadProductImage({files:event.dataTransfer.files})"
+        style="border:2px dashed var(--border);border-radius:var(--r-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--surface-2)">
+        <div id="imgUploadPlaceholder">
+          <div style="font-size:2rem;margin-bottom:6px">📷</div>
+          <div style="color:var(--fg-2);font-size:.85rem">Click to upload or drag &amp; drop</div>
+          <div style="color:var(--fg-3);font-size:.75rem;margin-top:3px">JPG, PNG, WEBP — max 5 MB</div>
+        </div>
+        <div id="imgUploadPreviewWrap" style="display:none;flex-direction:column;align-items:center;gap:8px">
+          <img id="p_image_preview_img" style="max-height:120px;max-width:100%;border-radius:6px;border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="p_image_upload_status" style="font-size:.78rem;color:var(--fg-2)"></span>
+            <button type="button" onclick="event.stopPropagation();clearProductImage()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.78rem;padding:2px 6px">✕ Remove</button>
+          </div>
+        </div>
       </div>
-      <div id="p_image_preview" style="margin-top:8px;display:none">
-        <img id="p_image_preview_img" style="max-height:80px;border-radius:6px;border:1px solid var(--border)">
-        <span id="p_image_upload_status" style="font-size:.78rem;color:var(--fg-2);margin-left:8px"></span>
-      </div>
+      <input type="file" id="p_image_file" accept="image/*" style="display:none" onchange="uploadProductImage(this)">
     </div>
     <div class="field"><label>Description</label><textarea id="p_desc" rows="2" placeholder="Short description…"></textarea></div>
     <div class="field"><label>Specs</label><textarea id="p_specs" rows="2" placeholder="Technical specs…"></textarea></div>
@@ -583,20 +589,31 @@ async function sb(path,opts={}){
   }finally{clearTimeout(timer);}
 }
 
+function clearProductImage(){
+  document.getElementById("p_image").value="";
+  document.getElementById("p_image_preview_img").src="";
+  document.getElementById("p_image_upload_status").textContent="";
+  document.getElementById("imgUploadPreviewWrap").style.display="none";
+  document.getElementById("imgUploadPlaceholder").style.display="block";
+  document.getElementById("imgUploadZone").style.borderColor="var(--border)";
+}
+
 async function uploadProductImage(input){
-  const file=input.files[0];
+  const file=input.files?input.files[0]:null;
   if(!file)return;
   const statusEl=document.getElementById("p_image_upload_status");
-  const previewBox=document.getElementById("p_image_preview");
+  const previewWrap=document.getElementById("imgUploadPreviewWrap");
+  const placeholder=document.getElementById("imgUploadPlaceholder");
   const previewImg=document.getElementById("p_image_preview_img");
-  const browseBtn=document.getElementById("p_image_browse");
+  const zone=document.getElementById("imgUploadZone");
   // show local preview immediately
   previewImg.src=URL.createObjectURL(file);
-  previewBox.style.display="flex";
-  previewBox.style.alignItems="center";
+  placeholder.style.display="none";
+  previewWrap.style.display="flex";
   statusEl.textContent="Uploading…";
-  browseBtn.style.opacity=".5";
-  browseBtn.style.pointerEvents="none";
+  statusEl.style.color="var(--fg-2)";
+  zone.style.borderColor="var(--accent)";
+  zone.style.pointerEvents="none";
   try{
     const ext=file.name.split(".").pop().toLowerCase();
     const fname="products/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
@@ -605,25 +622,19 @@ async function uploadProductImage(input){
       headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":file.type,"x-upsert":"true"},
       body:file
     });
-    if(!up.ok){
-      const err=await up.text();
-      // bucket may not exist yet — try creating it then retry
-      if(err.includes("Bucket not found")||up.status===404||up.status===400){
-        await fetch(SB_URL+"/storage/v1/bucket",{method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json"},body:JSON.stringify({id:"pt-images",name:"pt-images",public:true})});
-        const up2=await fetch(SB_URL+"/storage/v1/object/pt-images/"+fname,{method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":file.type,"x-upsert":"true"},body:file});
-        if(!up2.ok)throw new Error(await up2.text());
-      } else throw new Error(err);
-    }
+    if(!up.ok){const err=await up.text();throw new Error(err);}
     const publicUrl=SB_URL+"/storage/v1/object/public/pt-images/"+fname;
     document.getElementById("p_image").value=publicUrl;
     statusEl.textContent="✓ Uploaded";
     statusEl.style.color="var(--green)";
+    zone.style.borderColor="var(--green)";
   }catch(e){
-    statusEl.textContent="Upload failed: "+e.message;
+    statusEl.textContent="Upload failed: "+e.message.slice(0,80);
     statusEl.style.color="var(--red)";
+    zone.style.borderColor="var(--red)";
   }
-  browseBtn.style.opacity="";browseBtn.style.pointerEvents="";
-  input.value="";
+  zone.style.pointerEvents="";
+  if(input.value!==undefined)input.value="";
 }
 
 function init(){
@@ -1046,12 +1057,14 @@ function openProdModal(p){
   document.getElementById("p_qty").value=p?.quantity??0;
   document.getElementById("p_badge").value=p?.badge||"";
   document.getElementById("p_image").value=p?.image_url||"";
-  // reset image preview
-  const prev=document.getElementById("p_image_preview");
   const prevImg=document.getElementById("p_image_preview_img");
   const prevStatus=document.getElementById("p_image_upload_status");
-  if(p?.image_url){prev.style.display="flex";prev.style.alignItems="center";prevImg.src=p.image_url;prevStatus.textContent="";}
-  else{prev.style.display="none";prevImg.src="";prevStatus.textContent="";}
+  const previewWrap=document.getElementById("imgUploadPreviewWrap");
+  const placeholder=document.getElementById("imgUploadPlaceholder");
+  const zone=document.getElementById("imgUploadZone");
+  zone.style.borderColor="var(--border)";
+  if(p?.image_url){prevImg.src=p.image_url;prevStatus.textContent="";previewWrap.style.display="flex";placeholder.style.display="none";}
+  else{prevImg.src="";prevStatus.textContent="";previewWrap.style.display="none";placeholder.style.display="block";}
   document.getElementById("p_desc").value=p?.description||"";
   document.getElementById("p_specs").value=p?.specs||"";
   document.getElementById("p_active").value=String(p?.is_active!==false);
