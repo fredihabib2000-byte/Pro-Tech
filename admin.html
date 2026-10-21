@@ -328,6 +328,7 @@ select.status-sel:focus{border-color:var(--accent)}
           <div class="card-actions">
             <input class="search-input" placeholder="Search products…" oninput="filterProducts(this.value)">
             <button class="btn btn-ghost btn-sm" onclick="loadProducts()">↻ Refresh</button>
+            <button id="deleteSelectedBtn" class="btn btn-sm" style="background:var(--red);color:#fff;display:none" onclick="deleteSelectedProducts()">🗑 Delete Selected (<span id="selCount">0</span>)</button>
             <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="deleteAllProducts()">🗑 Delete All</button>
             <button class="btn btn-primary btn-sm" onclick="openProdModal()">+ Add Product</button>
           </div>
@@ -876,12 +877,22 @@ function filterProducts(q){
   renderProductsTable(f);
 }
 
+function updateSelCount(){
+  const boxes=document.querySelectorAll(".prod-check:checked");
+  const n=boxes.length;
+  const btn=document.getElementById("deleteSelectedBtn");
+  const sp=document.getElementById("selCount");
+  if(sp)sp.textContent=n;
+  if(btn)btn.style.display=n>0?"inline-flex":"none";
+}
+
 function renderProductsTable(prods){
   if(!prods.length){document.getElementById("productsWrap").innerHTML='<div class="empty-state">No products found.</div>';return}
   const rows=prods.map(p=>{
     const stockCls=(p.quantity||0)<5?"low":"ok";
     const stockLabel=(p.quantity||0)<5?"Low":"In Stock";
     return `<tr>
+      <td style="width:36px"><input type="checkbox" class="prod-check" data-id="${p.id}" onchange="updateSelCount()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)"></td>
       <td>${p.image_url?`<img src="${p.image_url}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;background:var(--surface-2)">`:`<div style="width:42px;height:42px;border-radius:6px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.2rem">${p.icon||"📦"}</div>`}</td>
       <td><strong>${p.name}</strong>${p.badge?`<br><span style="font-size:.72rem;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:99px">${p.badge}</span>`:""}</td>
       <td style="color:var(--fg-2)">${p.category||"—"}</td>
@@ -900,7 +911,22 @@ function renderProductsTable(prods){
       </td>
     </tr>`;
   }).join("");
-  document.getElementById("productsWrap").innerHTML=`<table><thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById("productsWrap").innerHTML=`<table><thead><tr><th style="width:36px"><input type="checkbox" id="selAllChk" onchange="(e=>{document.querySelectorAll('.prod-check').forEach(c=>c.checked=e.target.checked);updateSelCount()})(event)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)"></th><th></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function deleteSelectedProducts(){
+  const ids=[...document.querySelectorAll(".prod-check:checked")].map(c=>c.dataset.id);
+  if(!ids.length)return;
+  if(!confirm(`Delete ${ids.length} selected product(s)? This cannot be undone.`))return;
+  const btn=document.getElementById("deleteSelectedBtn");
+  btn.disabled=true;btn.textContent="Deleting…";
+  try{
+    await sb(`/rest/v1/pt_products?id=in.(${ids.join(",")})`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    allProducts=allProducts.filter(p=>!ids.includes(String(p.id)));
+    renderProductsTable(allProducts);
+    updateSelCount();
+  }catch(e){alert("Error: "+e.message);}
+  finally{btn.disabled=false;}
 }
 
 function markStockDirty(inp){inp.nextElementSibling.style.display="block"}
