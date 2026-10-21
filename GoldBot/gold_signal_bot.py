@@ -22,6 +22,8 @@ TWELVE_API_KEY   = os.getenv("TWELVE_API_KEY")
 
 CHECK_EVERY = 60 * 15
 
+ALPHA_VANTAGE_KEY = os.getenv("ALPHA_VANTAGE_KEY")   # optional — improves accuracy
+
 FAST_EMA   = 8
 SLOW_EMA   = 21
 TREND_EMA  = 200
@@ -231,7 +233,7 @@ def send(msg: str):
         log.error("Telegram: %s", e)
 
 
-def fmt_signal(sig: dict, session: str, htf: str) -> str:
+def fmt_signal(sig: dict, session: str, htf: str, af: dict = None) -> str:
     score = sig["score"]; d = sig["direction"]
     if   score >= STRONG_LEVEL: header = f"🚀 <b>STRONG {d} — XAUUSD</b>"; stars = "⭐⭐⭐"
     elif score >= SIGNAL_LEVEL: header = f"📡 <b>{d} SIGNAL — XAUUSD</b>";  stars = "⭐⭐"
@@ -241,12 +243,20 @@ def fmt_signal(sig: dict, session: str, htf: str) -> str:
     emoji = "🟢" if d == "BUY" else "🔴"
     now   = datetime.utcnow().strftime("%H:%M UTC")
 
+    macro = ""
+    if af:
+        y_icon = "📈" if af["yield"] == "RISING" else "📉" if af["yield"] == "FALLING" else "➡️"
+        u_icon = "💪" if af["usd"] == "STRONG" else "🔽" if af["usd"] == "WEAK" else "➡️"
+        s_icon = "🟢" if af["sentiment"] == "Bullish" else "🔴" if af["sentiment"] == "Bearish" else "⚪"
+        bias   = af["gold_bias"]
+        macro  = f"\n📰 News: {s_icon} {af['sentiment']}  |  10Y: {y_icon} {af['yield']}  |  USD: {u_icon} {af['usd']}  |  Bias: {bias:+d}/3"
+
     lines = [
         f"{emoji} {header}",
         f"━━━━━━━━━━━━━━━━",
         f"⏰ {now}  |  {session}",
         f"💡 {sig['reason']}",
-        f"🏆 {stars}  |  1H: {htf_icon} {htf}",
+        f"🏆 {stars}  |  1H: {htf_icon} {htf}{macro}",
         f"━━━━━━━━━━━━━━━━",
     ]
     if score >= SIGNAL_LEVEL:
@@ -266,16 +276,28 @@ def fmt_signal(sig: dict, session: str, htf: str) -> str:
     return "\n".join(lines)
 
 
-def fmt_brief(price: float, rsi_v: float, atr_v: float, htf: str) -> str:
+def fmt_brief(price: float, rsi_v: float, atr_v: float, htf: str, af: dict = None) -> str:
     htf_icon = "📈 Bullish" if htf == "UP" else "📉 Bearish" if htf == "DOWN" else "➡️ Neutral"
+    macro = ""
+    if af:
+        y_icon = "📈" if af["yield"] == "RISING" else "📉" if af["yield"] == "FALLING" else "➡️"
+        u_icon = "💪" if af["usd"] == "STRONG" else "🔽" if af["usd"] == "WEAK" else "➡️"
+        s_icon = "🟢" if af["sentiment"] == "Bullish" else "🔴" if af["sentiment"] == "Bearish" else "⚪"
+        blocked_txt = f"\n⚠️ NEWS BLOCK: {af['block_event']}" if af["blocked"] else ""
+        macro = (
+            f"\n10Y Yield : {y_icon} {af['yield']}\n"
+            f"USD       : {u_icon} {af['usd']}\n"
+            f"News      : {s_icon} {af['sentiment']} ({af['sent_score']:+.2f})\n"
+            f"Gold Bias : {af['gold_bias']:+d} / 3{blocked_txt}"
+        )
     return (
         f"🌅 <b>LONDON SESSION OPEN — XAUUSD</b>\n"
         f"━━━━━━━━━━━━━━━━\n"
         f"Price : <b>{price:.2f}</b>\n"
         f"1H    : {htf_icon}\n"
-        f"RSI   : {rsi_v:.1f}  |  ATR: {atr_v:.2f}\n"
+        f"RSI   : {rsi_v:.1f}  |  ATR: {atr_v:.2f}{macro}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"Signals active: 11:00–00:00 (Lebanon 🇱🇧)"
+        f"Signals: 11:00–00:00 (Lebanon 🇱🇧)"
     )
 
 
@@ -302,12 +324,15 @@ def run():
             last_brief_date = today
             try:
                 _, highs, lows, closes = fetch_data()
-                opens_d, _, _, _ = fetch_data()
                 price = closes[-1]
                 at_v  = atr(highs, lows, closes, ATR_PERIOD)[-1]
                 rs_v  = rsi(closes, RSI_PERIOD)[-1]
                 htf   = get_htf_trend()
-                send(fmt_brief(price, rs_v, at_v, htf))
+                af    = None
+                if ALPHA_VANTAGE_KEY:
+                    from alpha_filters import get_all_filters
+                    af = get_all_filters()
+                send(fmt_brief(price, rs_v, at_v, htf, af))
                 log.info("Daily brief sent")
             except Exception as e:
                 log.error("Brief error: %s", e)
@@ -321,6 +346,20 @@ def run():
             opens, highs, lows, closes = fetch_data()
             price = closes[-1]
             htf   = get_htf_trend()
+
+            # Alpha Vantage filters (optional — only if key is set)
+            af = None
+            if ALPHA_VANTAGE_KEY:
+                try:
+                    from alpha_filters import get_all_filters
+                    af = get_all_filters()
+                    # Block during high-impact news events
+                    if af["blocked"]:
+                        log.info("News block: %s — skipping", af["block_event"])
+                        time.sleep(CHECK_EVERY)
+                        continue
+                except Exception as e:
+                    log.warning("Alpha filters error: %s", e)
 
             sig, atr_val, rsi_val = score_signals(price, opens, highs, lows, closes)
 
@@ -342,6 +381,18 @@ def run():
                     time.sleep(CHECK_EVERY)
                     continue
 
+            # Alpha Vantage macro filter: suppress BUY when environment is bearish for gold
+            if af and score >= SIGNAL_LEVEL:
+                bias = af.get("gold_bias", 0)
+                if d == "BUY"  and bias <= -2:
+                    log.info("Macro bias anti-gold (%d) — BUY suppressed", bias)
+                    time.sleep(CHECK_EVERY)
+                    continue
+                if d == "SELL" and bias >= 2:
+                    log.info("Macro bias pro-gold (%d) — SELL suppressed", bias)
+                    time.sleep(CHECK_EVERY)
+                    continue
+
             # Spam guard: don't re-alert same conditions within SPAM_MINUTES
             prev_rkey, prev_ts = last_alert.get(d, ("", 0))
             age_mins = (time.time() - prev_ts) / 60
@@ -351,7 +402,7 @@ def run():
                 continue
 
             last_alert[d] = (rkey, time.time())
-            send(fmt_signal(sig, session, htf))
+            send(fmt_signal(sig, session, htf, af))
             log.info("Alert: %s score=%d HTF=%s @ %.2f", d, score, htf, price)
 
         except Exception as e:
