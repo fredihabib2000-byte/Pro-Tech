@@ -226,6 +226,7 @@ select.status-sel:focus{border-color:var(--accent)}
       <button class="sb-item active" data-page="dashboard" onclick="goto(this)"><span class="icon">📊</span> Dashboard</button>
       <button class="sb-item" data-page="orders" onclick="goto(this)"><span class="icon">🛒</span> Orders <span class="badge-dot" id="pendingDot" style="display:none"></span></button>
       <button class="sb-item" data-page="products" onclick="goto(this)"><span class="icon">📦</span> Products</button>
+      <button class="sb-item" data-page="categories" onclick="goto(this)"><span class="icon">🏷️</span> Categories</button>
       <button class="sb-item" data-page="clients" onclick="goto(this)"><span class="icon">👥</span> Clients</button>
       <button class="sb-item" data-page="reports" onclick="goto(this)"><span class="icon">📈</span> Reports</button>
       <button class="sb-item" data-page="inventory" onclick="goto(this)"><span class="icon">🗃️</span> Inventory <span class="badge-dot" id="lowStockDot" style="display:none"></span></button>
@@ -334,6 +335,20 @@ select.status-sel:focus{border-color:var(--accent)}
           </div>
         </div>
         <div class="tbl-wrap" id="productsWrap"><div class="loading-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="page page-hidden" id="page-categories">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Categories</span>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadCategories()">↻ Refresh</button>
+            <button class="btn btn-primary btn-sm" onclick="openCatModal()">+ Add Category</button>
+          </div>
+        </div>
+        <div class="tbl-wrap" id="categoriesWrap"><div class="loading-state">Loading…</div></div>
       </div>
     </div>
 
@@ -446,7 +461,7 @@ select.status-sel:focus{border-color:var(--accent)}
     <h3 id="prodModalTitle">Add Product</h3>
     <div class="field-row">
       <div class="field"><label>Name *</label><input id="p_name" placeholder="Product name"></div>
-      <div class="field"><label>Category *</label><input id="p_category" placeholder="e.g. Headphones"></div>
+      <div class="field"><label>Category *</label><select id="p_category" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--fg);outline:none;width:100%;font-size:.9rem"><option value="">Select category…</option></select></div>
     </div>
     <div class="field-row">
       <div class="field"><label>Price ($) *</label><input id="p_price" type="number" step="0.01" placeholder="0.00"></div>
@@ -483,6 +498,18 @@ select.status-sel:focus{border-color:var(--accent)}
   </div>
 </div>
 
+<!-- CATEGORY MODAL -->
+<div class="modal-bg" id="catModal">
+  <div class="modal" style="max-width:380px">
+    <h3 id="catModalTitle">Add Category</h3>
+    <div class="field"><label>Category Name *</label><input id="cat_name" placeholder="e.g. Headphones" style="width:100%"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCatModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCat()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ORDER DETAIL MODAL -->
 <div class="modal-bg" id="orderModal">
   <div class="modal">
@@ -508,6 +535,7 @@ let invSearchQ='',invStatusF='all';
 let rptAllOrders=[],rptFrom='',rptTo='',rptTab='sales';
 let allMsgs=[];
 let settingsData={};
+let allCategories=[];
 
 function togglePw(id,btn){const el=document.getElementById(id);el.type=el.type==="password"?"text":"password";btn.textContent=el.type==="password"?"👁":"🙈";}
 
@@ -709,7 +737,7 @@ function goto(el){
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open")}
 
 // ── NAVIGATION ───────────────────────────────────────────
-const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",clients:"Clients",reports:"Reports",inventory:"Inventory",messages:"Messages",settings:"Settings"};
+const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",messages:"Messages",settings:"Settings"};
 function goto(el){
   document.querySelectorAll(".sb-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
@@ -720,6 +748,7 @@ function goto(el){
   document.getElementById("sidebar").classList.remove("mob-open");
   if(p==="orders")loadOrders();
   if(p==="products")loadProducts();
+  if(p==="categories")loadCategories();
   if(p==="clients")loadClients();
   if(p==="reports")loadReports();
   if(p==="inventory")loadInventory();
@@ -856,8 +885,12 @@ function viewOrder(id){
 async function loadProducts(){
   document.getElementById("productsWrap").innerHTML='<div class="loading-state">Loading…</div>';
   try{
-    allProducts=await sb("/rest/v1/pt_products?select=*&order=name.asc")||[];
+    [allProducts,allCategories]=await Promise.all([
+      sb("/rest/v1/pt_products?select=*&order=name.asc").then(r=>r||[]),
+      sb("/rest/v1/pt_categories?select=*&order=name.asc").then(r=>r||[])
+    ]);
     renderProductsTable(allProducts);
+    populateCategoryDropdown();
   }catch(e){console.error("loadProducts error:",e);document.getElementById("productsWrap").innerHTML=`<div class="empty-state">Failed to load products: ${e.message}</div>`}
 }
 
@@ -870,6 +903,65 @@ async function deleteAllProducts(){
     allProducts=[];
     wrap.innerHTML='<div class="empty-state">All products deleted. Click + Add Product to start fresh.</div>';
   }catch(e){wrap.innerHTML=`<div class="empty-state">Error: ${e.message}</div>`;}
+}
+
+// ── CATEGORIES ───────────────────────────────────────────
+async function loadCategories(){
+  document.getElementById("categoriesWrap").innerHTML='<div class="loading-state">Loading…</div>';
+  try{
+    allCategories=await sb("/rest/v1/pt_categories?select=*&order=name.asc")||[];
+    renderCategoriesTable();
+    populateCategoryDropdown();
+  }catch(e){document.getElementById("categoriesWrap").innerHTML=`<div class="empty-state">Error: ${e.message}</div>`;}
+}
+
+function renderCategoriesTable(){
+  const wrap=document.getElementById("categoriesWrap");
+  if(!allCategories.length){wrap.innerHTML='<div class="empty-state">No categories yet. Click + Add Category to create one.</div>';return;}
+  const rows=allCategories.map(c=>`<tr>
+    <td><strong>${c.name}</strong></td>
+    <td style="color:var(--fg-2);font-size:.82rem">${new Date(c.created_at).toLocaleDateString()}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteCat(${c.id},'${c.name.replace(/'/g,"\\'")}')">Delete</button></td>
+  </tr>`).join("");
+  wrap.innerHTML=`<table><thead><tr><th>Name</th><th>Created</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function populateCategoryDropdown(){
+  const sel=document.getElementById("p_category");
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select category…</option>'+allCategories.map(c=>`<option value="${c.name}">${c.name}</option>`).join("");
+  if(cur)sel.value=cur;
+}
+
+function openCatModal(){
+  document.getElementById("cat_name").value="";
+  document.getElementById("catModal").classList.add("open");
+  setTimeout(()=>document.getElementById("cat_name").focus(),100);
+}
+function closeCatModal(){document.getElementById("catModal").classList.remove("open");}
+
+async function saveCat(){
+  const name=document.getElementById("cat_name").value.trim();
+  if(!name){alert("Enter a category name.");return;}
+  try{
+    const created=await sb("/rest/v1/pt_categories",{method:"POST",body:JSON.stringify({name})});
+    if(created&&created[0])allCategories.push(created[0]);
+    allCategories.sort((a,b)=>a.name.localeCompare(b.name));
+    renderCategoriesTable();
+    populateCategoryDropdown();
+    closeCatModal();
+  }catch(e){alert("Error: "+e.message);}
+}
+
+async function deleteCat(id,name){
+  if(!confirm(`Delete category "${name}"?`))return;
+  try{
+    await sb(`/rest/v1/pt_categories?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    allCategories=allCategories.filter(c=>c.id!==id);
+    renderCategoriesTable();
+    populateCategoryDropdown();
+  }catch(e){alert("Error: "+e.message);}
 }
 
 function filterProducts(q){
@@ -947,6 +1039,7 @@ function openProdModal(p){
   editProdId=p?p.id:null;
   document.getElementById("prodModalTitle").textContent=p?"Edit Product":"Add Product";
   document.getElementById("p_name").value=p?.name||"";
+  populateCategoryDropdown();
   document.getElementById("p_category").value=p?.category||"";
   document.getElementById("p_price").value=p?.price||"";
   document.getElementById("p_old_price").value=p?.old_price||"";
