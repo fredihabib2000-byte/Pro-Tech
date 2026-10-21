@@ -105,6 +105,41 @@ def atr(highs, lows, closes, period=14):
         r.append((r[-1]*(period-1) + tr) / period)
     return r
 
+def bollinger(prices, period=20, std_mult=2.0):
+    """Returns (upper, middle, lower) as lists aligned to prices."""
+    if len(prices) < period:
+        p = prices[-1]
+        return [p]*len(prices), [p]*len(prices), [p]*len(prices)
+    upper, middle, lower = [], [], []
+    for i in range(len(prices)):
+        if i < period - 1:
+            upper.append(prices[i]); middle.append(prices[i]); lower.append(prices[i])
+            continue
+        window = prices[i-period+1:i+1]
+        m = sum(window) / period
+        sd = (sum((x - m) ** 2 for x in window) / period) ** 0.5
+        upper.append(m + std_mult * sd)
+        middle.append(m)
+        lower.append(m - std_mult * sd)
+    return upper, middle, lower
+
+def stoch_rsi(prices, rsi_period=14, stoch_period=14, smooth_k=3, smooth_d=3):
+    """Returns (K, D) smoothed stochastic RSI, values 0–100."""
+    rs = rsi(prices, rsi_period)
+    if len(rs) < stoch_period:
+        return [50.0], [50.0]
+    raw_k = []
+    for i in range(stoch_period - 1, len(rs)):
+        window = rs[i-stoch_period+1:i+1]
+        lo, hi = min(window), max(window)
+        raw_k.append(50.0 if hi == lo else (rs[i] - lo) / (hi - lo) * 100)
+    def sma(arr, n):
+        if len(arr) < n: return arr
+        return [sum(arr[i:i+n])/n for i in range(len(arr)-n+1)]
+    k = sma(raw_k, smooth_k) or raw_k
+    d = sma(k, smooth_d) or k
+    return k, d
+
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -150,13 +185,18 @@ def score_signals(price, opens, highs, lows, closes):
     rs_v = rsi(closes, RSI_PERIOD)
     mm_v, ms_v = macd(closes)
     at_v = atr(highs, lows, closes, ATR_PERIOD)
+    bb_u, bb_m, bb_l = bollinger(closes, 20, 2.0)
+    sk_v, sd_v = stoch_rsi(closes)
 
     n = min(len(ef_v), len(es_v), len(et_v), len(rs_v),
-            len(mm_v), len(ms_v), len(at_v), len(closes), len(opens))
+            len(mm_v), len(ms_v), len(at_v), len(bb_u),
+            len(sk_v), len(sd_v), len(closes), len(opens))
 
     ef = ef_v[-n:]; es = es_v[-n:]; et = et_v[-n:]
     rs = rs_v[-n:]; mm = mm_v[-n:]; ms = ms_v[-n:]
     at = at_v[-n:]; cl = closes[-n:]; op = opens[-n:]
+    bu = bb_u[-n:]; bm = bb_m[-n:]; bl = bb_l[-n:]
+    sk = sk_v[-n:]; sd = sd_v[-n:]
 
     atr_val = at[-1]
     atr_med = sorted(at[-20:])[10]
@@ -173,7 +213,18 @@ def score_signals(price, opens, highs, lows, closes):
         "RSI Bullish":   rs[-1] > 50,
         "Strong Candle": body > atr_val * 0.4,
     }
-    # Bonus event conditions (add +1 if a cross just happened)
+    # BB: price above middle band (uptrend) or bouncing off lower band
+    if cl[-1] > bm[-1]:
+        buy_conds["BB Mid↑"] = True
+    if cl[-2] <= bl[-2] and cl[-1] > bl[-1]:        # just bounced off lower band
+        buy_conds["BB Bounce 🔄"] = True
+    # StochRSI: oversold → buy zone
+    if sk[-1] < 25:
+        buy_conds["StochRSI Oversold"] = True
+    if sk[-1] > sd[-1] and sk[-2] <= sd[-2] and sk[-2] < 40:  # K crosses D from low
+        buy_conds["StochRSI Cross ✨"] = True
+
+    # Bonus cross events (+1 if a cross just happened)
     if ef[-1] > es[-1] and ef[-2] <= es[-2]:        # EMA just crossed
         buy_conds["EMA Cross ✨"] = True
     if mm[-1] > ms[-1] and mm[-2] <= ms[-2]:        # MACD just crossed
@@ -189,6 +240,17 @@ def score_signals(price, opens, highs, lows, closes):
         "RSI Bearish":   rs[-1] < 50,
         "Strong Candle": body < -atr_val * 0.4,
     }
+    # BB: price below middle band or rejecting upper band
+    if cl[-1] < bm[-1]:
+        sell_conds["BB Mid↓"] = True
+    if cl[-2] >= bu[-2] and cl[-1] < bu[-1]:        # just rejected from upper band
+        sell_conds["BB Reject 🔄"] = True
+    # StochRSI: overbought → sell zone
+    if sk[-1] > 75:
+        sell_conds["StochRSI Overbought"] = True
+    if sk[-1] < sd[-1] and sk[-2] >= sd[-2] and sk[-2] > 60:  # K crosses D from high
+        sell_conds["StochRSI Cross ✨"] = True
+
     if ef[-1] < es[-1] and ef[-2] >= es[-2]:
         sell_conds["EMA Cross ✨"] = True
     if mm[-1] < ms[-1] and mm[-2] >= ms[-2]:
@@ -207,15 +269,16 @@ def score_signals(price, opens, highs, lows, closes):
         hits  = [k for k, v in conds.items() if v]
         score = len(hits)
         if score >= SETUP_LEVEL:
-            # Only show the 3 most relevant conditions in the reason
             reason = " + ".join(hits[:3])
+            bb_pct = (cl[-1] - bl[-1]) / (bu[-1] - bl[-1]) if (bu[-1] - bl[-1]) > 0 else 0.5
             results.append({
                 "direction": direction,
                 "score": score,
                 "reason": reason,
-                "reason_key": "|".join(sorted(hits)),   # for spam detection
+                "reason_key": "|".join(sorted(hits)),
                 "sl": sl_p, "tp": tp_p, "entry": price,
                 "atr": atr_val, "rsi": rs[-1],
+                "stoch_k": sk[-1], "bb_pct": bb_pct,
             })
 
     results.sort(key=lambda x: x["score"], reverse=True)
@@ -260,11 +323,14 @@ def fmt_signal(sig: dict, session: str, htf: str, af: dict = None) -> str:
         f"━━━━━━━━━━━━━━━━",
     ]
     if score >= SIGNAL_LEVEL:
+        sk = sig.get("stoch_k", 50); bb = sig.get("bb_pct", 0.5)
+        sk_icon = "🔴 OB" if sk > 75 else "🟢 OS" if sk < 25 else "⚪"
+        bb_icon = "🔴 Top" if bb > 0.85 else "🟢 Bot" if bb < 0.15 else f"{bb:.0%}"
         lines += [
             f"💰 Entry : <b>{sig['entry']:.2f}</b>",
             f"🛑 SL    : <b>{sig['sl']:.2f}</b>  ({sig['atr'] * ATR_MULT:.1f} pts)",
             f"🎯 TP    : <b>{sig['tp']:.2f}</b>  (1:{RR_RATIO})",
-            f"📊 RSI   : {sig['rsi']:.1f}  |  ATR: {sig['atr']:.2f}",
+            f"📊 RSI: {sig['rsi']:.1f}  |  StochRSI: {sk:.0f} {sk_icon}  |  BB: {bb_icon}",
             f"━━━━━━━━━━━━━━━━",
             f"⚠️ Confirm before entering!",
         ]
