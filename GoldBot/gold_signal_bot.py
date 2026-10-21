@@ -29,12 +29,15 @@ SLOW_EMA   = 21
 TREND_EMA  = 200
 RSI_PERIOD = 14
 ATR_PERIOD = 14
-ATR_MULT   = 2.0
-RR_RATIO   = 2.5
+ATR_MULT   = 1.8     # tighter stop → better RR
+RR_RATIO   = 3.0     # 3:1 RR → profitable even at 35% win rate
+ATR_MIN    = 2.5     # skip dead/choppy markets below this ATR
 
 SETUP_LEVEL  = 2
 SIGNAL_LEVEL = 3
 STRONG_LEVEL = 4
+
+PIVOT_ZONE  = 0.35   # within X × ATR of a pivot level = "at key level"
 
 # Spam guard: don't re-alert same direction+reason within N minutes
 SPAM_MINUTES = 60
@@ -140,6 +143,29 @@ def stoch_rsi(prices, rsi_period=14, stoch_period=14, smooth_k=3, smooth_d=3):
     d = sma(k, smooth_d) or k
     return k, d
 
+def pivot_levels(highs, lows, closes):
+    """
+    Classic daily pivot points from yesterday's candles.
+    Uses last 96 15min bars (~24h) as 'yesterday'.
+    Returns dict with PP, R1, R2, S1, S2.
+    """
+    n = len(closes)
+    if n < 200:
+        return {}
+    # Yesterday = candles from -192 to -96 (the 24h before the last 96 bars)
+    start, end = max(0, n - 192), n - 96
+    ph = max(highs[start:end])
+    pl = min(lows[start:end])
+    pc = closes[end - 1]
+    pp = (ph + pl + pc) / 3
+    return {
+        "PP": pp,
+        "R1": 2 * pp - pl,
+        "R2": pp + (ph - pl),
+        "S1": 2 * pp - ph,
+        "S2": pp - (ph - pl),
+    }
+
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -202,8 +228,23 @@ def score_signals(price, opens, highs, lows, closes):
     atr_med = sorted(at[-20:])[10]
     if atr_val > atr_med * 2.2:
         return None, atr_val, rs[-1]   # ATR spike — skip
+    if atr_val < ATR_MIN:
+        return None, atr_val, rs[-1]   # dead/choppy market — skip
 
     body = cl[-1] - op[-1]
+
+    # Pivot levels — near-level trades get +1 score bonus
+    pivots = pivot_levels(highs, lows, closes)
+    pivot_zone = atr_val * PIVOT_ZONE
+    near_support    = any(abs(cl[-1] - pivots[k]) <= pivot_zone for k in ("S1", "S2", "PP") if k in pivots)
+    near_resistance = any(abs(cl[-1] - pivots[k]) <= pivot_zone for k in ("R1", "R2", "PP") if k in pivots)
+    # Find nearest pivot name and distance for display
+    nearest_pivot = ""
+    nearest_dist  = 9999
+    for k, v in pivots.items():
+        d = abs(cl[-1] - v)
+        if d < nearest_dist:
+            nearest_dist = d; nearest_pivot = f"{k} {v:.1f}"
 
     # ── BUY conditions (ALL state-based — fire whenever conditions hold) ──
     buy_conds = {
@@ -223,6 +264,10 @@ def score_signals(price, opens, highs, lows, closes):
         buy_conds["StochRSI Oversold"] = True
     if sk[-1] > sd[-1] and sk[-2] <= sd[-2] and sk[-2] < 40:  # K crosses D from low
         buy_conds["StochRSI Cross ✨"] = True
+
+    # Pivot: near support = great BUY entry (+1 bonus)
+    if near_support:
+        buy_conds["Near Support 🎯"] = True
 
     # Bonus cross events (+1 if a cross just happened)
     if ef[-1] > es[-1] and ef[-2] <= es[-2]:        # EMA just crossed
@@ -250,6 +295,10 @@ def score_signals(price, opens, highs, lows, closes):
         sell_conds["StochRSI Overbought"] = True
     if sk[-1] < sd[-1] and sk[-2] >= sd[-2] and sk[-2] > 60:  # K crosses D from high
         sell_conds["StochRSI Cross ✨"] = True
+
+    # Pivot: near resistance = great SELL entry (+1 bonus)
+    if near_resistance:
+        sell_conds["Near Resistance 🎯"] = True
 
     if ef[-1] < es[-1] and ef[-2] >= es[-2]:
         sell_conds["EMA Cross ✨"] = True
@@ -279,6 +328,7 @@ def score_signals(price, opens, highs, lows, closes):
                 "sl": sl_p, "tp": tp_p, "entry": price,
                 "atr": atr_val, "rsi": rs[-1],
                 "stoch_k": sk[-1], "bb_pct": bb_pct,
+                "nearest_pivot": nearest_pivot,
             })
 
     results.sort(key=lambda x: x["score"], reverse=True)
@@ -326,10 +376,14 @@ def fmt_signal(sig: dict, session: str, htf: str, af: dict = None) -> str:
         sk = sig.get("stoch_k", 50); bb = sig.get("bb_pct", 0.5)
         sk_icon = "🔴 OB" if sk > 75 else "🟢 OS" if sk < 25 else "⚪"
         bb_icon = "🔴 Top" if bb > 0.85 else "🟢 Bot" if bb < 0.15 else f"{bb:.0%}"
+        sl_pts = sig['atr'] * ATR_MULT
+        be_price = (sig['entry'] + sl_pts) if d == "BUY" else (sig['entry'] - sl_pts)
+        pivot_txt = f"\n📌 Pivot  : {sig['nearest_pivot']}" if sig.get("nearest_pivot") else ""
         lines += [
             f"💰 Entry : <b>{sig['entry']:.2f}</b>",
-            f"🛑 SL    : <b>{sig['sl']:.2f}</b>  ({sig['atr'] * ATR_MULT:.1f} pts)",
+            f"🛑 SL    : <b>{sig['sl']:.2f}</b>  ({sl_pts:.1f} pts)",
             f"🎯 TP    : <b>{sig['tp']:.2f}</b>  (1:{RR_RATIO})",
+            f"🔐 BE    : move SL → entry when price hits <b>{be_price:.2f}</b>{pivot_txt}",
             f"📊 RSI: {sig['rsi']:.1f}  |  StochRSI: {sk:.0f} {sk_icon}  |  BB: {bb_icon}",
             f"━━━━━━━━━━━━━━━━",
             f"⚠️ Confirm before entering!",
