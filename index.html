@@ -1298,7 +1298,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   font-size: 5rem;
   overflow: hidden;
 }
-.prod-modal-img img { width: 100%; height: 100%; object-fit: cover; }
+.prod-modal-img img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
 .prod-modal-info { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
 .prod-modal-cat { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
 .prod-modal-name { font-family: var(--display); font-size: 1.2rem; font-weight: 700; line-height: 1.25; }
@@ -2505,7 +2505,7 @@ function productCardHTML(p) {
       <div class="product-card" onclick="openProductDetail(${p.id})">
         <div class="shimmer-layer" aria-hidden="true"></div>
         <div class="product-img">
-          ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">` : `<span>${p.icon}</span>`}
+          ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:contain;padding:6px;display:block">` : `<span>${p.icon}</span>`}
           ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${p.badge}</div>` : ""}
           ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
           <div class="product-img-overlay">
