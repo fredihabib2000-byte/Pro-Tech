@@ -2564,6 +2564,7 @@ function getCatMeta(name, idx) {
 
 // ── Build dynamic category cards & filter buttons ─────────────────
 function buildCategoryUI(cats) {
+  cats = cats.filter(c => PRODUCTS.some(p => p.cat === c.name && p.quantity > 0));
   const cGrid = document.getElementById("categoriesGrid");
   if (cGrid) {
     cGrid.innerHTML = `<div class="category-card active" data-cat="all">
