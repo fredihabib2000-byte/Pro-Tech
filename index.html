@@ -2056,38 +2056,10 @@ html.lenis, html.lenis body { height: auto; }
     <div class="section-accent-line"></div>
     <h2 class="section-title">Shop by Category</h2>
     <p class="section-sub">Everything your business needs, organized for easy browsing.</p>
-    <div class="categories-grid">
+    <div class="categories-grid" id="categoriesGrid">
       <div class="category-card active" data-cat="all">
         <div class="cat-circle c-blue">🏪</div>
         <div class="cat-name">All Products</div>
-      </div>
-      <div class="category-card" data-cat="laptops">
-        <div class="cat-circle c-blue">💻</div>
-        <div class="cat-name">Laptops &amp; PCs</div>
-      </div>
-      <div class="category-card" data-cat="pos-systems">
-        <div class="cat-circle c-purple">🏧</div>
-        <div class="cat-name">POS Systems</div>
-      </div>
-      <div class="category-card" data-cat="printers">
-        <div class="cat-circle c-green">🖨️</div>
-        <div class="cat-name">Printers</div>
-      </div>
-      <div class="category-card" data-cat="cash-drawers">
-        <div class="cat-circle c-amber">💰</div>
-        <div class="cat-name">Cash Drawers</div>
-      </div>
-      <div class="category-card" data-cat="scanners">
-        <div class="cat-circle c-pink">📡</div>
-        <div class="cat-name">Scanners</div>
-      </div>
-      <div class="category-card" data-cat="displays">
-        <div class="cat-circle c-teal">🖥️</div>
-        <div class="cat-name">Displays</div>
-      </div>
-      <div class="category-card" data-cat="accessories">
-        <div class="cat-circle c-orange">🎧</div>
-        <div class="cat-name">Accessories</div>
       </div>
     </div>
   </div>
@@ -2109,15 +2081,8 @@ html.lenis, html.lenis body { height: auto; }
         </div>
       </div>
     </div>
-    <div class="products-filter">
+    <div class="products-filter" id="filterBar">
       <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="laptops">Laptops</button>
-      <button class="filter-btn" data-filter="pos-systems">POS</button>
-      <button class="filter-btn" data-filter="printers">Printers</button>
-      <button class="filter-btn" data-filter="cash-drawers">Cash Drawers</button>
-      <button class="filter-btn" data-filter="scanners">Scanners</button>
-      <button class="filter-btn" data-filter="displays">Displays</button>
-      <button class="filter-btn" data-filter="accessories">Accessories</button>
     </div>
     <br>
     <div class="products-grid" id="productsGrid"></div>
@@ -2478,9 +2443,10 @@ async function loadProducts() {
   const grid = document.getElementById("productsGrid");
   grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">Loading products...</div>`;
   try {
-    const [products, promos] = await Promise.all([
+    const [products, promos, cats] = await Promise.all([
       sbFetch("/rest/v1/pt_products?is_active=eq.true&order=category.asc,name.asc&select=*"),
-      sbFetch("/rest/v1/pt_promotions?is_active=eq.true&select=*")
+      sbFetch("/rest/v1/pt_promotions?is_active=eq.true&select=*"),
+      sbFetch("/rest/v1/pt_categories?select=name&order=name.asc")
     ]);
     PRODUCTS = products.map(p => ({
       id: p.id, name: p.name, cat: p.category, price: parseFloat(p.price),
@@ -2489,6 +2455,7 @@ async function loadProducts() {
       quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || ""
     }));
     PROMOS = promos;
+    buildCategoryUI(cats || []);
     renderProducts();
   } catch (e) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">Failed to load products. Please refresh.</div>`;
@@ -2535,7 +2502,7 @@ function renderProducts(appendFrom) {
   const grid = document.getElementById("productsGrid");
   const lmWrap = document.getElementById("loadMoreWrap");
   const filtered = PRODUCTS.filter(p => {
-    const matchCat = activeFilter === "all" || p.cat === activeFilter || catLabel(activeFilter) === p.cat;
+    const matchCat = activeFilter === "all" || p.cat === activeFilter;
     const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || (p.desc||"").toLowerCase().includes(searchTerm);
     return matchCat && matchSearch && p.quantity > 0;
   });
@@ -2574,29 +2541,73 @@ function catLabel(cat) {
   return { laptops:"Laptops & PCs", "pos-systems":"POS Systems", printers:"Printers", "cash-drawers":"Cash Drawers", scanners:"Scanners", displays:"Customer Displays", accessories:"Accessories" }[cat] || cat;
 }
 
-// ── Filter & search ───────────────────────────────────────────────
-document.querySelectorAll(".filter-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    activeFilter = btn.dataset.filter;
-    visibleCount = PAGE_SIZE;
-    renderProducts();
-  });
-});
-document.querySelectorAll(".category-card").forEach(card => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll(".category-card").forEach(c => c.classList.remove("active"));
-    card.classList.add("active");
-    activeFilter = card.dataset.cat;
-    document.querySelectorAll(".filter-btn").forEach(b => {
-      b.classList.toggle("active", b.dataset.filter === activeFilter);
+// ── Category icon / colour lookup ────────────────────────────────
+const CAT_META = [
+  { k: ["laptop","computer"],         icon: "💻", color: "c-blue"   },
+  { k: ["pos","barcode"],             icon: "🏧", color: "c-purple" },
+  { k: ["printer","scanner"],         icon: "🖨️", color: "c-green"  },
+  { k: ["cash","drawer"],             icon: "💰", color: "c-amber"  },
+  { k: ["keyboard","mice","mouse"],   icon: "⌨️", color: "c-pink"   },
+  { k: ["audio","headphone","sound"], icon: "🎵", color: "c-purple" },
+  { k: ["scale","weigh"],             icon: "⚖️", color: "c-teal"   },
+  { k: ["display","monitor","screen"],icon: "🖥️", color: "c-teal"   },
+  { k: ["accessor"],                  icon: "🎧", color: "c-orange" },
+];
+const FALLBACK_COLORS = ["c-blue","c-purple","c-green","c-amber","c-pink","c-teal","c-orange"];
+function getCatMeta(name, idx) {
+  const lower = name.toLowerCase();
+  for (const m of CAT_META) {
+    if (m.k.some(k => lower.includes(k))) return { icon: m.icon, color: m.color };
+  }
+  return { icon: "📦", color: FALLBACK_COLORS[idx % FALLBACK_COLORS.length] };
+}
+
+// ── Build dynamic category cards & filter buttons ─────────────────
+function buildCategoryUI(cats) {
+  const cGrid = document.getElementById("categoriesGrid");
+  if (cGrid) {
+    cGrid.innerHTML = `<div class="category-card active" data-cat="all">
+      <div class="cat-circle c-blue">🏪</div>
+      <div class="cat-name">All Products</div>
+    </div>` + cats.map((c, i) => {
+      const { icon, color } = getCatMeta(c.name, i);
+      return `<div class="category-card" data-cat="${c.name}">
+        <div class="cat-circle ${color}">${icon}</div>
+        <div class="cat-name">${c.name}</div>
+      </div>`;
+    }).join("");
+    cGrid.querySelectorAll(".category-card").forEach(card => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll(".category-card").forEach(c => c.classList.remove("active"));
+        card.classList.add("active");
+        activeFilter = card.dataset.cat;
+        document.querySelectorAll(".filter-btn").forEach(b => {
+          b.classList.toggle("active", b.dataset.filter === activeFilter);
+        });
+        visibleCount = PAGE_SIZE;
+        renderProducts();
+        document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+      });
     });
-    visibleCount = PAGE_SIZE;
-    renderProducts();
-    document.getElementById("products").scrollIntoView({ behavior: "smooth" });
-  });
-});
+  }
+
+  const fBar = document.getElementById("filterBar");
+  if (fBar) {
+    fBar.innerHTML = `<button class="filter-btn active" data-filter="all">All</button>` +
+      cats.map(c => `<button class="filter-btn" data-filter="${c.name}">${c.name}</button>`).join("");
+    fBar.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        fBar.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeFilter = btn.dataset.filter;
+        visibleCount = PAGE_SIZE;
+        renderProducts();
+      });
+    });
+  }
+}
+
+// ── Search ────────────────────────────────────────────────────────
 document.getElementById("searchInput").addEventListener("input", e => {
   searchTerm = e.target.value.trim().toLowerCase();
   visibleCount = PAGE_SIZE;
