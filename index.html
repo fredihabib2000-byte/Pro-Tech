@@ -2535,7 +2535,7 @@ function renderProducts(appendFrom) {
   const grid = document.getElementById("productsGrid");
   const lmWrap = document.getElementById("loadMoreWrap");
   const filtered = PRODUCTS.filter(p => {
-    const matchCat = activeFilter === "all" || p.cat === activeFilter;
+    const matchCat = activeFilter === "all" || p.cat === activeFilter || catLabel(activeFilter) === p.cat;
     const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || (p.desc||"").toLowerCase().includes(searchTerm);
     return matchCat && matchSearch && p.quantity > 0;
   });
