@@ -226,6 +226,7 @@ select.status-sel:focus{border-color:var(--accent)}
       <button class="sb-item active" data-page="dashboard" onclick="goto(this)"><span class="icon">📊</span> Dashboard</button>
       <button class="sb-item" data-page="orders" onclick="goto(this)"><span class="icon">🛒</span> Orders <span class="badge-dot" id="pendingDot" style="display:none"></span></button>
       <button class="sb-item" data-page="products" onclick="goto(this)"><span class="icon">📦</span> Products</button>
+      <button class="sb-item" data-page="categories" onclick="goto(this)"><span class="icon">🏷️</span> Categories</button>
       <button class="sb-item" data-page="clients" onclick="goto(this)"><span class="icon">👥</span> Clients</button>
       <button class="sb-item" data-page="reports" onclick="goto(this)"><span class="icon">📈</span> Reports</button>
       <button class="sb-item" data-page="inventory" onclick="goto(this)"><span class="icon">🗃️</span> Inventory <span class="badge-dot" id="lowStockDot" style="display:none"></span></button>
@@ -328,10 +329,26 @@ select.status-sel:focus{border-color:var(--accent)}
           <div class="card-actions">
             <input class="search-input" placeholder="Search products…" oninput="filterProducts(this.value)">
             <button class="btn btn-ghost btn-sm" onclick="loadProducts()">↻ Refresh</button>
+            <button id="deleteSelectedBtn" class="btn btn-sm" style="background:var(--red);color:#fff;display:none" onclick="deleteSelectedProducts()">🗑 Delete Selected (<span id="selCount">0</span>)</button>
+            <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="deleteAllProducts()">🗑 Delete All</button>
             <button class="btn btn-primary btn-sm" onclick="openProdModal()">+ Add Product</button>
           </div>
         </div>
         <div class="tbl-wrap" id="productsWrap"><div class="loading-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="page page-hidden" id="page-categories">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Categories</span>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm" onclick="loadCategories()">↻ Refresh</button>
+            <button class="btn btn-primary btn-sm" onclick="openCatModal()">+ Add Category</button>
+          </div>
+        </div>
+        <div class="tbl-wrap" id="categoriesWrap"><div class="loading-state">Loading…</div></div>
       </div>
     </div>
 
@@ -444,7 +461,7 @@ select.status-sel:focus{border-color:var(--accent)}
     <h3 id="prodModalTitle">Add Product</h3>
     <div class="field-row">
       <div class="field"><label>Name *</label><input id="p_name" placeholder="Product name"></div>
-      <div class="field"><label>Category *</label><input id="p_category" placeholder="e.g. Headphones"></div>
+      <div class="field"><label>Category *</label><select id="p_category" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--fg);outline:none;width:100%;font-size:.9rem"><option value="">Select category…</option></select></div>
     </div>
     <div class="field-row">
       <div class="field"><label>Price ($) *</label><input id="p_price" type="number" step="0.01" placeholder="0.00"></div>
@@ -456,17 +473,23 @@ select.status-sel:focus{border-color:var(--accent)}
     </div>
     <div class="field">
       <label>Image</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="p_image" placeholder="https://…" style="flex:1">
-        <label for="p_image_file" class="btn btn-sm" style="cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--fg);font-size:.82rem;font-weight:600;transition:background .15s" id="p_image_browse">
-          📁 Browse
-        </label>
-        <input type="file" id="p_image_file" accept="image/*" style="display:none" onchange="uploadProductImage(this)">
+      <input type="hidden" id="p_image">
+      <div id="imgUploadZone" onclick="document.getElementById('p_image_file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';uploadProductImage({files:event.dataTransfer.files})"
+        style="border:2px dashed var(--border);border-radius:var(--r-sm);padding:24px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--surface-2)">
+        <div id="imgUploadPlaceholder">
+          <div style="font-size:2rem;margin-bottom:6px">📷</div>
+          <div style="color:var(--fg-2);font-size:.85rem">Click to upload or drag &amp; drop</div>
+          <div style="color:var(--fg-3);font-size:.75rem;margin-top:3px">JPG, PNG, WEBP — max 5 MB</div>
+        </div>
+        <div id="imgUploadPreviewWrap" style="display:none;flex-direction:column;align-items:center;gap:8px">
+          <img id="p_image_preview_img" style="max-height:120px;max-width:100%;border-radius:6px;border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="p_image_upload_status" style="font-size:.78rem;color:var(--fg-2)"></span>
+            <button type="button" onclick="event.stopPropagation();clearProductImage()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.78rem;padding:2px 6px">✕ Remove</button>
+          </div>
+        </div>
       </div>
-      <div id="p_image_preview" style="margin-top:8px;display:none">
-        <img id="p_image_preview_img" style="max-height:80px;border-radius:6px;border:1px solid var(--border)">
-        <span id="p_image_upload_status" style="font-size:.78rem;color:var(--fg-2);margin-left:8px"></span>
-      </div>
+      <input type="file" id="p_image_file" accept="image/*" style="display:none" onchange="uploadProductImage(this)">
     </div>
     <div class="field"><label>Description</label><textarea id="p_desc" rows="2" placeholder="Short description…"></textarea></div>
     <div class="field"><label>Specs</label><textarea id="p_specs" rows="2" placeholder="Technical specs…"></textarea></div>
@@ -477,6 +500,18 @@ select.status-sel:focus{border-color:var(--accent)}
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeProdModal()">Cancel</button>
       <button class="btn btn-primary" id="prodSaveBtn" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-bg" id="catModal">
+  <div class="modal" style="max-width:380px">
+    <h3 id="catModalTitle">Add Category</h3>
+    <div class="field"><label>Category Name *</label><input id="cat_name" placeholder="e.g. Headphones" style="width:100%"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCatModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCat()">Save</button>
     </div>
   </div>
 </div>
@@ -506,6 +541,7 @@ let invSearchQ='',invStatusF='all';
 let rptAllOrders=[],rptFrom='',rptTo='',rptTab='sales';
 let allMsgs=[];
 let settingsData={};
+let allCategories=[];
 
 function togglePw(id,btn){const el=document.getElementById(id);el.type=el.type==="password"?"text":"password";btn.textContent=el.type==="password"?"👁":"🙈";}
 
@@ -553,20 +589,31 @@ async function sb(path,opts={}){
   }finally{clearTimeout(timer);}
 }
 
+function clearProductImage(){
+  document.getElementById("p_image").value="";
+  document.getElementById("p_image_preview_img").src="";
+  document.getElementById("p_image_upload_status").textContent="";
+  document.getElementById("imgUploadPreviewWrap").style.display="none";
+  document.getElementById("imgUploadPlaceholder").style.display="block";
+  document.getElementById("imgUploadZone").style.borderColor="var(--border)";
+}
+
 async function uploadProductImage(input){
-  const file=input.files[0];
+  const file=input.files?input.files[0]:null;
   if(!file)return;
   const statusEl=document.getElementById("p_image_upload_status");
-  const previewBox=document.getElementById("p_image_preview");
+  const previewWrap=document.getElementById("imgUploadPreviewWrap");
+  const placeholder=document.getElementById("imgUploadPlaceholder");
   const previewImg=document.getElementById("p_image_preview_img");
-  const browseBtn=document.getElementById("p_image_browse");
+  const zone=document.getElementById("imgUploadZone");
   // show local preview immediately
   previewImg.src=URL.createObjectURL(file);
-  previewBox.style.display="flex";
-  previewBox.style.alignItems="center";
+  placeholder.style.display="none";
+  previewWrap.style.display="flex";
   statusEl.textContent="Uploading…";
-  browseBtn.style.opacity=".5";
-  browseBtn.style.pointerEvents="none";
+  statusEl.style.color="var(--fg-2)";
+  zone.style.borderColor="var(--accent)";
+  zone.style.pointerEvents="none";
   try{
     const ext=file.name.split(".").pop().toLowerCase();
     const fname="products/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;
@@ -575,25 +622,19 @@ async function uploadProductImage(input){
       headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":file.type,"x-upsert":"true"},
       body:file
     });
-    if(!up.ok){
-      const err=await up.text();
-      // bucket may not exist yet — try creating it then retry
-      if(err.includes("Bucket not found")||up.status===404||up.status===400){
-        await fetch(SB_URL+"/storage/v1/bucket",{method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json"},body:JSON.stringify({id:"pt-images",name:"pt-images",public:true})});
-        const up2=await fetch(SB_URL+"/storage/v1/object/pt-images/"+fname,{method:"POST",headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":file.type,"x-upsert":"true"},body:file});
-        if(!up2.ok)throw new Error(await up2.text());
-      } else throw new Error(err);
-    }
+    if(!up.ok){const err=await up.text();throw new Error(err);}
     const publicUrl=SB_URL+"/storage/v1/object/public/pt-images/"+fname;
     document.getElementById("p_image").value=publicUrl;
     statusEl.textContent="✓ Uploaded";
     statusEl.style.color="var(--green)";
+    zone.style.borderColor="var(--green)";
   }catch(e){
-    statusEl.textContent="Upload failed: "+e.message;
+    statusEl.textContent="Upload failed: "+e.message.slice(0,80);
     statusEl.style.color="var(--red)";
+    zone.style.borderColor="var(--red)";
   }
-  browseBtn.style.opacity="";browseBtn.style.pointerEvents="";
-  input.value="";
+  zone.style.pointerEvents="";
+  if(input.value!==undefined)input.value="";
 }
 
 function init(){
@@ -707,7 +748,7 @@ function goto(el){
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open")}
 
 // ── NAVIGATION ───────────────────────────────────────────
-const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",clients:"Clients",reports:"Reports",inventory:"Inventory",messages:"Messages",settings:"Settings"};
+const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",messages:"Messages",settings:"Settings"};
 function goto(el){
   document.querySelectorAll(".sb-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
@@ -718,6 +759,7 @@ function goto(el){
   document.getElementById("sidebar").classList.remove("mob-open");
   if(p==="orders")loadOrders();
   if(p==="products")loadProducts();
+  if(p==="categories")loadCategories();
   if(p==="clients")loadClients();
   if(p==="reports")loadReports();
   if(p==="inventory")loadInventory();
@@ -854,14 +896,97 @@ function viewOrder(id){
 async function loadProducts(){
   document.getElementById("productsWrap").innerHTML='<div class="loading-state">Loading…</div>';
   try{
-    allProducts=await sb("/rest/v1/pt_products?select=*&order=name.asc")||[];
+    [allProducts,allCategories]=await Promise.all([
+      sb("/rest/v1/pt_products?select=*&order=name.asc").then(r=>r||[]),
+      sb("/rest/v1/pt_categories?select=*&order=name.asc").then(r=>r||[])
+    ]);
     renderProductsTable(allProducts);
+    populateCategoryDropdown();
   }catch(e){console.error("loadProducts error:",e);document.getElementById("productsWrap").innerHTML=`<div class="empty-state">Failed to load products: ${e.message}</div>`}
+}
+
+async function deleteAllProducts(){
+  if(!confirm(`Delete ALL ${allProducts.length} products? This cannot be undone.`))return;
+  const wrap=document.getElementById("productsWrap");
+  wrap.innerHTML='<div class="loading-state">Deleting all products…</div>';
+  try{
+    await sb("/rest/v1/pt_products?id=gt.0",{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    allProducts=[];
+    wrap.innerHTML='<div class="empty-state">All products deleted. Click + Add Product to start fresh.</div>';
+  }catch(e){wrap.innerHTML=`<div class="empty-state">Error: ${e.message}</div>`;}
+}
+
+// ── CATEGORIES ───────────────────────────────────────────
+async function loadCategories(){
+  document.getElementById("categoriesWrap").innerHTML='<div class="loading-state">Loading…</div>';
+  try{
+    allCategories=await sb("/rest/v1/pt_categories?select=*&order=name.asc")||[];
+    renderCategoriesTable();
+    populateCategoryDropdown();
+  }catch(e){document.getElementById("categoriesWrap").innerHTML=`<div class="empty-state">Error: ${e.message}</div>`;}
+}
+
+function renderCategoriesTable(){
+  const wrap=document.getElementById("categoriesWrap");
+  if(!allCategories.length){wrap.innerHTML='<div class="empty-state">No categories yet. Click + Add Category to create one.</div>';return;}
+  const rows=allCategories.map(c=>`<tr>
+    <td><strong>${c.name}</strong></td>
+    <td style="color:var(--fg-2);font-size:.82rem">${new Date(c.created_at).toLocaleDateString()}</td>
+    <td><button class="btn btn-danger btn-sm" onclick="deleteCat(${c.id},'${c.name.replace(/'/g,"\\'")}')">Delete</button></td>
+  </tr>`).join("");
+  wrap.innerHTML=`<table><thead><tr><th>Name</th><th>Created</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function populateCategoryDropdown(){
+  const sel=document.getElementById("p_category");
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select category…</option>'+allCategories.map(c=>`<option value="${c.name}">${c.name}</option>`).join("");
+  if(cur)sel.value=cur;
+}
+
+function openCatModal(){
+  document.getElementById("cat_name").value="";
+  document.getElementById("catModal").classList.add("open");
+  setTimeout(()=>document.getElementById("cat_name").focus(),100);
+}
+function closeCatModal(){document.getElementById("catModal").classList.remove("open");}
+
+async function saveCat(){
+  const name=document.getElementById("cat_name").value.trim();
+  if(!name){alert("Enter a category name.");return;}
+  try{
+    const created=await sb("/rest/v1/pt_categories",{method:"POST",body:JSON.stringify({name})});
+    if(created&&created[0])allCategories.push(created[0]);
+    allCategories.sort((a,b)=>a.name.localeCompare(b.name));
+    renderCategoriesTable();
+    populateCategoryDropdown();
+    closeCatModal();
+  }catch(e){alert("Error: "+e.message);}
+}
+
+async function deleteCat(id,name){
+  if(!confirm(`Delete category "${name}"?`))return;
+  try{
+    await sb(`/rest/v1/pt_categories?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    allCategories=allCategories.filter(c=>c.id!==id);
+    renderCategoriesTable();
+    populateCategoryDropdown();
+  }catch(e){alert("Error: "+e.message);}
 }
 
 function filterProducts(q){
   const f=allProducts.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())||(p.category||"").toLowerCase().includes(q.toLowerCase()));
   renderProductsTable(f);
+}
+
+function updateSelCount(){
+  const boxes=document.querySelectorAll(".prod-check:checked");
+  const n=boxes.length;
+  const btn=document.getElementById("deleteSelectedBtn");
+  const sp=document.getElementById("selCount");
+  if(sp)sp.textContent=n;
+  if(btn)btn.style.display=n>0?"inline-flex":"none";
 }
 
 function renderProductsTable(prods){
@@ -870,6 +995,7 @@ function renderProductsTable(prods){
     const stockCls=(p.quantity||0)<5?"low":"ok";
     const stockLabel=(p.quantity||0)<5?"Low":"In Stock";
     return `<tr>
+      <td style="width:36px"><input type="checkbox" class="prod-check" data-id="${p.id}" onchange="updateSelCount()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)"></td>
       <td>${p.image_url?`<img src="${p.image_url}" style="width:42px;height:42px;object-fit:cover;border-radius:6px;background:var(--surface-2)">`:`<div style="width:42px;height:42px;border-radius:6px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:1.2rem">${p.icon||"📦"}</div>`}</td>
       <td><strong>${p.name}</strong>${p.badge?`<br><span style="font-size:.72rem;background:var(--accent-dim);color:var(--accent);padding:2px 7px;border-radius:99px">${p.badge}</span>`:""}</td>
       <td style="color:var(--fg-2)">${p.category||"—"}</td>
@@ -888,7 +1014,22 @@ function renderProductsTable(prods){
       </td>
     </tr>`;
   }).join("");
-  document.getElementById("productsWrap").innerHTML=`<table><thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+  document.getElementById("productsWrap").innerHTML=`<table><thead><tr><th style="width:36px"><input type="checkbox" id="selAllChk" onchange="(e=>{document.querySelectorAll('.prod-check').forEach(c=>c.checked=e.target.checked);updateSelCount()})(event)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)"></th><th></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function deleteSelectedProducts(){
+  const ids=[...document.querySelectorAll(".prod-check:checked")].map(c=>c.dataset.id);
+  if(!ids.length)return;
+  if(!confirm(`Delete ${ids.length} selected product(s)? This cannot be undone.`))return;
+  const btn=document.getElementById("deleteSelectedBtn");
+  btn.disabled=true;btn.textContent="Deleting…";
+  try{
+    await sb(`/rest/v1/pt_products?id=in.(${ids.join(",")})`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    allProducts=allProducts.filter(p=>!ids.includes(String(p.id)));
+    renderProductsTable(allProducts);
+    updateSelCount();
+  }catch(e){alert("Error: "+e.message);}
+  finally{btn.disabled=false;}
 }
 
 function markStockDirty(inp){inp.nextElementSibling.style.display="block"}
@@ -909,18 +1050,21 @@ function openProdModal(p){
   editProdId=p?p.id:null;
   document.getElementById("prodModalTitle").textContent=p?"Edit Product":"Add Product";
   document.getElementById("p_name").value=p?.name||"";
+  populateCategoryDropdown();
   document.getElementById("p_category").value=p?.category||"";
   document.getElementById("p_price").value=p?.price||"";
   document.getElementById("p_old_price").value=p?.old_price||"";
   document.getElementById("p_qty").value=p?.quantity??0;
   document.getElementById("p_badge").value=p?.badge||"";
   document.getElementById("p_image").value=p?.image_url||"";
-  // reset image preview
-  const prev=document.getElementById("p_image_preview");
   const prevImg=document.getElementById("p_image_preview_img");
   const prevStatus=document.getElementById("p_image_upload_status");
-  if(p?.image_url){prev.style.display="flex";prev.style.alignItems="center";prevImg.src=p.image_url;prevStatus.textContent="";}
-  else{prev.style.display="none";prevImg.src="";prevStatus.textContent="";}
+  const previewWrap=document.getElementById("imgUploadPreviewWrap");
+  const placeholder=document.getElementById("imgUploadPlaceholder");
+  const zone=document.getElementById("imgUploadZone");
+  zone.style.borderColor="var(--border)";
+  if(p?.image_url){prevImg.src=p.image_url;prevStatus.textContent="";previewWrap.style.display="flex";placeholder.style.display="none";}
+  else{prevImg.src="";prevStatus.textContent="";previewWrap.style.display="none";placeholder.style.display="block";}
   document.getElementById("p_desc").value=p?.description||"";
   document.getElementById("p_specs").value=p?.specs||"";
   document.getElementById("p_active").value=String(p?.is_active!==false);
