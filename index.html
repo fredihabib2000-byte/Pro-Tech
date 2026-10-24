@@ -2456,11 +2456,21 @@ const _REF = (() => {
   if (/instagram/i.test(r)) return "instagram";
   try { return new URL(r).hostname; } catch { return r; }
 })();
+let _LOC = { country: null, city: null };
+(async () => {
+  try {
+    const cached = sessionStorage.getItem("pt_loc");
+    if (cached) { _LOC = JSON.parse(cached); return; }
+    const d = await fetch("https://ipwho.is/").then(r => r.json());
+    _LOC = { country: d.country || null, city: d.city || null, flag: d.flag?.emoji || "" };
+    sessionStorage.setItem("pt_loc", JSON.stringify(_LOC));
+  } catch {}
+})();
 function trackEvent(event, data = {}) {
   sbFetch("/rest/v1/pt_analytics", {
     method: "POST",
     headers: { "Prefer": "return=minimal" },
-    body: JSON.stringify({ event, data: { ...data, device: _DEVICE, ref: _REF }, session_id: _SID })
+    body: JSON.stringify({ event, data: { ...data, device: _DEVICE, ref: _REF, country: _LOC.country, city: _LOC.city, flag: _LOC.flag }, session_id: _SID })
   }).catch(() => {});
 }
 
