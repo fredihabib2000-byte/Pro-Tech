@@ -2459,11 +2459,8 @@ const _REF = (() => {
 let _LOC = { country: null, city: null };
 (async () => {
   try {
-    const cached = sessionStorage.getItem("pt_loc");
-    if (cached) { _LOC = JSON.parse(cached); return; }
     const d = await fetch("https://ipwho.is/").then(r => r.json());
     _LOC = { country: d.country || null, city: d.city || null, flag: d.flag?.emoji || "" };
-    sessionStorage.setItem("pt_loc", JSON.stringify(_LOC));
   } catch {}
 })();
 function trackEvent(event, data = {}) {
