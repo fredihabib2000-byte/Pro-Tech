@@ -2445,11 +2445,22 @@ const _SID = (() => {
     return s;
   } catch { return "nosession"; }
 })();
+const _UA = navigator.userAgent;
+const _DEVICE = /Mobi|Android|iPhone|iPad/i.test(_UA) ? "mobile" : "desktop";
+const _REF = (() => {
+  const r = document.referrer;
+  if (!r) return "direct";
+  if (/google/i.test(r)) return "google";
+  if (/whatsapp/i.test(r)) return "whatsapp";
+  if (/facebook|fb\./i.test(r)) return "facebook";
+  if (/instagram/i.test(r)) return "instagram";
+  try { return new URL(r).hostname; } catch { return r; }
+})();
 function trackEvent(event, data = {}) {
   sbFetch("/rest/v1/pt_analytics", {
     method: "POST",
     headers: { "Prefer": "return=minimal" },
-    body: JSON.stringify({ event, data, session_id: _SID })
+    body: JSON.stringify({ event, data: { ...data, device: _DEVICE, ref: _REF }, session_id: _SID })
   }).catch(() => {});
 }
 

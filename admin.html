@@ -411,12 +411,16 @@ select.status-sel:focus{border-color:var(--accent)}
           <div id="topCart" style="padding:16px"><div class="loading-state">Loading…</div></div>
         </div>
       </div>
-      <div class="card">
+      <div class="card" style="margin-bottom:16px">
         <div class="card-header">
           <span class="card-title">Daily Visits — Last 7 Days</span>
           <button class="btn btn-ghost btn-sm" onclick="loadAnalytics()">↻ Refresh</button>
         </div>
         <div id="visitChart" style="padding:24px 16px"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Recent Activity</span></div>
+        <div id="recentActivity" style="padding:0 16px 8px"><div class="loading-state">Loading…</div></div>
       </div>
     </div>
 
@@ -1674,11 +1678,23 @@ async function markRead(id){
 }
 
 // ── ANALYTICS ────────────────────────────────────────────
+function fmtTime(ts){
+  if(!ts)return"—";
+  const d=new Date(ts);
+  const now=new Date();
+  const diff=Math.floor((now-d)/1000);
+  if(diff<60)return"Just now";
+  if(diff<3600)return Math.floor(diff/60)+"m ago";
+  if(diff<86400)return Math.floor(diff/3600)+"h ago";
+  return d.toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+}
+const EVT_LABELS={page_view:{icon:"👁",label:"Visited store",color:"var(--fg-2)"},product_view:{icon:"📦",label:"Viewed",color:"var(--accent)"},add_to_cart:{icon:"🛒",label:"Added to cart",color:"var(--green)"},order_placed:{icon:"✅",label:"Placed order",color:"#f59e0b)"}};
 async function loadAnalytics(){
   const statsEl=document.getElementById("analyticsStats");
   const topViewedEl=document.getElementById("topViewed");
   const topCartEl=document.getElementById("topCart");
   const chartEl=document.getElementById("visitChart");
+  const recentEl=document.getElementById("recentActivity");
   if(statsEl) statsEl.innerHTML='<div class="loading-state" style="grid-column:1/-1">Loading…</div>';
   try{
     const all=await sb("/rest/v1/pt_analytics?select=event,data,session_id,created_at&order=created_at.desc&limit=5000")||[];
@@ -1696,11 +1712,20 @@ async function loadAnalytics(){
     const orders=all.filter(r=>r.event==="order_placed");
     const ordersToday=orders.filter(r=>r.created_at.startsWith(todayStr)).length;
 
+    // Device breakdown
+    const mobileToday=new Set(viewsToday.filter(r=>r.data?.device==="mobile").map(r=>r.session_id)).size;
+    const desktopToday=uniqToday-mobileToday;
+
+    // Referrer breakdown today
+    const refMap={};
+    viewsToday.forEach(r=>{const ref=r.data?.ref||"direct";refMap[ref]=(refMap[ref]||0)+1;});
+    const refStr=Object.entries(refMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} (${v})`).join(" · ")||"—";
+
     if(statsEl) statsEl.innerHTML=`
-      <div class="stat-card"><div class="stat-val">${uniqToday}</div><div class="stat-lbl">Visitors Today</div></div>
+      <div class="stat-card"><div class="stat-val">${uniqToday}</div><div class="stat-lbl">Visitors Today</div><div style="font-size:.72rem;color:var(--fg-3);margin-top:4px">📱${mobileToday} 💻${desktopToday}</div></div>
       <div class="stat-card"><div class="stat-val">${uniqWeek}</div><div class="stat-lbl">Visitors This Week</div></div>
       <div class="stat-card"><div class="stat-val">${uniqTotal}</div><div class="stat-lbl">Total Visitors</div></div>
-      <div class="stat-card"><div class="stat-val">${ordersToday}</div><div class="stat-lbl">Orders Today</div></div>`;
+      <div class="stat-card"><div class="stat-val">${ordersToday}</div><div class="stat-lbl">Orders Today</div><div style="font-size:.72rem;color:var(--fg-3);margin-top:4px">From: ${refStr}</div></div>`;
 
     // Top products viewed
     const pvMap={};
@@ -1734,6 +1759,31 @@ async function loadAnalytics(){
           <div style="font-size:.68rem;color:var(--fg-3);white-space:nowrap">${d.slice(5)}</div>
         </div>`).join("")}
     </div>`;
+
+    // Recent activity feed — last 50 events
+    if(recentEl){
+      const recent=all.slice(0,50);
+      if(!recent.length){recentEl.innerHTML='<div style="color:var(--fg-3);padding:12px 0;font-size:.85rem">No activity yet</div>';return;}
+      recentEl.innerHTML=`<table style="width:100%"><thead><tr>
+        <th style="text-align:left;padding:8px 0;font-size:.72rem;color:var(--fg-2);border-bottom:1px solid var(--border)">Event</th>
+        <th style="text-align:left;padding:8px 0;font-size:.72rem;color:var(--fg-2);border-bottom:1px solid var(--border)">Detail</th>
+        <th style="text-align:left;padding:8px 0;font-size:.72rem;color:var(--fg-2);border-bottom:1px solid var(--border)">Device</th>
+        <th style="text-align:left;padding:8px 0;font-size:.72rem;color:var(--fg-2);border-bottom:1px solid var(--border)">Source</th>
+        <th style="text-align:right;padding:8px 0;font-size:.72rem;color:var(--fg-2);border-bottom:1px solid var(--border)">When</th>
+      </tr></thead><tbody>${recent.map(r=>{
+        const m=EVT_LABELS[r.event]||{icon:"•",label:r.event,color:"var(--fg-2)"};
+        const detail=r.data?.name||(r.event==="order_placed"?`$${r.data?.total||"—"}`:"");
+        const device=r.data?.device==="mobile"?"📱 Mobile":r.data?.device==="desktop"?"💻 Desktop":"—";
+        const ref=r.data?.ref||"direct";
+        return `<tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:8px 0;font-size:.83rem">${m.icon} <span style="color:${m.color}">${m.label}</span></td>
+          <td style="padding:8px 0;font-size:.83rem;color:var(--fg)">${detail||"—"}</td>
+          <td style="padding:8px 0;font-size:.78rem;color:var(--fg-2)">${device}</td>
+          <td style="padding:8px 0;font-size:.78rem;color:var(--fg-3)">${ref}</td>
+          <td style="padding:8px 0;font-size:.75rem;color:var(--fg-3);text-align:right;white-space:nowrap">${fmtTime(r.created_at)}</td>
+        </tr>`;
+      }).join("")}</tbody></table>`;
+    }
   }catch(e){
     if(statsEl) statsEl.innerHTML=`<div style="grid-column:1/-1;color:var(--red);padding:12px">Failed to load analytics.</div>`;
   }
