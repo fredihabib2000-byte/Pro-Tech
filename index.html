@@ -2429,6 +2429,22 @@ async function sbFetch(path, opts = {}) {
   return text ? JSON.parse(text) : null;
 }
 
+// ── Analytics ────────────────────────────────────────────────────
+const _SID = (() => {
+  try {
+    let s = sessionStorage.getItem("pt_sid");
+    if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem("pt_sid", s); }
+    return s;
+  } catch { return "nosession"; }
+})();
+function trackEvent(event, data = {}) {
+  sbFetch("/rest/v1/pt_analytics", {
+    method: "POST",
+    headers: { "Prefer": "return=minimal" },
+    body: JSON.stringify({ event, data, session_id: _SID })
+  }).catch(() => {});
+}
+
 // ── State ─────────────────────────────────────────────────────────
 let PRODUCTS = [];
 let PROMOS = [];
@@ -2457,6 +2473,7 @@ async function loadProducts() {
     PROMOS = promos;
     buildCategoryUI(cats || []);
     renderProducts();
+    trackEvent('page_view');
   } catch (e) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">Failed to load products. Please refresh.</div>`;
   }
@@ -2628,6 +2645,7 @@ function addToCart(id) {
   const existing = cart.find(x => x.id === id);
   if (existing) existing.qty++;
   else cart.push({ ...p, qty: 1 });
+  trackEvent('add_to_cart', { id: p.id, name: p.name, price: p.price });
   updateCart();
   showToast(`${p.name} added to cart`);
   const btn = document.getElementById(`addbtn-${id}`);
@@ -2827,6 +2845,7 @@ let waNumber = "";
 function openProductDetail(id) {
   const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
+  trackEvent('product_view', { id: p.id, name: p.name });
   currentModalProduct = p;
   document.getElementById("pmTitle").textContent = p.name;
   const imgEl = document.getElementById("pmImg");
@@ -2910,6 +2929,7 @@ async function submitOrder() {
         status: "pending"
       })
     });
+    trackEvent('order_placed', { total: parseFloat(total.toFixed(2)), items_count: cart.length });
 
     // Build customer WhatsApp message
     const customerMsg = encodeURIComponent(
@@ -3314,7 +3334,5 @@ function closeMobileNav() {
   document.body.style.overflow = '';
 }
 </script>
-<script defer src="/_vercel/insights/script.js"></script>
-<script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>

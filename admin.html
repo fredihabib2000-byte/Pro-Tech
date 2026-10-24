@@ -231,6 +231,7 @@ select.status-sel:focus{border-color:var(--accent)}
       <button class="sb-item" data-page="reports" onclick="goto(this)"><span class="icon">📈</span> Reports</button>
       <button class="sb-item" data-page="inventory" onclick="goto(this)"><span class="icon">🗃️</span> Inventory <span class="badge-dot" id="lowStockDot" style="display:none"></span></button>
       <div class="sb-section">Other</div>
+      <button class="sb-item" data-page="analytics" onclick="goto(this)"><span class="icon">📡</span> Analytics</button>
       <button class="sb-item" data-page="messages" onclick="goto(this)"><span class="icon">💬</span> Messages <span class="badge-dot" id="msgDot" style="display:none"></span></button>
       <button class="sb-item" data-page="settings" onclick="goto(this)"><span class="icon">⚙️</span> Settings</button>
     </div>
@@ -386,6 +387,28 @@ select.status-sel:focus{border-color:var(--accent)}
           <div id="clientCount" style="font-size:.8rem;color:var(--fg-2)"></div>
         </div>
         <div class="tbl-wrap" id="clientsWrap"><div class="loading-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page page-hidden" id="page-analytics">
+      <div class="stats" id="analyticsStats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Top Products Viewed</span></div>
+          <div id="topViewed" style="padding:16px"><div class="loading-state">Loading…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Top Added to Cart</span></div>
+          <div id="topCart" style="padding:16px"><div class="loading-state">Loading…</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Daily Visits — Last 7 Days</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadAnalytics()">↻ Refresh</button>
+        </div>
+        <div id="visitChart" style="padding:24px 16px"></div>
       </div>
     </div>
 
@@ -748,7 +771,7 @@ function goto(el){
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open")}
 
 // ── NAVIGATION ───────────────────────────────────────────
-const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",messages:"Messages",settings:"Settings"};
+const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",analytics:"Analytics",messages:"Messages",settings:"Settings"};
 function goto(el){
   document.querySelectorAll(".sb-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
@@ -763,6 +786,7 @@ function goto(el){
   if(p==="clients")loadClients();
   if(p==="reports")loadReports();
   if(p==="inventory")loadInventory();
+  if(p==="analytics")loadAnalytics();
   if(p==="messages")loadMessages();
 }
 
@@ -1641,6 +1665,72 @@ async function markRead(id){
   }catch(e){alert("Failed.")}
 }
 
+// ── ANALYTICS ────────────────────────────────────────────
+async function loadAnalytics(){
+  const statsEl=document.getElementById("analyticsStats");
+  const topViewedEl=document.getElementById("topViewed");
+  const topCartEl=document.getElementById("topCart");
+  const chartEl=document.getElementById("visitChart");
+  if(statsEl) statsEl.innerHTML='<div class="loading-state" style="grid-column:1/-1">Loading…</div>';
+  try{
+    const all=await sb("/rest/v1/pt_analytics?select=event,data,session_id,created_at&order=created_at.desc&limit=5000")||[];
+    const now=new Date();
+    const todayStr=now.toISOString().slice(0,10);
+    const weekAgo=new Date(now-7*864e5);
+
+    const views=all.filter(r=>r.event==="page_view");
+    const viewsToday=views.filter(r=>r.created_at.startsWith(todayStr));
+    const viewsWeek=views.filter(r=>new Date(r.created_at)>=weekAgo);
+    const uniqToday=new Set(viewsToday.map(r=>r.session_id)).size;
+    const uniqWeek=new Set(viewsWeek.map(r=>r.session_id)).size;
+    const uniqTotal=new Set(views.map(r=>r.session_id)).size;
+
+    const orders=all.filter(r=>r.event==="order_placed");
+    const ordersToday=orders.filter(r=>r.created_at.startsWith(todayStr)).length;
+
+    if(statsEl) statsEl.innerHTML=`
+      <div class="stat-card"><div class="stat-val">${uniqToday}</div><div class="stat-lbl">Visitors Today</div></div>
+      <div class="stat-card"><div class="stat-val">${uniqWeek}</div><div class="stat-lbl">Visitors This Week</div></div>
+      <div class="stat-card"><div class="stat-val">${uniqTotal}</div><div class="stat-lbl">Total Visitors</div></div>
+      <div class="stat-card"><div class="stat-val">${ordersToday}</div><div class="stat-lbl">Orders Today</div></div>`;
+
+    // Top products viewed
+    const pvMap={};
+    all.filter(r=>r.event==="product_view"&&r.data?.name).forEach(r=>{pvMap[r.data.name]=(pvMap[r.data.name]||0)+1;});
+    const pvTop=Object.entries(pvMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(topViewedEl) topViewedEl.innerHTML=pvTop.length?pvTop.map(([n,c],i)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:.85rem;color:var(--fg)">${i+1}. ${n}</span>
+        <span style="font-size:.85rem;font-weight:600;color:var(--accent)">${c}</span>
+      </div>`).join(""):'<div style="color:var(--fg-3);font-size:.85rem;padding:8px 0">No data yet</div>';
+
+    // Top added to cart
+    const acMap={};
+    all.filter(r=>r.event==="add_to_cart"&&r.data?.name).forEach(r=>{acMap[r.data.name]=(acMap[r.data.name]||0)+1;});
+    const acTop=Object.entries(acMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(topCartEl) topCartEl.innerHTML=acTop.length?acTop.map(([n,c],i)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:.85rem;color:var(--fg)">${i+1}. ${n}</span>
+        <span style="font-size:.85rem;font-weight:600;color:var(--green)">${c}</span>
+      </div>`).join(""):'<div style="color:var(--fg-3);font-size:.85rem;padding:8px 0">No data yet</div>';
+
+    // Daily visits chart — last 7 days
+    const days=Array.from({length:7},(_,i)=>{const d=new Date(now-i*864e5);return d.toISOString().slice(0,10);}).reverse();
+    const dayCounts=days.map(d=>({d,c:new Set(views.filter(r=>r.created_at.startsWith(d)).map(r=>r.session_id)).size}));
+    const maxC=Math.max(...dayCounts.map(x=>x.c),1);
+    if(chartEl) chartEl.innerHTML=`<div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+      ${dayCounts.map(({d,c})=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="font-size:.72rem;color:var(--fg-2)">${c||0}</div>
+          <div style="width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:${Math.round((c/maxC)*90)+5}px;opacity:${c?1:0.2}"></div>
+          <div style="font-size:.68rem;color:var(--fg-3);white-space:nowrap">${d.slice(5)}</div>
+        </div>`).join("")}
+    </div>`;
+  }catch(e){
+    if(statsEl) statsEl.innerHTML=`<div style="grid-column:1/-1;color:var(--red);padding:12px">Failed to load analytics.</div>`;
+  }
+}
+
 // ── SETTINGS ─────────────────────────────────────────────
 async function loadSettings(){
   try{
@@ -1914,7 +2004,5 @@ function exportReportsPDF(){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script defer src="/_vercel/insights/script.js"></script>
-<script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
