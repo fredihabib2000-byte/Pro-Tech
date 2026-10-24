@@ -2456,12 +2456,35 @@ const _REF = (() => {
   if (/instagram/i.test(r)) return "instagram";
   try { return new URL(r).hostname; } catch { return r; }
 })();
-let _LOC = { country: null, city: null };
-(async () => {
-  try {
-    const d = await fetch("https://ipwho.is/").then(r => r.json());
-    _LOC = { country: d.country || null, city: d.city || null, flag: d.flag?.emoji || "" };
-  } catch {}
+let _LOC = { country: null, city: null, flag: "" };
+const _LOC_READY = (async () => {
+  const ipFallback = async () => {
+    try {
+      const d = await fetch("https://ipwho.is/").then(r => r.json());
+      _LOC = { country: d.country || null, city: d.city || null, flag: d.flag?.emoji || "" };
+    } catch {}
+  };
+  if (!navigator.geolocation) { await ipFallback(); return; }
+  await new Promise(resolve => {
+    const timer = setTimeout(async () => { await ipFallback(); resolve(); }, 10000);
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        clearTimeout(timer);
+        try {
+          const { latitude: lat, longitude: lon } = pos.coords;
+          const d = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`).then(r => r.json());
+          const city = d.address?.city || d.address?.town || d.address?.village || d.address?.county || null;
+          const country = d.address?.country || null;
+          const cc = d.address?.country_code?.toUpperCase() || "";
+          const flag = cc.length === 2 ? String.fromCodePoint(...[...cc].map(c => 0x1F1E0 + c.charCodeAt(0) - 65)) : "";
+          _LOC = { country, city, flag, gps: true };
+        } catch { await ipFallback(); }
+        resolve();
+      },
+      async () => { clearTimeout(timer); await ipFallback(); resolve(); },
+      { timeout: 9000, maximumAge: 0 }
+    );
+  });
 })();
 function trackEvent(event, data = {}) {
   sbFetch("/rest/v1/pt_analytics", {
@@ -2499,7 +2522,7 @@ async function loadProducts() {
     PROMOS = promos;
     buildCategoryUI(cats || []);
     renderProducts();
-    trackEvent('page_view');
+    _LOC_READY.then(() => trackEvent('page_view'));
   } catch (e) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">Failed to load products. Please refresh.</div>`;
   }
