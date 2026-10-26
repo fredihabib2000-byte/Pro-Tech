@@ -881,7 +881,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   transform: translateY(-4px);
 }
 .product-img {
-  aspect-ratio: 4/3;
+  aspect-ratio: 1/1;
   background: var(--surface-2);
   display: flex;
   align-items: center;
@@ -890,6 +890,14 @@ button { cursor: pointer; font-family: inherit; border: none; }
   position: relative;
   overflow: hidden;
 }
+.product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .35s ease;
+}
+.product-card:hover .product-img img { transform: scale(1.06); }
 .product-badge {
   position: absolute;
   top: 10px;
@@ -1326,61 +1334,159 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 
 /* ── Product detail modal ─────────────────────────────────────── */
+/* ── Product detail modal (pablotech-style) ──────────────────────── */
 .prod-modal-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.6);
+  background: rgba(0,0,0,.75);
   z-index: 400;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 12px;
+  backdrop-filter: blur(4px);
 }
 .prod-modal-overlay.open { display: flex; }
 .prod-modal {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--r);
+  border-radius: 16px;
   width: 100%;
-  max-width: 680px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-lg);
+  max-width: 980px;
+  max-height: 94vh;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.8);
+  display: flex;
+  flex-direction: column;
 }
 .prod-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
   background: var(--surface);
-  z-index: 1;
+  flex-shrink: 0;
 }
-.prod-modal-header h3 { font-family: var(--display); font-size: 1rem; font-weight: 700; }
-.prod-modal-body { display: grid; grid-template-columns: 1fr 1fr; }
-@media (max-width: 560px) { .prod-modal-body { grid-template-columns: 1fr; } }
-.prod-modal-img {
-  aspect-ratio: 4/3;
+.prod-modal-header h3 {
+  font-family: var(--display);
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--fg-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 40px);
+}
+.prod-modal-body {
+  display: grid;
+  grid-template-columns: 55% 45%;
+  flex: 1;
+  overflow: hidden;
+}
+@media (max-width: 680px) {
+  .prod-modal-body { grid-template-columns: 1fr; overflow-y: auto; }
+}
+/* ── Gallery panel ── */
+.prod-modal-gallery {
   background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.prod-modal-main-img {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 5rem;
   overflow: hidden;
+  position: relative;
+  cursor: zoom-in;
+  min-height: 280px;
 }
-.prod-modal-img img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
-.prod-modal-info { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-.prod-modal-cat { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
-.prod-modal-name { font-family: var(--display); font-size: 1.2rem; font-weight: 700; line-height: 1.25; }
-.prod-modal-price { font-family: var(--display); font-size: 1.6rem; font-weight: 800; color: var(--accent); }
-.prod-modal-price-old { font-size: .9rem; color: var(--fg-3); text-decoration: line-through; margin-left: 8px; font-family: var(--body); font-weight: 400; }
-.prod-modal-desc { font-size: .875rem; color: var(--fg-2); line-height: 1.6; }
-.prod-modal-specs { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-.prod-modal-specs li { font-size: .8rem; color: var(--fg-2); padding-left: .8rem; position: relative; line-height: 1.5; }
-.prod-modal-specs li::before { content: "›"; position: absolute; left: 0; color: var(--accent); }
-.prod-modal-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 20px; border-top: 1px solid var(--border); }
+.prod-modal-main-img img {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 16px;
+  transition: transform .3s ease;
+}
+.prod-modal-main-img:hover img { transform: scale(1.08); }
+.prod-modal-main-img .pm-zoom-hint {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  font-size: .65rem;
+  padding: 3px 8px;
+  border-radius: 99px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.prod-modal-main-img:hover .pm-zoom-hint { opacity: 1; }
+.prod-modal-thumbs {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: thin;
+  flex-shrink: 0;
+}
+.prod-modal-thumb {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .15s;
+}
+.prod-modal-thumb.active { border-color: var(--accent); }
+.prod-modal-thumb:hover { border-color: var(--accent); }
+.prod-modal-thumb img { width: 100%; height: 100%; object-fit: cover; }
+/* ── Info panel ── */
+.prod-modal-info {
+  padding: 24px 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+.prod-modal-cat { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
+.prod-modal-name { font-family: var(--display); font-size: 1.35rem; font-weight: 700; line-height: 1.25; }
+.prod-modal-price-row { display: flex; align-items: baseline; gap: 10px; }
+.prod-modal-price { font-family: var(--display); font-size: 2rem; font-weight: 800; color: var(--accent); }
+.prod-modal-price-old { font-size: .9rem; color: var(--fg-3); text-decoration: line-through; font-weight: 400; }
+.prod-modal-divider { height: 1px; background: var(--border); }
+.prod-modal-desc { font-size: .875rem; color: var(--fg-2); line-height: 1.65; }
+.prod-modal-specs { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.prod-modal-specs li { font-size: .82rem; color: var(--fg); padding: 5px 8px 5px 22px; position: relative; border-radius: 6px; background: var(--surface-2); line-height: 1.4; }
+.prod-modal-specs li::before { content: "✓"; position: absolute; left: 7px; color: var(--accent); font-size: .75rem; }
+.prod-modal-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 22px; border-top: 1px solid var(--border); flex-shrink: 0; background: var(--surface); }
+/* ── Lightbox ── */
+.pm-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.92);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+}
+.pm-lightbox.open { display: flex; }
+.pm-lightbox img { max-width: 94vw; max-height: 94vh; object-fit: contain; border-radius: 8px; cursor: zoom-out; }
+.pm-lightbox-close { position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,.15); border: none; color: #fff; font-size: 1.4rem; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .btn-wa {
   display: flex;
   align-items: center;
@@ -2549,23 +2655,41 @@ html.lenis, html.lenis body { height: auto; }
       <button class="close-btn" onclick="closeProductDetail()">✕</button>
     </div>
     <div class="prod-modal-body">
-      <div class="prod-modal-img" id="pmImg"></div>
+      <!-- Gallery panel -->
+      <div class="prod-modal-gallery">
+        <div class="prod-modal-main-img" id="pmMainImg" onclick="openLightbox()">
+          <span id="pmImgFallback" style="font-size:5rem"></span>
+          <span class="pm-zoom-hint">Click to zoom</span>
+        </div>
+        <div class="prod-modal-thumbs" id="pmThumbs"></div>
+      </div>
+      <!-- Info panel -->
       <div class="prod-modal-info">
         <div class="prod-modal-cat" id="pmCat"></div>
         <div class="prod-modal-name" id="pmName"></div>
-        <div class="prod-modal-price" id="pmPrice"></div>
+        <div class="prod-modal-price-row">
+          <span class="prod-modal-price" id="pmPriceNum"></span>
+          <span class="prod-modal-price-old" id="pmPriceOld" style="display:none"></span>
+        </div>
+        <div class="prod-modal-divider"></div>
         <div class="prod-modal-desc" id="pmDesc"></div>
         <ul class="prod-modal-specs" id="pmSpecs"></ul>
       </div>
     </div>
     <div class="prod-modal-actions">
-      <button class="btn-primary" style="flex:1" onclick="addFromModal()">+ Add to Cart</button>
+      <button class="btn-primary" style="flex:1;min-width:120px" onclick="addFromModal()">+ Add to Cart</button>
       <a id="pmWaBtn" class="btn-wa" href="#" target="_blank" rel="noopener" style="display:none">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
         WhatsApp
       </a>
     </div>
   </div>
+</div>
+
+<!-- ── Image lightbox ─────────────────────────────────────────── -->
+<div class="pm-lightbox" id="pmLightbox" onclick="closeLightbox()">
+  <img id="pmLightboxImg" src="" alt="">
+  <button class="pm-lightbox-close" onclick="closeLightbox()">✕</button>
 </div>
 
 <!-- ── ORDER FORM MODAL ───────────────────────────────────────── -->
@@ -2631,6 +2755,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (track) {
     track.addEventListener('mouseenter', () => clearInterval(sliderTimer));
     track.addEventListener('mouseleave', () => { sliderTimer = setInterval(slideNext, 5000); });
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('pmLightbox').classList.contains('open')) { closeLightbox(); return; }
+    closeProductDetail();
+  }
+  if (document.getElementById('pmLightbox').classList.contains('open')) {
+    if (e.key === 'ArrowRight') pmShowImage((_pmCurrentIdx + 1) % (_pmCurrentImages.length || 1));
+    if (e.key === 'ArrowLeft') pmShowImage((_pmCurrentIdx - 1 + (_pmCurrentImages.length || 1)) % (_pmCurrentImages.length || 1));
   }
 });
 
@@ -2731,7 +2865,8 @@ async function loadProducts() {
       id: p.id, name: p.name, cat: p.category, price: parseFloat(p.price),
       oldPrice: p.old_price ? parseFloat(p.old_price) : null,
       icon: p.icon || "📦", badge: p.badge, desc: p.description || "",
-      quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || ""
+      quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || "",
+      extraImages: Array.isArray(p.extra_images) ? p.extra_images : []
     }));
     PROMOS = promos;
     buildCategoryUI(cats || []);
@@ -2752,7 +2887,7 @@ function productCardHTML(p) {
       <div class="product-card" onclick="openProductDetail(${p.id})">
         <div class="shimmer-layer" aria-hidden="true"></div>
         <div class="product-img">
-          ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy" style="width:100%;height:100%;object-fit:contain;padding:6px;display:block">` : `<span>${p.icon}</span>`}
+          ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : `<span>${p.icon}</span>`}
           ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${p.badge}</div>` : ""}
           ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
           <div class="product-img-overlay">
@@ -3133,41 +3268,94 @@ function setPriceFilter(val) {
 let currentModalProduct = null;
 let waNumber = "";
 
+let _pmCurrentImages = [];
+let _pmCurrentIdx = 0;
+
 function openProductDetail(id) {
   const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
   trackEvent('product_view', { id: p.id, name: p.name });
   currentModalProduct = p;
+
+  // Build image list: main image + extras
+  _pmCurrentImages = [p.imageUrl, ...(p.extraImages || [])].filter(Boolean);
+  _pmCurrentIdx = 0;
+
   document.getElementById("pmTitle").textContent = p.name;
-  const imgEl = document.getElementById("pmImg");
-  imgEl.innerHTML = p.imageUrl
-    ? `<img src="${p.imageUrl}" alt="${p.name}">`
-    : `<span>${p.icon}</span>`;
   document.getElementById("pmCat").textContent = catLabel(p.cat);
   document.getElementById("pmName").textContent = p.name;
-  document.getElementById("pmPrice").innerHTML = `$${p.price.toLocaleString()}${p.oldPrice ? `<span class="prod-modal-price-old">$${p.oldPrice.toLocaleString()}</span>` : ""}`;
+  document.getElementById("pmPriceNum").textContent = `$${p.price.toLocaleString()}`;
+  const oldEl = document.getElementById("pmPriceOld");
+  if (p.oldPrice) { oldEl.textContent = `$${p.oldPrice.toLocaleString()}`; oldEl.style.display = ""; }
+  else { oldEl.style.display = "none"; }
   document.getElementById("pmDesc").textContent = p.desc || "";
+
   const specsEl = document.getElementById("pmSpecs");
   if (p.specs) {
     specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${s}</li>`).join("");
     specsEl.style.display = "";
+  } else { specsEl.innerHTML = ""; specsEl.style.display = "none"; }
+
+  // Populate gallery
+  pmShowImage(0);
+  const thumbsEl = document.getElementById("pmThumbs");
+  if (_pmCurrentImages.length > 1) {
+    thumbsEl.innerHTML = _pmCurrentImages.map((url, i) =>
+      `<div class="prod-modal-thumb${i===0?" active":""}" onclick="pmShowImage(${i})"><img src="${url}" alt="" loading="lazy"></div>`
+    ).join("");
+    thumbsEl.style.display = "flex";
   } else {
-    specsEl.innerHTML = ""; specsEl.style.display = "none";
+    thumbsEl.innerHTML = "";
+    thumbsEl.style.display = "none";
   }
+
   const waBtn = document.getElementById("pmWaBtn");
   if (waNumber) {
     const msg = encodeURIComponent(`Hi! I'm interested in: ${p.name} ($${p.price.toLocaleString()})`);
     waBtn.href = `https://wa.me/${waNumber.replace(/\D/g,"")}?text=${msg}`;
     waBtn.style.display = "flex";
-  } else {
-    waBtn.style.display = "none";
-  }
+  } else { waBtn.style.display = "none"; }
+
   document.getElementById("productDetailModal").classList.add("open");
   document.body.style.overflow = "hidden";
 }
 
+function pmShowImage(idx) {
+  _pmCurrentIdx = idx;
+  const url = _pmCurrentImages[idx];
+  const mainEl = document.getElementById("pmMainImg");
+  const fallback = document.getElementById("pmImgFallback");
+  // Remove existing img if any
+  const existing = mainEl.querySelector("img");
+  if (existing) existing.remove();
+  if (url) {
+    fallback.textContent = "";
+    const img = document.createElement("img");
+    img.src = url;
+    img.alt = currentModalProduct ? currentModalProduct.name : "";
+    mainEl.insertBefore(img, mainEl.firstChild);
+  } else {
+    fallback.textContent = currentModalProduct ? currentModalProduct.icon : "📦";
+  }
+  // Update active thumb
+  document.querySelectorAll(".prod-modal-thumb").forEach((t, i) => t.classList.toggle("active", i === idx));
+}
+
+function openLightbox() {
+  const url = _pmCurrentImages[_pmCurrentIdx];
+  if (!url) return;
+  document.getElementById("pmLightboxImg").src = url;
+  document.getElementById("pmLightbox").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  document.getElementById("pmLightbox").classList.remove("open");
+}
+
 function closeProductDetail() {
   document.getElementById("productDetailModal").classList.remove("open");
+  closeLightbox();
   document.body.style.overflow = "";
 }
 
