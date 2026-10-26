@@ -54,11 +54,14 @@
   "openingHours": "Mo-Sa 09:00-18:00"
 }
 </script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap">
-<!-- Animation libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.1/dist/lenis.min.js"></script>
+<!-- Preconnect to external resource origins -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
+<link rel="preconnect" href="https://cdn.shopify.com">
+<link rel="preconnect" href="https://cgmqovyttrjecrbynooo.supabase.co">
+<!-- Google Fonts — non-blocking with font-display:swap -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600&display=swap&font-display=swap">
 <style>
 /* ── Design tokens ────────────────────────────────────────────── */
 :root {
@@ -102,7 +105,7 @@
 
 /* ── Reset & base ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: auto; } /* Lenis handles smooth scroll */
+html { scroll-behavior: smooth; } /* native smooth; overridden by Lenis on desktop */
 body {
   font-family: var(--body);
   background: var(--bg);
@@ -955,6 +958,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   flex-direction: column;
   transition: box-shadow .15s, transform .15s;
   cursor: pointer;
+  contain: layout style;
 }
 .product-card:hover {
   box-shadow: var(--shadow-md);
@@ -2758,6 +2762,11 @@ html.lenis, html.lenis body { height: auto; }
 <!-- ── TOAST ──────────────────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
 
+<!-- Animation libraries — loaded here (end of body) so they don't block first paint -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.1/dist/lenis.min.js"></script>
+
 <script>
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
@@ -3572,32 +3581,56 @@ loadStoreSettings();
   // ── Register plugins ──────────────────────────────────────────
   gsap.registerPlugin(ScrollTrigger);
 
-  // ── Init Lenis smooth scroll ─────────────────────────────────
-  const lenis = new Lenis({
-    duration: 1.15,
+  // ── Init Lenis smooth scroll (desktop only — mobile uses native) ─
+  const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  if (isTouchDevice) {
+    // Native scroll on touch: fast, no overhead
+    document.documentElement.style.scrollBehavior = 'smooth';
+  }
+  const lenis = isTouchDevice ? null : new Lenis({
+    duration: 0.85,
     easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
     touchMultiplier: 0,
+    wheelMultiplier: 0.9,
   });
+  if (lenis) {
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add(time => lenis.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
+  }
   // Refresh ScrollTrigger positions after Lenis rewires scroll
   setTimeout(() => ScrollTrigger.refresh(), 400);
 
   // ── Scroll progress bar ───────────────────────────────────────
   const bar = document.getElementById('scrollProgress');
-  if (bar) lenis.on('scroll', ({ progress }) => { bar.style.width = (progress * 100) + '%'; });
+  if (bar) {
+    if (lenis) {
+      lenis.on('scroll', ({ progress }) => { bar.style.width = (progress * 100) + '%'; });
+    } else {
+      window.addEventListener('scroll', () => {
+        const h = document.documentElement;
+        bar.style.width = ((h.scrollTop || document.body.scrollTop) / (h.scrollHeight - h.clientHeight) * 100) + '%';
+      }, { passive: true });
+    }
+  }
 
   // ── Nav: blur/shadow on scroll ────────────────────────────────
   const nav = document.querySelector('.nav');
-  lenis.on('scroll', ({ scroll }) => { nav.classList.toggle('nav-scrolled', scroll > 80); });
+  if (lenis) {
+    lenis.on('scroll', ({ scroll }) => { nav.classList.toggle('nav-scrolled', scroll > 80); });
+  } else {
+    window.addEventListener('scroll', () => { nav.classList.toggle('nav-scrolled', window.scrollY > 80); }, { passive: true });
+  }
 
   // ── Override anchor links with Lenis ─────────────────────────
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const el = document.querySelector(a.getAttribute('href'));
-      if (el) { e.preventDefault(); lenis.scrollTo(el, { offset: -72 }); }
+      if (!el) return;
+      e.preventDefault();
+      if (lenis) { lenis.scrollTo(el, { offset: -72 }); }
+      else { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
   });
 
