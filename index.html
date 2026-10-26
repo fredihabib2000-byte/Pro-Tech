@@ -2971,15 +2971,25 @@ function catLabel(cat) {
 
 // ── Category icon / colour lookup ────────────────────────────────
 const CAT_META = [
-  { k: ["laptop","computer"],         icon: "💻", color: "c-blue"   },
-  { k: ["pos","barcode"],             icon: "🏧", color: "c-purple" },
-  { k: ["printer","scanner"],         icon: "🖨️", color: "c-green"  },
-  { k: ["cash","drawer"],             icon: "💰", color: "c-amber"  },
-  { k: ["keyboard","mice","mouse"],   icon: "⌨️", color: "c-pink"   },
-  { k: ["audio","headphone","sound"], icon: "🎵", color: "c-purple" },
-  { k: ["scale","weigh"],             icon: "⚖️", color: "c-teal"   },
-  { k: ["display","monitor","screen"],icon: "🖥️", color: "c-teal"   },
-  { k: ["accessor"],                  icon: "🎧", color: "c-orange" },
+  { k: ["laptop","computer"],             icon: "💻", color: "c-blue"   },
+  { k: ["pos","barcode"],                 icon: "🏧", color: "c-purple" },
+  { k: ["printer","scanner"],             icon: "🖨️", color: "c-green"  },
+  { k: ["cash","drawer"],                 icon: "💰", color: "c-amber"  },
+  { k: ["gaming mouse","gaming mice"],    icon: "🖱️", color: "c-pink"   },
+  { k: ["gaming headset"],                icon: "🎧", color: "c-purple" },
+  { k: ["gaming keyboard"],               icon: "⌨️", color: "c-blue"   },
+  { k: ["gaming console","gaming furni"], icon: "🎮", color: "c-green"  },
+  { k: ["speaker"],                       icon: "🔊", color: "c-teal"   },
+  { k: ["earphone","headphone","earbud"], icon: "🎵", color: "c-pink"   },
+  { k: ["smart watch","smartwatch"],      icon: "⌚", color: "c-amber"  },
+  { k: ["smart gadget"],                  icon: "💡", color: "c-green"  },
+  { k: ["power bank"],                    icon: "🔋", color: "c-teal"   },
+  { k: ["phone accessor","car accessor"], icon: "📱", color: "c-orange" },
+  { k: ["keyboard","mice","mouse"],       icon: "⌨️", color: "c-pink"   },
+  { k: ["audio","sound"],                 icon: "🎵", color: "c-purple" },
+  { k: ["scale","weigh"],                 icon: "⚖️", color: "c-teal"   },
+  { k: ["display","monitor","screen"],    icon: "🖥️", color: "c-teal"   },
+  { k: ["accessor"],                      icon: "🎧", color: "c-orange" },
 ];
 const FALLBACK_COLORS = ["c-blue","c-purple","c-green","c-amber","c-pink","c-teal","c-orange"];
 function getCatMeta(name, idx) {
