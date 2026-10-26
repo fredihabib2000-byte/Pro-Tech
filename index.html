@@ -512,9 +512,16 @@ button { cursor: pointer; font-family: inherit; border: none; }
   display: block;
   object-fit: contain;
   filter: drop-shadow(0 10px 24px rgba(0,60,220,.5));
-  transition: transform .35s cubic-bezier(.34,1.56,.64,1), filter .3s;
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1), filter .3s, opacity .3s ease;
 }
 .hero-prod-card:hover img { transform: translateY(-10px) scale(1.04); filter: drop-shadow(0 20px 36px rgba(0,80,255,.7)); }
+/* shuffle fade state */
+.hero-prod-card.shuffling img,
+.hero-prod-card.shuffling .hero-prod-label {
+  opacity: 0;
+  transform: scale(.75) translateY(8px);
+  transition: opacity .28s ease, transform .28s ease;
+}
 .hero-prod-label {
   font-size: .66rem;
   font-weight: 600;
@@ -2136,9 +2143,9 @@ html.lenis, html.lenis body { height: auto; }
   <div class="hero-products" aria-hidden="true">
     <div class="hero-prod-card hero-prod-1">
       <div class="hero-prod-img-wrap">
-        <img src="https://cdn.shopify.com/s/files/1/0860/5270/0433/files/IMG_7414-Photoroom.jpg?v=1779536610" alt="REEVO Gaming Headset" loading="lazy">
+        <img src="https://cdn.shopify.com/s/files/1/0860/5270/0433/files/LS_JBL_GRIP_BLACK_HERO__0026_x3_c81b13dd-b7c9-43f0-adbd-213adfaa1a9a.png?v=1790613718" alt="JBL Grip" loading="lazy">
       </div>
-      <div class="hero-prod-label">REEVO Headset</div>
+      <div class="hero-prod-label">JBL Grip</div>
     </div>
     <div class="hero-prod-card hero-prod-2">
       <div class="hero-prod-img-wrap">
@@ -3544,6 +3551,52 @@ loadStoreSettings();
     const cards = document.querySelectorAll('.hero-prod-card');
     if (cards.length) tl.from(cards, { y: 44, opacity: 0, duration: .5, stagger: .12, ease: 'back.out(1.4)' }, .55);
   }
+
+  /* ── Hero product shuffle ──────────────────────────────────────── */
+  (function () {
+    const CDN = 'https://cdn.shopify.com/s/files/1/0860/5270/0433/files/';
+    const SB  = 'https://cgmqovyttrjecrbynooo.supabase.co/storage/v1/object/public/pt-images/products/';
+    const POOL = [
+      { src: CDN + 'LS_JBL_GRIP_BLACK_HERO__0026_x3_c81b13dd-b7c9-43f0-adbd-213adfaa1a9a.png?v=1790613718',   label: 'JBL Grip' },
+      { src: CDN + 'LS_JBL_CHARGE_6_BLACK_HERO_071_x1_777157ff-f7f1-465d-8d0a-2375ad6703a1.png?v=1790613714', label: 'JBL Charge 6' },
+      { src: CDN + 'JBL_GO_4_HERO_BLUE_48170_x6_0f150b2a-ee44-4c51-8cd8-b7ba47393b3e.png?v=1790693254',       label: 'JBL Go 4' },
+      { src: CDN + 'JBL_FLIP_7_HERO_BLACK_060_x2_e7f37380-bbbd-4c1f-90a9-d1baa7124a07.png?v=1790613721',      label: 'JBL Flip 7' },
+      { src: SB  + '1792739430366-m5g2ramg1h.png',   label: 'HP ZBook Fury' },
+      { src: SB  + '1792749967531-i18e4rekvd.png',   label: 'HP ProBook 640' },
+      { src: SB  + '1792666413135-ss0buw6gg8l.png',  label: 'ThinkPad P14s' },
+      { src: CDN + 'IMG_7645.png?v=1779713263',       label: 'Vocal X228 Mic' },
+      { src: CDN + 'IMG_7635.png?v=1779710989',       label: 'Porodo EchoBox' },
+    ];
+
+    const heroCards = Array.from(document.querySelectorAll('.hero-prod-card'));
+    if (!heroCards.length) return;
+    const shown = [0, 1, 2, 3];   // pool index currently displayed per slot
+    let lastSlot = -1;
+
+    setInterval(function () {
+      let slot;
+      do { slot = Math.floor(Math.random() * heroCards.length); }
+      while (slot === lastSlot);
+      lastSlot = slot;
+
+      const used = new Set(shown);
+      const avail = POOL.map(function (_, i) { return i; }).filter(function (i) { return !used.has(i); });
+      if (!avail.length) return;
+      const next = avail[Math.floor(Math.random() * avail.length)];
+
+      const card = heroCards[slot];
+      card.classList.add('shuffling');
+      setTimeout(function () {
+        const p = POOL[next];
+        const img = card.querySelector('img');
+        img.src = p.src;
+        img.alt = p.label;
+        card.querySelector('.hero-prod-label').textContent = p.label;
+        shown[slot] = next;
+        card.classList.remove('shuffling');
+      }, 300);
+    }, 2000);
+  }());
 
   const st = (trigger, start) => ({ trigger, start: start || 'top bottom', once: true });
 
