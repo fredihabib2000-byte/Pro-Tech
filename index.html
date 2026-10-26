@@ -803,6 +803,32 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .category-card.active .cat-count { color: var(--accent); background: var(--accent-soft); }
 
+/* ── New Arrivals section ─────────────────────────────────────── */
+.new-arrivals-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 2rem;
+}
+.new-arrivals-header p { color: var(--fg-3); font-size: .88rem; margin: 6px 0 0; }
+.new-arrivals-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-size: .84rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.new-arrivals-view-all:hover { background: var(--accent); color: #fff; }
 /* ── Products grid ────────────────────────────────────────────── */
 .products-header {
   display: flex;
@@ -2168,6 +2194,23 @@ html.lenis, html.lenis body { height: auto; }
   </div>
 </section>
 
+<!-- ── NEW ARRIVALS ─────────────────────────────────────────────── -->
+<section class="section reveal" id="new-arrivals" style="background:var(--bg);border-top:1px solid var(--border)">
+  <div class="container">
+    <div class="new-arrivals-header">
+      <div>
+        <div class="section-accent-line"></div>
+        <h2 class="section-title" style="margin-bottom:0">New Arrivals</h2>
+        <p>Fresh additions — just landed in our catalog</p>
+      </div>
+      <a href="#products" class="new-arrivals-view-all">View All Products →</a>
+    </div>
+    <div class="products-grid" id="newArrivalsGrid">
+      <div style="grid-column:1/-1;text-align:center;padding:2.5rem;color:var(--fg-3)">Loading…</div>
+    </div>
+  </div>
+</section>
+
 <!-- ── TRUST STRIP ─────────────────────────────────────────────── -->
 <div class="trust-strip">
   <div class="trust-strip-inner">
@@ -2810,6 +2853,23 @@ let searchTerm = "";
 const PAGE_SIZE = 24;
 let visibleCount = PAGE_SIZE;
 
+// ── New Arrivals ──────────────────────────────────────────────────
+function renderNewArrivals() {
+  const grid = document.getElementById("newArrivalsGrid");
+  if (!grid) return;
+  const items = [...PRODUCTS]
+    .filter(p => p.quantity > 0)
+    .sort((a, b) => b.id - a.id)
+    .slice(0, 8);
+  if (!items.length) { grid.innerHTML = ""; return; }
+  grid.innerHTML = items.map(productCardHTML).join("");
+  if (typeof gsap !== "undefined") {
+    gsap.from(grid.querySelectorAll(".product-card"), {
+      y: 36, opacity: 0, duration: .45, stagger: .07, ease: "power2.out", clearProps: "all"
+    });
+  }
+}
+
 // ── Load products from Supabase ───────────────────────────────────
 async function loadProducts() {
   const grid = document.getElementById("productsGrid");
@@ -2830,6 +2890,7 @@ async function loadProducts() {
     PROMOS = promos;
     buildCategoryUI(cats || []);
     renderProducts();
+    renderNewArrivals();
     _LOC_READY.then(() => trackEvent('page_view'));
   } catch (e) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">Failed to load products. Please refresh.</div>`;
