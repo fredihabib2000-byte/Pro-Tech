@@ -776,7 +776,67 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .filter-btn:hover, .filter-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: #000;
+}
+[data-theme="light"] .filter-btn:hover, [data-theme="light"] .filter-btn.active { color: #fff; }
+/* ── Sort / Filter toolbar ──────────────────────── */
+.sort-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.sort-filter-left, .sort-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sort-filter-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--fg-2);
+  white-space: nowrap;
+  letter-spacing: .03em;
+}
+.sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a0a0a0'/%3E%3C/svg%3E") no-repeat right 9px center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--fg);
+  font-size: .8rem;
+  font-weight: 500;
+  padding: 6px 28px 6px 10px;
+  cursor: pointer;
+  transition: border-color .15s;
+  min-width: 160px;
+}
+.sort-select:hover, .sort-select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+.sort-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+}
+.sort-count {
+  font-size: .8rem;
+  color: var(--fg-2);
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .sort-filter-bar { flex-direction: column; align-items: stretch; }
+  .sort-filter-left, .sort-filter-right { justify-content: space-between; }
+  .sort-select { min-width: 0; flex: 1; }
 }
 .search-bar {
   display: flex;
@@ -2091,7 +2151,6 @@ html.lenis, html.lenis body { height: auto; }
       <div>
         <div class="section-accent-line"></div>
         <h2 class="section-title" style="margin-bottom:4px">Featured Products</h2>
-        <p class="section-sub" style="margin-bottom:0">Showing <span id="productCount">24</span> products</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <div class="search-bar">
@@ -2100,10 +2159,31 @@ html.lenis, html.lenis body { height: auto; }
         </div>
       </div>
     </div>
+    <div class="sort-filter-bar">
+      <div class="sort-filter-left">
+        <span class="sort-filter-label">Filter:</span>
+        <select class="sort-select" id="priceFilterSelect" onchange="setPriceFilter(this.value)">
+          <option value="all">Price: All</option>
+          <option value="under-100">Under $100</option>
+          <option value="100-500">$100 – $500</option>
+          <option value="500-1000">$500 – $1,000</option>
+          <option value="over-1000">Over $1,000</option>
+        </select>
+      </div>
+      <div class="sort-filter-right">
+        <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
+          <option value="alpha-asc">Alphabetically, A–Z</option>
+          <option value="alpha-desc">Alphabetically, Z–A</option>
+          <option value="price-asc">Price, Low to High</option>
+          <option value="price-desc">Price, High to Low</option>
+        </select>
+        <div class="sort-divider"></div>
+        <span class="sort-count"><span id="productCount">0</span> products</span>
+      </div>
+    </div>
     <div class="products-filter" id="filterBar">
       <button class="filter-btn active" data-filter="all">All</button>
     </div>
-    <br>
     <div class="products-grid" id="productsGrid"></div>
     <div id="loadMoreWrap" style="display:none;justify-content:center;margin-top:2.5rem;">
       <button id="loadMoreBtn" class="load-more-btn">Load More</button>
@@ -2631,6 +2711,8 @@ let PRODUCTS = [];
 let PROMOS = [];
 let cart = [];
 let activeFilter = "all";
+let activeSort = "alpha-asc";
+let activePriceFilter = "all";
 let searchTerm = "";
 const PAGE_SIZE = 24;
 let visibleCount = PAGE_SIZE;
@@ -2702,12 +2784,25 @@ function renderProducts(appendFrom) {
   const filtered = PRODUCTS.filter(p => {
     const matchCat = activeFilter === "all" || p.cat === activeFilter;
     const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || (p.desc||"").toLowerCase().includes(searchTerm);
-    return matchCat && matchSearch && p.quantity > 0;
+    const price = p.price || 0;
+    const matchPrice = activePriceFilter === "all"
+      || (activePriceFilter === "under-100" && price < 100)
+      || (activePriceFilter === "100-500" && price >= 100 && price <= 500)
+      || (activePriceFilter === "500-1000" && price > 500 && price <= 1000)
+      || (activePriceFilter === "over-1000" && price > 1000);
+    return matchCat && matchSearch && matchPrice && p.quantity > 0;
   });
+
+  // Sort
+  if (activeSort === "alpha-asc")  filtered.sort((a,b) => a.name.localeCompare(b.name));
+  else if (activeSort === "alpha-desc") filtered.sort((a,b) => b.name.localeCompare(a.name));
+  else if (activeSort === "price-asc")  filtered.sort((a,b) => (a.price||0) - (b.price||0));
+  else if (activeSort === "price-desc") filtered.sort((a,b) => (b.price||0) - (a.price||0));
 
   const total = filtered.length;
   const showing = Math.min(visibleCount, total);
-  document.getElementById("productCount").textContent = showing + (total > showing ? ` of ${total}` : "");
+  const countEl = document.getElementById("productCount");
+  if (countEl) countEl.textContent = total > showing ? `${showing} of ${total}` : total;
 
   if (total === 0) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">No products found.</div>`;
@@ -3020,6 +3115,17 @@ function setFilter(cat) {
   activeFilter = cat;
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
   document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
+  visibleCount = PAGE_SIZE;
+  renderProducts();
+}
+function setSort(val) {
+  activeSort = val;
+  visibleCount = PAGE_SIZE;
+  renderProducts();
+}
+function setPriceFilter(val) {
+  activePriceFilter = val;
+  visibleCount = PAGE_SIZE;
   renderProducts();
 }
 
