@@ -113,6 +113,7 @@ body {
   line-height: 1.6;
   padding-inline: 0;
   padding-block: env(safe-area-inset-top, 0px) env(safe-area-inset-bottom, 0px);
+  overflow-x: hidden;
 }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
@@ -409,7 +410,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
   position: relative;
   z-index: 2;
   max-width: 520px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
 }
 .hero-brand {
   font-size: .68rem;
@@ -488,6 +490,29 @@ button { cursor: pointer; font-family: inherit; border: none; }
   .hero-products { display: none; }
   .hero-banner { justify-content: center; text-align: center; }
   .hero-ctas { justify-content: center; }
+}
+@media (max-width: 600px) {
+  .hero-banner {
+    padding: 48px 20px;
+    min-height: unset;
+  }
+  .hero-title {
+    font-size: clamp(2rem, 9.5vw, 2.8rem);
+    word-break: break-word;
+  }
+  .hero-subtitle {
+    font-size: .88rem;
+    max-width: 100%;
+  }
+  .hero-ctas {
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-btn-primary,
+  .hero-btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
 }
 .hero-prod-card {
   position: absolute;
