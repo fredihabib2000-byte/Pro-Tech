@@ -2760,6 +2760,17 @@ html.lenis, html.lenis body { height: auto; }
         <input type="tel" id="ord_phone" placeholder="+961 70 000 000">
       </div>
       <div>
+        <label>Payment Method *</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <label id="pm-cod" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--accent);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600">
+            <input type="radio" name="payment_method" value="Cash on Delivery" checked style="accent-color:var(--accent)"> 💵 Cash on Delivery
+          </label>
+          <label id="pm-wish" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--border);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600">
+            <input type="radio" name="payment_method" value="Wish" style="accent-color:var(--accent)"> 📲 Wish
+          </label>
+        </div>
+      </div>
+      <div>
         <label>Notes (optional)</label>
         <textarea id="ord_notes" rows="2" placeholder="Any special instructions…"></textarea>
       </div>
@@ -3466,12 +3477,26 @@ function addFromModal() {
 }
 
 // ── Order form ────────────────────────────────────────────────────
+const DELIVERY_FEE = 5;
+
 function openOrderModal() {
-  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const grandTotal = subtotal + DELIVERY_FEE;
+  const fmt = n => "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   document.getElementById("orderSummaryItems").innerHTML =
-    cart.map(i => `<div class="order-summary-item"><span>${esc(i.name)} × ${i.qty}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join("") +
-    `<div class="order-summary-total"><span>Total</span><span>$${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",")}</span></div>`;
+    cart.map(i => `<div class="order-summary-item"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.price * i.qty)}</span></div>`).join("") +
+    `<div class="order-summary-item" style="color:var(--fg-2)"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>` +
+    `<div class="order-summary-item" style="color:var(--fg-2)"><span>Delivery</span><span>${fmt(DELIVERY_FEE)}</span></div>` +
+    `<div class="order-summary-total"><span>Total</span><span>${fmt(grandTotal)}</span></div>`;
   ["ord_name","ord_phone","ord_notes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  // Reset payment method highlight
+  document.querySelectorAll("input[name='payment_method']").forEach(r => {
+    r.closest("label").style.borderColor = r.checked ? "var(--accent)" : "var(--border)";
+    r.addEventListener("change", () => {
+      document.querySelectorAll("input[name='payment_method']").forEach(x =>
+        x.closest("label").style.borderColor = x.checked ? "var(--accent)" : "var(--border)");
+    });
+  });
   document.getElementById("orderModal").classList.add("open");
   document.body.style.overflow = "hidden";
 }
@@ -3490,7 +3515,9 @@ async function submitOrder() {
   const name  = document.getElementById("ord_name").value.trim();
   const phone = document.getElementById("ord_phone").value.trim();
   if (!name || !phone) { showToast("Please fill in your name and phone number."); return; }
-  const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
+  const grandTotal = subtotal + DELIVERY_FEE;
+  const paymentMethod = (document.querySelector("input[name='payment_method']:checked") || {}).value || "Cash on Delivery";
   const btn = document.getElementById("placeOrderBtn");
   btn.disabled = true; btn.textContent = "Placing order…";
   try {
@@ -3503,17 +3530,17 @@ async function submitOrder() {
         customer_address: "",
         notes: document.getElementById("ord_notes").value.trim() || null,
         items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-        total: parseFloat(total.toFixed(2)),
+        total: parseFloat(grandTotal.toFixed(2)),
         status: "pending"
       })
     });
-    trackEvent('order_placed', { total: parseFloat(total.toFixed(2)), items_count: cart.length });
+    trackEvent('order_placed', { total: parseFloat(grandTotal.toFixed(2)), items_count: cart.length });
 
     // Build customer WhatsApp message
     const customerMsg = encodeURIComponent(
-      `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\n💰 Total: $${total.toFixed(2)}\n👤 Name: ${name}\n📞 Phone: ${phone}`
+      `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\nSubtotal: $${subtotal.toFixed(2)}\nDelivery: $${DELIVERY_FEE.toFixed(2)}\n💰 Total: $${grandTotal.toFixed(2)}\n💳 Payment: ${paymentMethod}\n👤 Name: ${name}\n📞 Phone: ${phone}`
     );
-    const ownerNum = (waNumber || "96171925840").replace(/\D/g, "");
+    const ownerNum = (waNumber || "96170107139").replace(/\D/g, "");
     const waLink = `https://wa.me/${ownerNum}?text=${customerMsg}`;
     document.getElementById("waSuccessBtn").href = waLink;
 
@@ -3526,11 +3553,14 @@ async function submitOrder() {
 *Customer:* ${name}
 *Phone:* ${phone}
 *Time:* ${now}
+*Payment:* ${paymentMethod}
 -----------------------------
 *Items:*
 ${itemsList}
 -----------------------------
-*Total: $${total.toFixed(2)}*${notes ? `\n*Note:* ${notes}` : ''}
+Subtotal: $${subtotal.toFixed(2)}
+Delivery: $${DELIVERY_FEE.toFixed(2)}
+*Total: $${grandTotal.toFixed(2)}*${notes ? `\n*Note:* ${notes}` : ''}
 -----------------------------
 Please confirm delivery location.`
     );
