@@ -979,12 +979,41 @@ async function loadCategories(){
 function renderCategoriesTable(){
   const wrap=document.getElementById("categoriesWrap");
   if(!allCategories.length){wrap.innerHTML='<div class="empty-state">No categories yet. Click + Add Category to create one.</div>';return;}
-  const rows=allCategories.map(c=>`<tr>
-    <td><strong>${c.name}</strong></td>
+  const rows=allCategories.map(c=>`<tr id="cat-row-${c.id}">
+    <td id="cat-name-${c.id}"><strong>${c.name}</strong></td>
     <td style="color:var(--fg-2);font-size:.82rem">${new Date(c.created_at).toLocaleDateString()}</td>
-    <td><button class="btn btn-danger btn-sm" onclick="deleteCat(${c.id},'${c.name.replace(/'/g,"\\'")}')">Delete</button></td>
+    <td style="display:flex;gap:.4rem">
+      <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="editCat(${c.id},'${c.name.replace(/'/g,"\\'")}')">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteCat(${c.id},'${c.name.replace(/'/g,"\\'")}')">Delete</button>
+    </td>
   </tr>`).join("");
   wrap.innerHTML=`<table><thead><tr><th>Name</th><th>Created</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function editCat(id,currentName){
+  const nameCell=document.getElementById(`cat-name-${id}`);
+  const row=document.getElementById(`cat-row-${id}`);
+  nameCell.innerHTML=`<input id="cat-edit-${id}" class="form-input" style="width:100%;padding:.3rem .5rem;font-size:.9rem" value="${currentName.replace(/"/g,'&quot;')}">`;
+  const actionsCell=row.querySelector("td:last-child");
+  actionsCell.innerHTML=`
+    <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="saveEditCat(${id})">Save</button>
+    <button class="btn btn-ghost btn-sm" onclick="renderCategoriesTable()">Cancel</button>`;
+  document.getElementById(`cat-edit-${id}`).focus();
+  document.getElementById(`cat-edit-${id}`).addEventListener("keydown",e=>{if(e.key==="Enter")saveEditCat(id);if(e.key==="Escape")renderCategoriesTable();});
+}
+
+async function saveEditCat(id){
+  const input=document.getElementById(`cat-edit-${id}`);
+  const newName=input?input.value.trim():"";
+  if(!newName){alert("Category name cannot be empty.");return;}
+  try{
+    await sb(`/rest/v1/pt_categories?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({name:newName}),headers:{"Prefer":"return=minimal"}});
+    const cat=allCategories.find(c=>c.id===id);
+    if(cat)cat.name=newName;
+    allCategories.sort((a,b)=>a.name.localeCompare(b.name));
+    renderCategoriesTable();
+    populateCategoryDropdown();
+  }catch(e){alert("Error saving: "+e.message);}
 }
 
 function populateCategoryDropdown(){
