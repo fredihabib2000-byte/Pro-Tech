@@ -3579,7 +3579,6 @@ async function submitOrder() {
       `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\nSubtotal: $${subtotal.toFixed(2)}${deliveryLine}\n💰 Total: $${grandTotal.toFixed(2)}\n📦 ${orderType}\n💳 Payment: ${paymentMethod}\n👤 Name: ${name}\n📞 Phone: ${phone}`
     );
     const waLink = `https://wa.me/${ownerNum}?text=${customerMsg}`;
-    document.getElementById("waSuccessBtn").href = waLink;
 
     // Update success message based on order type & payment
     const successMsg = document.getElementById("waSuccessMsg");
@@ -3615,8 +3614,7 @@ Subtotal: $${subtotal.toFixed(2)}${fee > 0 ? `\nDelivery: $${fee.toFixed(2)}` : 
 -----------------------------
 ${orderType === "Pickup" ? "Customer will pick up from store." : "Please confirm delivery location."}`
     );
-    window.open(`https://wa.me/${ownerNum}?text=${ownerMsg}`, "_blank");
-
+    document.getElementById("waSuccessBtn").href = `https://wa.me/${ownerNum}?text=${ownerMsg}`;
     cart = [];
     updateCart();
     closeOrderModal();
