@@ -2068,6 +2068,61 @@ html.lenis, html.lenis body { height: auto; }
 .review-name { font-weight: 700; font-size: .85rem; }
 .review-role { font-size: .75rem; color: var(--fg-3); margin-top: 1px; }
 
+/* ── FAQ ──────────────────────────────────────────────────────── */
+.faq-list {
+  max-width: 760px;
+  margin: 48px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.faq-q {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  color: var(--fg);
+  font-size: .925rem;
+  font-weight: 600;
+  text-align: left;
+  transition: background .15s;
+}
+.faq-q:hover { background: var(--surface-2); }
+.faq-q.open { color: var(--accent); }
+.faq-icon {
+  font-size: 1.4rem;
+  font-weight: 300;
+  flex-shrink: 0;
+  color: var(--accent);
+  transition: transform .25s;
+  line-height: 1;
+}
+.faq-q.open .faq-icon { transform: rotate(45deg); }
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  font-size: .875rem;
+  line-height: 1.75;
+  color: var(--fg-2);
+  transition: max-height .3s ease, padding .3s ease;
+  padding: 0 20px;
+}
+.faq-a.open {
+  max-height: 300px;
+  padding: 0 20px 18px;
+}
+
 /* ── Contact grid ─────────────────────────────────────────────── */
 .contact-grid {
   display: grid;
@@ -2242,6 +2297,7 @@ html.lenis, html.lenis body { height: auto; }
     <a class="mobile-nav-link" href="#products" onclick="closeMobileNav()">📦 Products</a>
     <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
     <a class="mobile-nav-link" href="#reviews" onclick="closeMobileNav()">💬 Reviews</a>
+    <a class="mobile-nav-link" href="#faq" onclick="closeMobileNav()">❓ FAQ</a>
     <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
   </div>
 </div>
@@ -2710,6 +2766,73 @@ html.lenis, html.lenis body { height: auto; }
             <div class="review-role">Freelancer, Baabda</div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ───────────────────────────────────────────────────── -->
+<section class="section reveal" id="faq" style="background: var(--surface); border-top: 1px solid var(--border)">
+  <div class="container">
+    <div class="section-accent-line"></div>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <p class="section-sub">Everything you need to know before ordering</p>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Do you deliver across all of Lebanon?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Yes, we deliver to all regions in Lebanon. Delivery costs $5 flat. You can also pick up for free from our store in Sin el Fil, Beirut.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>How long does delivery take?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Most orders within Beirut and Mount Lebanon are delivered same day or next day. Other regions typically take 1–2 business days. We will confirm the exact time with you on WhatsApp.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>What payment methods do you accept?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">We accept Cash on Delivery and Wish (mobile money transfer). For Wish payments, transfer the total amount to +961 70 107 139 and send a screenshot on WhatsApp to confirm your order.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Are your products covered by warranty?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Yes. All products are covered by the manufacturer's warranty. Duration varies by product — typically 1 year for laptops and electronics. Contact us on WhatsApp with your order details for any warranty claims.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Can I return a product if I change my mind?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">We accept returns within 7 days of purchase for defective items in original condition and packaging. Products that have been used or are missing their packaging are not eligible. Contact us on WhatsApp to initiate a return.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Do you sell POS systems for businesses?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Absolutely. We specialize in complete POS setups for restaurants, supermarkets, pharmacies, and retail stores — including receipt printers, barcode scanners, cash drawers, and touchscreen terminals. Contact us for a free quote.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>Can I visit the store in person?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Yes! Our store is located in Sin el Fil, Beirut. We recommend messaging us on WhatsApp first to confirm availability of the product you want before visiting.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span>How do I place an order?</span>
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">Browse our products, add items to your cart, then click "Place Order". Fill in your name and phone number, choose Delivery or Pickup, select your payment method, and confirm. You will receive a WhatsApp message to finalize your order.</div>
       </div>
     </div>
   </div>
@@ -3759,6 +3882,22 @@ function openLegal(type) {
 function closeLegal() {
   document.getElementById("legalOverlay").classList.remove("open");
   document.body.style.overflow = "";
+}
+
+// ── FAQ accordion ─────────────────────────────────────────────
+function toggleFaq(btn) {
+  const answer = btn.nextElementSibling;
+  const isOpen = btn.classList.contains("open");
+  // Close all
+  document.querySelectorAll(".faq-q.open").forEach(b => {
+    b.classList.remove("open");
+    b.nextElementSibling.classList.remove("open");
+  });
+  // Open clicked if it was closed
+  if (!isOpen) {
+    btn.classList.add("open");
+    answer.classList.add("open");
+  }
 }
 
 async function submitOrder() {
