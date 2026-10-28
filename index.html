@@ -2760,14 +2760,30 @@ html.lenis, html.lenis body { height: auto; }
         <input type="tel" id="ord_phone" placeholder="+961 70 000 000">
       </div>
       <div>
+        <label>Order Type *</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--accent);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600" id="ot-delivery-lbl">
+            <input type="radio" name="order_type" value="Delivery" checked style="accent-color:var(--accent)" onchange="updateOrderTotals()"> 🚚 Delivery (+$5)
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--border);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600" id="ot-pickup-lbl">
+            <input type="radio" name="order_type" value="Pickup" style="accent-color:var(--accent)" onchange="updateOrderTotals()"> 🏪 Pickup (Free)
+          </label>
+        </div>
+      </div>
+      <div>
         <label>Payment Method *</label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
-          <label id="pm-cod" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--accent);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600">
-            <input type="radio" name="payment_method" value="Cash on Delivery" checked style="accent-color:var(--accent)"> 💵 Cash on Delivery
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--accent);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600" id="pm-cod-lbl">
+            <input type="radio" name="payment_method" value="Cash on Delivery" checked style="accent-color:var(--accent)" onchange="updateOrderTotals()"> 💵 Cash
           </label>
-          <label id="pm-wish" style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--border);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600">
-            <input type="radio" name="payment_method" value="Wish" style="accent-color:var(--accent)"> 📲 Wish
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--border);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600" id="pm-wish-lbl">
+            <input type="radio" name="payment_method" value="Wish" style="accent-color:var(--accent)" onchange="updateOrderTotals()"> 📲 Wish
           </label>
+        </div>
+        <div id="wish-info" style="display:none;margin-top:8px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--accent);border-radius:10px;font-size:.82rem;line-height:1.6">
+          📲 <strong>Wish Payment:</strong> After placing your order, transfer the total amount to:<br>
+          <strong style="font-size:1rem;color:var(--accent)">+961 70 107 139</strong><br>
+          <span style="color:var(--fg-2)">Send payment screenshot on WhatsApp to confirm your order.</span>
         </div>
       </div>
       <div>
@@ -2787,7 +2803,7 @@ html.lenis, html.lenis body { height: auto; }
   <div class="wa-success-card">
     <div class="wa-success-icon">✅</div>
     <h3>Order Received!</h3>
-    <p>Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.</p>
+    <p id="waSuccessMsg">Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.</p>
     <a class="wa-btn" id="waSuccessBtn" href="#" target="_blank" rel="noopener">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.116 1.535 5.845L.057 23.49a.75.75 0 0 0 .918.935l5.83-1.527A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.797 9.797 0 0 1-4.99-1.363l-.358-.212-3.712.973.99-3.607-.233-.37A9.794 9.794 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
       Open WhatsApp
@@ -3479,24 +3495,41 @@ function addFromModal() {
 // ── Order form ────────────────────────────────────────────────────
 const DELIVERY_FEE = 5;
 
-function openOrderModal() {
+function updateOrderTotals() {
   const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
-  const grandTotal = subtotal + DELIVERY_FEE;
+  const isDelivery = (document.querySelector("input[name='order_type']:checked") || {}).value !== "Pickup";
+  const fee = isDelivery ? DELIVERY_FEE : 0;
+  const grandTotal = subtotal + fee;
   const fmt = n => "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   document.getElementById("orderSummaryItems").innerHTML =
     cart.map(i => `<div class="order-summary-item"><span>${esc(i.name)} × ${i.qty}</span><span>${fmt(i.price * i.qty)}</span></div>`).join("") +
     `<div class="order-summary-item" style="color:var(--fg-2)"><span>Subtotal</span><span>${fmt(subtotal)}</span></div>` +
-    `<div class="order-summary-item" style="color:var(--fg-2)"><span>Delivery</span><span>${fmt(DELIVERY_FEE)}</span></div>` +
+    (fee > 0 ? `<div class="order-summary-item" style="color:var(--fg-2)"><span>Delivery</span><span>${fmt(fee)}</span></div>` : "") +
     `<div class="order-summary-total"><span>Total</span><span>${fmt(grandTotal)}</span></div>`;
-  ["ord_name","ord_phone","ord_notes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
-  // Reset payment method highlight
-  document.querySelectorAll("input[name='payment_method']").forEach(r => {
-    r.closest("label").style.borderColor = r.checked ? "var(--accent)" : "var(--border)";
-    r.addEventListener("change", () => {
-      document.querySelectorAll("input[name='payment_method']").forEach(x =>
-        x.closest("label").style.borderColor = x.checked ? "var(--accent)" : "var(--border)");
-    });
+  // Radio highlight — order type
+  ["ot-delivery-lbl","ot-pickup-lbl"].forEach(id => {
+    const lbl = document.getElementById(id);
+    if (lbl) lbl.style.borderColor = lbl.querySelector("input").checked ? "var(--accent)" : "var(--border)";
   });
+  // Radio highlight — payment
+  ["pm-cod-lbl","pm-wish-lbl"].forEach(id => {
+    const lbl = document.getElementById(id);
+    if (lbl) lbl.style.borderColor = lbl.querySelector("input").checked ? "var(--accent)" : "var(--border)";
+  });
+  // Show Wish info box
+  const isWish = (document.querySelector("input[name='payment_method']:checked") || {}).value === "Wish";
+  const wishInfo = document.getElementById("wish-info");
+  if (wishInfo) wishInfo.style.display = isWish ? "block" : "none";
+}
+
+function openOrderModal() {
+  // Reset to defaults
+  const delRadio = document.querySelector("input[name='order_type'][value='Delivery']");
+  const cashRadio = document.querySelector("input[name='payment_method'][value='Cash on Delivery']");
+  if (delRadio) delRadio.checked = true;
+  if (cashRadio) cashRadio.checked = true;
+  ["ord_name","ord_phone","ord_notes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  updateOrderTotals();
   document.getElementById("orderModal").classList.add("open");
   document.body.style.overflow = "hidden";
 }
@@ -3516,7 +3549,9 @@ async function submitOrder() {
   const phone = document.getElementById("ord_phone").value.trim();
   if (!name || !phone) { showToast("Please fill in your name and phone number."); return; }
   const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
-  const grandTotal = subtotal + DELIVERY_FEE;
+  const orderType = (document.querySelector("input[name='order_type']:checked") || {}).value || "Delivery";
+  const fee = orderType === "Pickup" ? 0 : DELIVERY_FEE;
+  const grandTotal = subtotal + fee;
   const paymentMethod = (document.querySelector("input[name='payment_method']:checked") || {}).value || "Cash on Delivery";
   const btn = document.getElementById("placeOrderBtn");
   btn.disabled = true; btn.textContent = "Placing order…";
@@ -3536,15 +3571,30 @@ async function submitOrder() {
     });
     trackEvent('order_placed', { total: parseFloat(grandTotal.toFixed(2)), items_count: cart.length });
 
+    const ownerNum = (waNumber || "96170107139").replace(/\D/g, "");
+    const deliveryLine = fee > 0 ? `\nDelivery: $${fee.toFixed(2)}` : "";
     // Build customer WhatsApp message
     const customerMsg = encodeURIComponent(
-      `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\nSubtotal: $${subtotal.toFixed(2)}\nDelivery: $${DELIVERY_FEE.toFixed(2)}\n💰 Total: $${grandTotal.toFixed(2)}\n💳 Payment: ${paymentMethod}\n👤 Name: ${name}\n📞 Phone: ${phone}`
+      `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\nSubtotal: $${subtotal.toFixed(2)}${deliveryLine}\n💰 Total: $${grandTotal.toFixed(2)}\n📦 ${orderType}\n💳 Payment: ${paymentMethod}\n👤 Name: ${name}\n📞 Phone: ${phone}`
     );
-    const ownerNum = (waNumber || "96170107139").replace(/\D/g, "");
     const waLink = `https://wa.me/${ownerNum}?text=${customerMsg}`;
     document.getElementById("waSuccessBtn").href = waLink;
 
-    // Notify owner on WhatsApp (silent background open)
+    // Update success message based on order type & payment
+    const successMsg = document.getElementById("waSuccessMsg");
+    if (successMsg) {
+      if (orderType === "Pickup") {
+        successMsg.innerHTML = paymentMethod === "Wish"
+          ? `Thanks for your order! 🎉<br>Please transfer <strong>$${grandTotal.toFixed(2)}</strong> via Wish to <strong>+961 70 107 139</strong>, then come pick up your order from our store in Sin el Fil.`
+          : `Thanks for your order! 🎉<br>Your order is ready for pickup at our store in Sin el Fil. Pay cash when you arrive.`;
+      } else {
+        successMsg.innerHTML = paymentMethod === "Wish"
+          ? `Thanks for your order! 🎉<br>Please transfer <strong>$${grandTotal.toFixed(2)}</strong> via Wish to <strong>+961 70 107 139</strong> and send the screenshot on WhatsApp to confirm your order.`
+          : `Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.`;
+      }
+    }
+
+    // Notify owner on WhatsApp
     const now = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
     const notes = document.getElementById("ord_notes").value.trim();
     const ownerMsg = encodeURIComponent(
@@ -3553,16 +3603,16 @@ async function submitOrder() {
 *Customer:* ${name}
 *Phone:* ${phone}
 *Time:* ${now}
+*Type:* ${orderType}
 *Payment:* ${paymentMethod}
 -----------------------------
 *Items:*
 ${itemsList}
 -----------------------------
-Subtotal: $${subtotal.toFixed(2)}
-Delivery: $${DELIVERY_FEE.toFixed(2)}
+Subtotal: $${subtotal.toFixed(2)}${fee > 0 ? `\nDelivery: $${fee.toFixed(2)}` : ""}
 *Total: $${grandTotal.toFixed(2)}*${notes ? `\n*Note:* ${notes}` : ''}
 -----------------------------
-Please confirm delivery location.`
+${orderType === "Pickup" ? "Customer will pick up from store." : "Please confirm delivery location."}`
     );
     window.open(`https://wa.me/${ownerNum}?text=${ownerMsg}`, "_blank");
 
