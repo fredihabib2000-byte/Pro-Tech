@@ -2880,6 +2880,16 @@ function trackEvent(event, data = {}) {
 let PRODUCTS = [];
 let PROMOS = [];
 let cart = [];
+
+// Escape untrusted strings before injecting into innerHTML
+function esc(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 let activeFilter = "all";
 let activeSort = "alpha-asc";
 let activePriceFilter = "all";
@@ -2941,16 +2951,16 @@ function productCardHTML(p) {
       <div class="product-card" onclick="openProductDetail(${p.id})">
         <div class="shimmer-layer" aria-hidden="true"></div>
         <div class="product-img">
-          ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='');this.parentElement.querySelector('.img-fallback')&&(this.parentElement.querySelector('.img-fallback').style.display='flex')">` : ``}<span class="img-fallback" style="display:${p.imageUrl?'none':'flex'};align-items:center;justify-content:center;width:100%;height:100%">${p.icon}</span>
-          ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${p.badge}</div>` : ""}
+          ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='');this.parentElement.querySelector('.img-fallback')&&(this.parentElement.querySelector('.img-fallback').style.display='flex')">` : ``}<span class="img-fallback" style="display:${p.imageUrl?'none':'flex'};align-items:center;justify-content:center;width:100%;height:100%">${esc(p.icon)}</span>
+          ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${esc(p.badge)}</div>` : ""}
           ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
           <div class="product-img-overlay">
             <button class="quick-view-pill" onclick="event.stopPropagation();openProductDetail(${p.id})">Quick View</button>
           </div>
         </div>
         <div class="product-body">
-          <div class="product-cat">${catLabel(p.cat)}</div>
-          <div class="product-name">${p.name}</div>
+          <div class="product-cat">${esc(catLabel(p.cat))}</div>
+          <div class="product-name">${esc(p.name)}</div>
           <div class="product-footer">
             <div>
               <span class="product-price">$${p.price.toLocaleString()}</span>
@@ -3087,9 +3097,9 @@ function buildCategoryUI(cats) {
     </div>` + cats.map((c, i) => {
       const { icon, color } = getCatMeta(c.name, i);
       const count = PRODUCTS.filter(p => p.cat === c.name && p.quantity > 0).length;
-      return `<div class="category-card" data-cat="${c.name}">
+      return `<div class="category-card" data-cat="${esc(c.name)}">
         <div class="cat-icon-wrap ${color}">${icon}</div>
-        <div class="cat-name">${catLabel(c.name)}</div>
+        <div class="cat-name">${esc(catLabel(c.name))}</div>
         <div class="cat-count">${count} item${count !== 1 ? 's' : ''}</div>
       </div>`;
     }).join("");
@@ -3111,7 +3121,7 @@ function buildCategoryUI(cats) {
   const fBar = document.getElementById("filterBar");
   if (fBar) {
     fBar.innerHTML = `<button class="filter-btn active" data-filter="all">All</button>` +
-      cats.map(c => `<button class="filter-btn" data-filter="${c.name}">${c.name}</button>`).join("");
+      cats.map(c => `<button class="filter-btn" data-filter="${esc(c.name)}">${esc(c.name)}</button>`).join("");
     fBar.querySelectorAll(".filter-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         fBar.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
@@ -3167,9 +3177,9 @@ function updateCart() {
   }
   itemsEl.innerHTML = cart.map(item => `
     <div class="cart-item" id="cart-item-${item.id}">
-      <div class="cart-item-icon">${item.icon}</div>
+      <div class="cart-item-icon">${esc(item.icon)}</div>
       <div class="cart-item-info">
-        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-name">${esc(item.name)}</div>
         <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
       </div>
       <div class="cart-item-qty">
@@ -3380,7 +3390,7 @@ function openProductDetail(id) {
 
   const specsEl = document.getElementById("pmSpecs");
   if (p.specs) {
-    specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${s}</li>`).join("");
+    specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${esc(s)}</li>`).join("");
     specsEl.style.display = "";
   } else { specsEl.innerHTML = ""; specsEl.style.display = "none"; }
 
@@ -3458,7 +3468,7 @@ function addFromModal() {
 function openOrderModal() {
   const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
   document.getElementById("orderSummaryItems").innerHTML =
-    cart.map(i => `<div class="order-summary-item"><span>${i.name} × ${i.qty}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join("") +
+    cart.map(i => `<div class="order-summary-item"><span>${esc(i.name)} × ${i.qty}</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`).join("") +
     `<div class="order-summary-total"><span>Total</span><span>$${total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,",")}</span></div>`;
   ["ord_name","ord_phone","ord_notes"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   document.getElementById("orderModal").classList.add("open");
