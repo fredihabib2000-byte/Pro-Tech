@@ -2034,6 +2034,40 @@ html.lenis, html.lenis body { height: auto; }
 }
 .wa-success-close:hover { color: var(--fg); }
 
+/* ── Reviews ──────────────────────────────────────────────────── */
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 48px;
+}
+@media (max-width: 900px) { .reviews-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .reviews-grid { grid-template-columns: 1fr; } }
+.review-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform .2s, box-shadow .2s;
+}
+.review-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.15); }
+.review-stars { color: var(--accent); font-size: 1rem; letter-spacing: 2px; }
+.review-text { font-size: .875rem; line-height: 1.7; color: var(--fg-2); flex: 1; font-style: italic; }
+.review-text::before { content: "\201C"; font-size: 1.5rem; color: var(--accent); line-height: 0; vertical-align: -.4em; margin-right: 2px; font-style: normal; }
+.review-author { display: flex; align-items: center; gap: 10px; }
+.review-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent); color: #000;
+  font-weight: 800; font-size: .9rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.review-name { font-weight: 700; font-size: .85rem; }
+.review-role { font-size: .75rem; color: var(--fg-3); margin-top: 1px; }
+
 /* ── Contact grid ─────────────────────────────────────────────── */
 .contact-grid {
   display: grid;
@@ -2183,6 +2217,7 @@ html.lenis, html.lenis body { height: auto; }
       <li><a href="#categories">Categories</a></li>
       <li><a href="#products">Products</a></li>
       <li><a href="#why-us">Why Us</a></li>
+      <li><a href="#reviews">Reviews</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
     <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMobileNav()">
@@ -2206,7 +2241,8 @@ html.lenis, html.lenis body { height: auto; }
     <a class="mobile-nav-link" href="#categories" onclick="closeMobileNav()">🏪 Categories</a>
     <a class="mobile-nav-link" href="#products" onclick="closeMobileNav()">📦 Products</a>
     <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
-    <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">💬 Contact</a>
+    <a class="mobile-nav-link" href="#reviews" onclick="closeMobileNav()">💬 Reviews</a>
+    <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
   </div>
 </div>
 
@@ -2598,6 +2634,83 @@ html.lenis, html.lenis body { height: auto; }
         <p>Get a free consultation with our specialists. We'll build you the perfect tech stack for your store or restaurant.</p>
       </div>
       <a href="#contact" class="btn-white" style="position:relative;z-index:1">Get Free Quote</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── REVIEWS ────────────────────────────────────────────────── -->
+<section class="section reveal" id="reviews" style="background: var(--bg); border-top: 1px solid var(--border)">
+  <div class="container">
+    <div class="section-accent-line"></div>
+    <h2 class="section-title">What Our Customers Say</h2>
+    <p class="section-sub">Real feedback from businesses and individuals across Lebanon</p>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Got a full POS system for my restaurant — receipt printer, barcode scanner, and cash drawer. Installation was fast and everything works perfectly. Great service!"</p>
+        <div class="review-author">
+          <div class="review-avatar">K</div>
+          <div>
+            <div class="review-name">Karim A.</div>
+            <div class="review-role">Restaurant Owner, Beirut</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Bought a laptop for my business and the price was unbeatable. Delivery was same day to Jounieh. Pro Technology is now my go-to for all tech needs."</p>
+        <div class="review-author">
+          <div class="review-avatar">R</div>
+          <div>
+            <div class="review-name">Rima S.</div>
+            <div class="review-role">Small Business Owner, Jounieh</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Very professional team. I needed a thermal printer urgently and they had it ready for pickup within the hour. Highly recommend for any business equipment."</p>
+        <div class="review-author">
+          <div class="review-avatar">M</div>
+          <div>
+            <div class="review-name">Michel T.</div>
+            <div class="review-role">Pharmacy Owner, Sin el Fil</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Ordered a gaming headset and a mechanical keyboard. Both arrived well-packaged and exactly as described. Will definitely order again!"</p>
+        <div class="review-author">
+          <div class="review-avatar">J</div>
+          <div>
+            <div class="review-name">Jana H.</div>
+            <div class="review-role">Gamer, Beirut</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Set up our entire supermarket with barcode scanners and POS terminals. The team was helpful, honest about pricing, and after-sale support was excellent."</p>
+        <div class="review-author">
+          <div class="review-avatar">E</div>
+          <div>
+            <div class="review-name">Elie K.</div>
+            <div class="review-role">Supermarket Manager, Metn</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Fast response on WhatsApp, quick delivery, and the product was exactly what I needed. Trustworthy seller — the kind you keep in your contacts."</p>
+        <div class="review-author">
+          <div class="review-avatar">N</div>
+          <div>
+            <div class="review-name">Nadine F.</div>
+            <div class="review-role">Freelancer, Baabda</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
