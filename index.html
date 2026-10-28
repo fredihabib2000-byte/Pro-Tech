@@ -1391,6 +1391,34 @@ button { cursor: pointer; font-family: inherit; border: none; }
   font-size: .8rem;
   color: var(--fg-3);
 }
+.footer-bottom a { color: var(--fg-2); text-decoration: none; transition: color .15s; }
+.footer-bottom a:hover { color: var(--accent); }
+.footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+
+/* ── Legal modal ─────────────────────────────────────────────── */
+.legal-overlay {
+  position: fixed; inset: 0; z-index: 3000;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+  display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.legal-overlay.open { display: flex; }
+.legal-modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  width: 100%; max-width: 680px; max-height: 88vh; display: flex; flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,.8);
+}
+.legal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.legal-header h2 { font-size: 1rem; font-weight: 700; }
+.legal-body {
+  flex: 1; overflow-y: auto; padding: 24px 20px;
+  font-size: .875rem; line-height: 1.75; color: var(--fg-2);
+}
+.legal-body h3 { font-size: .9rem; font-weight: 700; color: var(--fg); margin: 20px 0 6px; }
+.legal-body h3:first-child { margin-top: 0; }
+.legal-body p { margin: 0 0 12px; }
 
 /* ── Promo banner ─────────────────────────────────────────────── */
 .promo-banner {
@@ -2659,9 +2687,24 @@ html.lenis, html.lenis body { height: auto; }
   </div>
   <div class="footer-bottom">
     <span>© 2026 Pro Technology. All rights reserved.</span>
-    <span>Privacy · Terms</span>
+    <div class="footer-links">
+      <a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Contact</a>
+      <a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a>
+      <a href="#" onclick="openLegal('terms');return false;">Terms of Service</a>
+    </div>
   </div>
 </footer>
+
+<!-- ── LEGAL MODALS ───────────────────────────────────────────── -->
+<div class="legal-overlay" id="legalOverlay" onclick="if(event.target===this)closeLegal()">
+  <div class="legal-modal">
+    <div class="legal-header">
+      <h2 id="legalTitle">Terms of Service</h2>
+      <button class="close-btn" onclick="closeLegal()">✕</button>
+    </div>
+    <div class="legal-body" id="legalBody"></div>
+  </div>
+</div>
 
 <!-- ── WHATSAPP FLOAT ─────────────────────────────────────────── -->
 <a id="waBtn" href="#" target="_blank" rel="noopener" title="Chat on WhatsApp">
@@ -3542,6 +3585,66 @@ function closeOrderModal() {
 
 function closeWaSuccess() {
   document.getElementById("waSuccessOverlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+// ── Legal modals ──────────────────────────────────────────────
+const LEGAL_CONTENT = {
+  terms: {
+    title: "Terms of Service",
+    body: `
+<h3>1. Acceptance of Terms</h3>
+<p>By accessing or using Pro Technology's website and services, you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
+<h3>2. Products & Pricing</h3>
+<p>All prices are listed in US Dollars (USD). We reserve the right to change prices at any time without prior notice. Product availability is subject to stock and may change.</p>
+<h3>3. Orders</h3>
+<p>Placing an order does not constitute a guaranteed sale. We reserve the right to cancel any order due to stock unavailability, pricing errors, or suspected fraud. You will be notified promptly in such cases.</p>
+<h3>4. Delivery</h3>
+<p>Delivery is available across Lebanon for a flat fee of $5. Delivery times may vary depending on your location and product availability. Pro Technology is not responsible for delays caused by external factors.</p>
+<h3>5. Pickup</h3>
+<p>Orders can be picked up from our store in Sin el Fil, Beirut. Please contact us on WhatsApp before coming to confirm availability.</p>
+<h3>6. Payment</h3>
+<p>We accept Cash on Delivery and Wish transfers. Payment must be completed upon delivery or pickup. For Wish transfers, payment must be sent before order processing.</p>
+<h3>7. Returns & Warranty</h3>
+<p>Products are covered by manufacturer warranty. Returns are accepted within 7 days of purchase for defective items in original condition with original packaging. Contact us via WhatsApp to initiate a return.</p>
+<h3>8. Limitation of Liability</h3>
+<p>Pro Technology is not liable for any indirect or consequential damages arising from product use. Our liability is limited to the purchase price of the product.</p>
+<h3>9. Contact</h3>
+<p>For any questions about these terms, contact us at +961 70 107 139 or via WhatsApp.</p>
+    `
+  },
+  privacy: {
+    title: "Privacy Policy",
+    body: `
+<h3>1. Information We Collect</h3>
+<p>When you place an order, we collect your name and phone number to process and deliver your order. We do not collect payment card details.</p>
+<h3>2. How We Use Your Information</h3>
+<p>Your information is used solely to process your orders, communicate order updates, and provide customer support. We do not sell, rent, or share your personal data with third parties.</p>
+<h3>3. WhatsApp Communication</h3>
+<p>When you confirm an order via WhatsApp, your conversation is subject to WhatsApp's own privacy policy. We use WhatsApp only for order-related communication.</p>
+<h3>4. Data Storage</h3>
+<p>Order data is stored securely in our database (Supabase) with industry-standard encryption. We retain order records for business and warranty purposes.</p>
+<h3>5. Cookies & Analytics</h3>
+<p>We use anonymous analytics to understand how visitors use our website (pages visited, device type, location country). No personally identifiable information is linked to analytics data.</p>
+<h3>6. Your Rights</h3>
+<p>You may request access to, correction of, or deletion of your personal data by contacting us at +961 70 107 139 via WhatsApp.</p>
+<h3>7. Changes to This Policy</h3>
+<p>We may update this Privacy Policy from time to time. Changes will be posted on this page.</p>
+<h3>8. Contact</h3>
+<p>For privacy-related inquiries, contact us via WhatsApp at +961 70 107 139.</p>
+    `
+  }
+};
+function openLegal(type) {
+  const content = LEGAL_CONTENT[type];
+  if (!content) return;
+  document.getElementById("legalTitle").textContent = content.title;
+  document.getElementById("legalBody").innerHTML = content.body;
+  document.getElementById("legalOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+function closeLegal() {
+  document.getElementById("legalOverlay").classList.remove("open");
   document.body.style.overflow = "";
 }
 
