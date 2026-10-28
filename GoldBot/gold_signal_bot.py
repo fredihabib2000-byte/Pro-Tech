@@ -40,8 +40,14 @@ STRONG_LEVEL = 4
 
 PIVOT_ZONE  = 0.35   # within X × ATR of a pivot level = "at key level"
 
+# Minimum score to actually send an alert (Setup=2 is detected but NOT sent)
+ALERT_MIN_SCORE = 3
+
 # Spam guard: don't re-alert same direction+reason within N minutes
-SPAM_MINUTES = 60
+SPAM_MINUTES = 90
+
+# Ranging filter: EMA spread / ATR must exceed this to confirm a trend
+EMA_TREND_MIN = 0.25
 
 last_alert = {}   # direction → (reason_key, timestamp)
 last_brief_date = None
@@ -494,9 +500,10 @@ def run():
     global last_alert, last_brief_date
     log.info("GainzAlgo started")
     send(
-        "🤖 <b>GainzAlgo Bot Started ✅</b>\n"
+        "🤖 <b>GainzAlgo V3 Started ✅</b>\n"
         "XAUUSD — London + NY sessions (11:00–00:00 Lebanon 🇱🇧)\n"
-        "⚡ Setup (2 cond)  📡 Signal (3 cond)  🚀 Strong (4 cond)"
+        "📡 Signal (3+ cond)  🚀 Strong (4+ cond)\n"
+        "Filters: 4H + 1H + Trend + Volume"
     )
 
     while True:
@@ -551,7 +558,7 @@ def run():
             sig, atr_val, rsi_val = score_signals(price, opens, highs, lows, closes, volumes)
 
             if sig is None:
-                log.info("ATR spike — skipping")
+                log.info("ATR filter — skipping")
                 time.sleep(CHECK_EVERY)
                 continue
 
@@ -560,23 +567,36 @@ def run():
             rkey  = sig["reason_key"]
             htf_1h, htf_4h = trends
 
-            # 4H macro filter: for strong signals, 4H must agree or be neutral
-            if score >= STRONG_LEVEL:
-                ok_4h = (d == "BUY"  and htf_4h in ("UP", "NEUTRAL")) or \
-                        (d == "SELL" and htf_4h in ("DOWN", "NEUTRAL"))
-                if not ok_4h:
-                    log.info("4H macro disagrees (%s vs %s) — suppressed", d, htf_4h)
-                    time.sleep(CHECK_EVERY)
-                    continue
+            # Minimum score: don't send Setup alerts (score=2) — wait for real Signal
+            if score < ALERT_MIN_SCORE:
+                log.info("Score %d < %d — setup only, not sent", score, ALERT_MIN_SCORE)
+                time.sleep(CHECK_EVERY)
+                continue
 
-            # 1h filter: for full signals, 1H must agree or be neutral
-            if score >= SIGNAL_LEVEL:
-                htf_ok = (d == "BUY"  and htf_1h in ("UP", "NEUTRAL")) or \
-                         (d == "SELL" and htf_1h in ("DOWN", "NEUTRAL"))
-                if not htf_ok:
-                    log.info("1H disagrees (%s vs %s) — suppressed", d, htf_1h)
-                    time.sleep(CHECK_EVERY)
-                    continue
+            # Ranging filter: EMA spread must show a real trend
+            ef_last = ema(closes, FAST_EMA)[-1]
+            es_last = ema(closes, SLOW_EMA)[-1]
+            ema_spread = abs(ef_last - es_last) / atr_val if atr_val else 0
+            if ema_spread < EMA_TREND_MIN:
+                log.info("Ranging market (EMA spread %.2f < %.2f) — skipping", ema_spread, EMA_TREND_MIN)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # 4H macro filter: ALL signals require 4H agreement or neutral
+            ok_4h = (d == "BUY"  and htf_4h in ("UP", "NEUTRAL")) or \
+                    (d == "SELL" and htf_4h in ("DOWN", "NEUTRAL"))
+            if not ok_4h:
+                log.info("4H disagrees (%s vs %s) — suppressed", d, htf_4h)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # 1H filter: ALL signals require 1H agreement or neutral
+            htf_ok = (d == "BUY"  and htf_1h in ("UP", "NEUTRAL")) or \
+                     (d == "SELL" and htf_1h in ("DOWN", "NEUTRAL"))
+            if not htf_ok:
+                log.info("1H disagrees (%s vs %s) — suppressed", d, htf_1h)
+                time.sleep(CHECK_EVERY)
+                continue
 
             # Alpha Vantage macro filter: suppress BUY when environment is bearish for gold
             if af and score >= SIGNAL_LEVEL:
