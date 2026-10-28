@@ -592,11 +592,23 @@ async function doLogin(){
   const pw=document.getElementById("pwInput").value;
   if(!email||!pw){errEl.textContent="Enter your email and password.";return}
   errEl.textContent="Signing in…";
-  const{error}=await _sb.auth.signInWithPassword({email,password:pw});
-  if(error){errEl.textContent="Incorrect email or password.";return}
-  document.getElementById("loginPage").style.display="none";
-  document.getElementById("shell").classList.add("show");
-  init();
+  try{
+    const{data,error}=await _sb.auth.signInWithPassword({email,password:pw});
+    if(error){
+      if(error.message&&error.message.toLowerCase().includes("confirm")){
+        errEl.textContent="Email not confirmed — check your inbox or contact support.";
+      } else {
+        errEl.textContent=error.message||"Incorrect email or password.";
+      }
+      return;
+    }
+    if(!data?.session){errEl.textContent="Sign in failed. Please try again.";return}
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("shell").classList.add("show");
+    init();
+  }catch(e){
+    errEl.textContent="Network error: "+e.message;
+  }
 }
 document.getElementById("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
 document.getElementById("emailInput").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("pwInput").focus()});
