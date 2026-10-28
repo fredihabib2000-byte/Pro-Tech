@@ -12,6 +12,7 @@
   gtag('config', 'G-8B9LXHRSDH');
 </script>
 <title>Pro Technology — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg:#0b0d14; --surface:#13161f; --surface-2:#1c2030; --surface-3:#242840;
@@ -210,12 +211,13 @@ select.status-sel:focus{border-color:var(--accent)}
   <div class="login-card">
     <div class="login-logo">⚙️</div>
     <h1>Pro Technology</h1>
-    <p>Admin Portal — Enter your password to continue</p>
+    <p>Admin Portal — Sign in to continue</p>
+    <input type="email" id="emailInput" placeholder="Email address" autocomplete="email" style="margin-bottom:12px">
     <div style="position:relative;margin-bottom:12px">
       <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password" style="margin-bottom:0;padding-right:44px">
       <button type="button" class="btn-eye" onclick="togglePw('pwInput',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1.1rem;padding:0;line-height:1">👁</button>
     </div>
-    <button type="button" onclick="doLogin()">Login</button>
+    <button type="button" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="loginErr"></div>
   </div>
 </div>
@@ -569,8 +571,8 @@ select.status-sel:focus{border-color:var(--accent)}
 <script>
 const SB_URL  = "https://cgmqovyttrjecrbynooo.supabase.co";
 const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNnbXFvdnl0dHJqZWNyYnlub29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0Mzg4MDAsImV4cCI6MjEwNjAxNDgwMH0.T0fRGI4e1i0xcfVMdLZo_UTnCIGRaBjYgC_JjzcfjT0";
-const BASE_HASH = "1a32ff273feb5cbe78820bcd5000d5d1a90d8edd"; // sha1(protech2024)
-const num = v => parseFloat(v) || 0; // Supabase returns numeric as string; coerce everywhere
+const _sb = window.supabase.createClient(SB_URL, SB_ANON);
+const num = v => parseFloat(v) || 0;
 
 // ── GLOBAL STATE (declared here to avoid TDZ when init() runs at auto-login) ──
 let bellCount=0,realtimeWs=null;
@@ -584,42 +586,38 @@ let allCategories=[];
 
 function togglePw(id,btn){const el=document.getElementById(id);el.type=el.type==="password"?"text":"password";btn.textContent=el.type==="password"?"👁":"🙈";}
 
-async function sha1(s){const b=await crypto.subtle.digest("SHA-1",new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,"0")).join("")}
-
-function getHash(){return localStorage.getItem("pt_pass_hash")||BASE_HASH}
-
 async function doLogin(){
   const errEl=document.getElementById("loginErr");
-  try{
-    const pw=document.getElementById("pwInput").value;
-    if(!pw){errEl.textContent="Enter your password.";return}
-    const h=await sha1(pw);
-    const ok=h===getHash()||h===BASE_HASH;
-    if(ok){
-      if(h===BASE_HASH)localStorage.removeItem("pt_pass_hash");
-      localStorage.setItem("pt_admin","1");
-      document.getElementById("loginPage").style.display="none";
-      document.getElementById("shell").classList.add("show");
-      init();
-    } else {
-      errEl.textContent="Incorrect password.";
-    }
-  }catch(e){errEl.textContent="Error: "+e.message;}
-}
-document.getElementById("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
-function doLogout(){localStorage.removeItem("pt_admin");location.reload()}
-
-if(localStorage.getItem("pt_admin")){
+  const email=document.getElementById("emailInput").value.trim();
+  const pw=document.getElementById("pwInput").value;
+  if(!email||!pw){errEl.textContent="Enter your email and password.";return}
+  errEl.textContent="Signing in…";
+  const{error}=await _sb.auth.signInWithPassword({email,password:pw});
+  if(error){errEl.textContent="Incorrect email or password.";return}
   document.getElementById("loginPage").style.display="none";
   document.getElementById("shell").classList.add("show");
   init();
 }
+document.getElementById("pwInput").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
+document.getElementById("emailInput").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("pwInput").focus()});
+
+async function doLogout(){await _sb.auth.signOut();location.reload()}
+
+_sb.auth.getSession().then(({data:{session}})=>{
+  if(session){
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("shell").classList.add("show");
+    init();
+  }
+});
 
 async function sb(path,opts={}){
+  const{data:{session}}=await _sb.auth.getSession();
+  const token=session?.access_token||SB_ANON;
   const ctrl=new AbortController();
   const timer=setTimeout(()=>ctrl.abort(),15000);
   try{
-    const r=await fetch(SB_URL+path,{...opts,signal:ctrl.signal,headers:{"apikey":SB_ANON,"Authorization":"Bearer "+SB_ANON,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})}});
+    const r=await fetch(SB_URL+path,{...opts,signal:ctrl.signal,headers:{"apikey":SB_ANON,"Authorization":"Bearer "+token,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})}});
     if(!r.ok){const body=await r.text();throw new Error(`HTTP ${r.status}: ${body.slice(0,300)}`);}
     const t=await r.text();return t?JSON.parse(t):null;
   }catch(e){
