@@ -177,39 +177,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .top-bar-sep { opacity: .3; user-select: none; }
 @media (max-width: 600px) { .top-bar-left { display: none; } }
 
-/* ── Trust strip ──────────────────────────────────────────────── */
-.trust-strip {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-.trust-strip-inner {
-  max-width: 1200px;
-  margin-inline: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.trust-item {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 11px 28px;
-  font-size: .82rem;
-  font-weight: 500;
-  color: var(--fg-2);
-  border-right: 1px solid var(--border);
-  transition: color .15s;
-  text-decoration: none;
-  cursor: default;
-}
-.trust-item:last-child { border-right: none; }
-.trust-item a { color: inherit; text-decoration: none; }
-.trust-item:hover { color: var(--accent); }
-@media (max-width: 700px) {
-  .trust-item { padding: 9px 16px; font-size: .75rem; }
-  .trust-item:nth-child(3), .trust-item:nth-child(4) { display: none; }
-}
 
 /* ── Nav search ───────────────────────────────────────────────── */
 .nav-search {
@@ -1337,50 +1304,108 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .toast.show { transform: translateY(0); opacity: 1; }
 
-/* ── Footer ───────────────────────────────────────────────────── */
-.footer {
+/* ── Old trust strip (horizontal bar) ─────────────────────────── */
+.trust-strip { background: var(--surface); border-bottom: 1px solid var(--border); }
+.trust-strip-inner { max-width: 1200px; margin-inline: auto; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+.trust-item { display: flex; align-items: center; gap: 7px; padding: 11px 28px; font-size: .82rem; font-weight: 500; color: var(--fg-2); border-right: 1px solid var(--border); transition: color .15s; text-decoration: none; cursor: default; }
+.trust-item:last-child { border-right: none; }
+.trust-item a { color: inherit; text-decoration: none; }
+.trust-item:hover { color: var(--accent); }
+@media (max-width: 700px) {
+  .trust-item { padding: 9px 16px; font-size: .75rem; }
+  .trust-item:nth-child(3), .trust-item:nth-child(4) { display: none; }
+}
+
+/* ── Footer trust badges strip ─────────────────────────────────── */
+.trust-badges {
   background: var(--surface);
   border-top: 1px solid var(--border);
-  padding-block: 48px 24px;
+  border-bottom: 1px solid var(--border);
+  padding-block: 36px;
+}
+.trust-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  max-width: 1100px;
+  margin-inline: auto;
+  padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
+}
+@media (max-width: 720px) { .trust-badges-grid { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
+@media (max-width: 400px) { .trust-badges-grid { grid-template-columns: 1fr; gap: 24px; } }
+.trust-badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-inline: 20px;
+  gap: 10px;
+  border-right: 1px solid var(--border);
+}
+.trust-badge-item:last-child, .trust-badge-item[style*="border-right:none"] { border-right: none; }
+@media (max-width: 720px) { .trust-badge-item { border-right: none !important; } }
+.trust-badge-icon {
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+}
+.trust-badge-title { font-weight: 700; font-size: .9rem; color: var(--fg); }
+.trust-badge-desc { font-size: .775rem; color: var(--fg-2); line-height: 1.55; max-width: 160px; }
+
+/* ── Footer ───────────────────────────────────────────────────── */
+.footer {
+  background: #0d1117;
+  color: #c9d1d9;
+  padding-block: 52px 0;
 }
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 40px;
-  padding-inline: 20px;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr;
+  gap: 32px;
+  padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px));
   max-width: 1200px;
   margin-inline: auto;
-  margin-bottom: 40px;
+  margin-bottom: 44px;
 }
-@media (max-width: 768px) {
-  .footer-grid { grid-template-columns: 1fr 1fr; }
+@media (max-width: 900px) {
+  .footer-grid { grid-template-columns: 1fr 1fr 1fr; }
   .footer-brand { grid-column: 1 / -1; }
 }
-@media (max-width: 480px) {
+@media (max-width: 560px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 360px) {
   .footer-grid { grid-template-columns: 1fr; }
 }
 .footer-brand-name {
   font-family: var(--display);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 800;
   color: var(--accent);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  letter-spacing: -.5px;
 }
-.footer-tagline { font-size: .875rem; color: var(--fg-2); line-height: 1.6; max-width: 280px; }
-.footer-col h4 { font-weight: 700; font-size: .9rem; margin-bottom: 14px; }
-.social-btn { display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;font-size:.8rem;font-weight:600;text-decoration:none;transition:opacity .15s; }
-.social-btn:hover { opacity:.85; }
-.social-btn.insta { background:linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7);color:#fff; }
-.social-btn.fb    { background:#1877f2;color:#fff; }
-.social-btn.tiktok{ background:#010101;color:#fff;border:1px solid #333; }
-#footer-socials { display:none;gap:10px;flex-wrap:wrap;margin-top:12px; }
-.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.footer-col a { font-size: .85rem; color: var(--fg-2); transition: color .1s; }
-.footer-col a:hover { color: var(--accent); }
+.footer-tagline { font-size: .825rem; color: #8b949e; line-height: 1.65; max-width: 240px; margin-bottom: 18px; }
+.footer-social-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.footer-social-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  text-decoration: none; color: #c9d1d9;
+  background: #21262d; border: 1px solid #30363d;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.footer-social-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+.footer-social-btn svg { width: 16px; height: 16px; }
+.footer-col h4 { font-weight: 700; font-size: .8rem; color: #f0f6fc; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 16px; }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-col li a { font-size: .825rem; color: #8b949e; text-decoration: none; transition: color .15s; }
+.footer-col li a:hover { color: var(--accent); }
+.footer-contact-item { display: flex; align-items: flex-start; gap: 8px; font-size: .82rem; color: #8b949e; margin-bottom: 10px; }
+.footer-contact-item svg { width: 15px; height: 15px; fill: none; stroke: var(--accent); flex-shrink: 0; margin-top: 2px; }
+.footer-contact-item svg[fill="currentColor"] { fill: var(--accent); stroke: none; }
 .footer-bottom {
-  border-top: 1px solid var(--border);
-  padding-top: 20px;
-  padding-inline: 20px;
+  border-top: 1px solid #21262d;
+  padding: 18px max(20px, env(safe-area-inset-left, 0px));
   max-width: 1200px;
   margin-inline: auto;
   display: flex;
@@ -1388,12 +1413,14 @@ button { cursor: pointer; font-family: inherit; border: none; }
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: .8rem;
-  color: var(--fg-3);
+  font-size: .78rem;
+  color: #6e7681;
 }
-.footer-bottom a { color: var(--fg-2); text-decoration: none; transition: color .15s; }
+.footer-bottom a { color: #8b949e; text-decoration: none; transition: color .15s; }
 .footer-bottom a:hover { color: var(--accent); }
-.footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+.footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
+#footer-socials { display:none; }
+.social-btn,.social-btn.insta,.social-btn.fb,.social-btn.tiktok{display:none;}
 
 /* ── Legal modal ─────────────────────────────────────────────── */
 .legal-overlay {
@@ -2887,37 +2914,111 @@ html.lenis, html.lenis body { height: auto; }
   </div>
 </section>
 
+<!-- ── TRUST BADGES ───────────────────────────────────────────── -->
+<div class="trust-badges">
+  <div class="trust-badges-grid">
+    <div class="trust-badge-item">
+      <div class="trust-badge-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <div class="trust-badge-title">Delivery Across Lebanon</div>
+      <div class="trust-badge-desc">Fast shipping to all regions</div>
+    </div>
+    <div class="trust-badge-item">
+      <div class="trust-badge-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div class="trust-badge-title">Secure Checkout</div>
+      <div class="trust-badge-desc">Your data is always protected</div>
+    </div>
+    <div class="trust-badge-item">
+      <div class="trust-badge-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      <div class="trust-badge-title">Cash on Delivery</div>
+      <div class="trust-badge-desc">Pay when your order arrives</div>
+    </div>
+    <div class="trust-badge-item" style="border-right:none">
+      <div class="trust-badge-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="trust-badge-title">Local Customer Support</div>
+      <div class="trust-badge-desc">Friendly team in Lebanon</div>
+    </div>
+  </div>
+</div>
+
 <!-- ── FOOTER ─────────────────────────────────────────────────── -->
 <footer class="footer">
   <div class="footer-grid">
+    <!-- Brand column -->
     <div class="footer-brand">
       <div class="footer-brand-name" id="footer-store-name">Pro Technology</div>
-      <div class="footer-tagline" id="footer-tagline">Your one-stop shop for business technology. Laptops, POS systems, printers, scanners, and everything in between.</div>
-      <div id="footer-socials"></div>
+      <div class="footer-tagline" id="footer-tagline">Your one-stop shop for business technology in Lebanon. Laptops, POS systems, printers, scanners, and everything in between.</div>
+      <div class="footer-social-row">
+        <a href="https://instagram.com" target="_blank" rel="noopener" class="footer-social-btn" aria-label="Instagram">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+        <a href="https://facebook.com" target="_blank" rel="noopener" class="footer-social-btn" aria-label="Facebook">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        </a>
+        <a href="https://wa.me/96170107139" target="_blank" rel="noopener" class="footer-social-btn" aria-label="WhatsApp">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        </a>
+        <a href="https://tiktok.com" target="_blank" rel="noopener" class="footer-social-btn" aria-label="TikTok">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34v-7a8.16 8.16 0 0 0 4.77 1.52V6.37a4.85 4.85 0 0 1-1-.32z"/></svg>
+        </a>
+      </div>
     </div>
+    <!-- Shop column -->
     <div class="footer-col">
-      <h4>Categories</h4>
+      <h4>Shop</h4>
       <ul>
-        <li><a href="#products" onclick="setFilter('laptops')">💻 Laptops &amp; PCs</a></li>
-        <li><a href="#products" onclick="setFilter('pos-systems')">🖥️ POS Systems</a></li>
-        <li><a href="#products" onclick="setFilter('printers')">🖨️ Receipt Printers</a></li>
-        <li><a href="#products" onclick="setFilter('cash-drawers')">💰 Cash Drawers</a></li>
-        <li><a href="#products" onclick="setFilter('scanners')">📷 Barcode Scanners</a></li>
+        <li><a href="#products" onclick="setFilter('all');return false;">All Products</a></li>
+        <li><a href="#products" onclick="setFilter('laptops');return false;">Laptops &amp; PCs</a></li>
+        <li><a href="#products" onclick="setFilter('pos-systems');return false;">POS Systems</a></li>
+        <li><a href="#products" onclick="setFilter('printers');return false;">Printers</a></li>
+        <li><a href="#products" onclick="setFilter('scanners');return false;">Barcode Scanners</a></li>
       </ul>
     </div>
+    <!-- Customer Care column -->
     <div class="footer-col">
-      <h4>Company</h4>
+      <h4>Customer Care</h4>
       <ul>
-        <li><a href="#why-us">🏢 About Us</a></li>
-        <li><a href="#contact">💬 Feedback</a></li>
+        <li><a href="#faq" onclick="document.getElementById('faq').scrollIntoView({behavior:'smooth'});return false;">Help &amp; FAQ</a></li>
+        <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Track Order</a></li>
+        <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Returns</a></li>
+        <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Warranty</a></li>
+        <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Contact Us</a></li>
       </ul>
     </div>
+    <!-- About column -->
     <div class="footer-col">
-      <h4>Support</h4>
+      <h4>About</h4>
       <ul>
-        <li><a href="#contact">🙋 Help Center</a></li>
-        <li><a href="#contact">🛡️ Warranty</a></li>
-        <li><a href="#contact">📦 Track Order</a></li>
+        <li><a href="#why-us" onclick="document.getElementById('why-us').scrollIntoView({behavior:'smooth'});return false;">About Us</a></li>
+        <li><a href="#why-us" onclick="document.getElementById('why-us').scrollIntoView({behavior:'smooth'});return false;">Why Choose Us</a></li>
+        <li><a href="#reviews" onclick="document.getElementById('reviews').scrollIntoView({behavior:'smooth'});return false;">Reviews</a></li>
+        <li><a href="#" onclick="openLegal('privacy');return false;">Privacy Policy</a></li>
+        <li><a href="#" onclick="openLegal('terms');return false;">Terms of Service</a></li>
+      </ul>
+    </div>
+    <!-- Contact column -->
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li class="footer-contact-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.12h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 6.29 6.29l.98-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <a href="tel:+96170107139">+961 70 107 139</a>
+        </li>
+        <li class="footer-contact-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+          <a href="https://wa.me/96170107139" target="_blank" rel="noopener">WhatsApp Us</a>
+        </li>
+        <li class="footer-contact-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Sin el Fil, Beirut, Lebanon</span>
+        </li>
       </ul>
     </div>
   </div>
