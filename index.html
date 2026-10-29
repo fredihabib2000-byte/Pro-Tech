@@ -233,20 +233,37 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .logo {
   font-family: var(--display);
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 800;
-  color: var(--accent);
+  color: var(--fg);
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
+  text-decoration: none;
   will-change: transform;
 }
-.logo-dot { color: var(--fg); }
-.nav-scrolled .logo { color: var(--accent); }
-.nav-scrolled .logo-dot { color: var(--fg); }
-@media (max-width: 400px) { .logo-dot { display: none; } }
+.logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--display);
+  font-size: .95rem;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.logo-text-pro { color: var(--accent); font-weight: 900; }
+.logo-text-tech { color: var(--fg-2); font-weight: 600; font-size: 1.1rem; }
+.nav-scrolled .logo-badge { background: var(--accent); }
+@media (max-width: 480px) { .logo-text-tech { display: none; } }
 .nav-links {
   display: flex;
   gap: 4px;
@@ -1671,6 +1688,21 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .prod-modal-specs li { font-size: .82rem; color: var(--fg); padding: 5px 8px 5px 22px; position: relative; border-radius: 6px; background: var(--surface-2); line-height: 1.4; }
 .prod-modal-specs li::before { content: "✓"; position: absolute; left: 7px; color: var(--accent); font-size: .75rem; }
 .pm-add-btn { width: 100%; padding: 14px 0; font-size: 1rem; font-weight: 700; margin-top: 4px; border-radius: 10px; }
+/* Color variant picker */
+.pm-variants-row { margin: 12px 0 4px; }
+.pm-variants-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--fg-3); margin-bottom: 8px; }
+.pm-variants-label span { font-weight: 700; color: var(--fg); text-transform: none; letter-spacing: 0; margin-left: 4px; }
+.pm-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.pm-swatch {
+  width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent;
+  cursor: pointer; transition: transform .15s, border-color .15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  outline: none; position: relative;
+}
+.pm-swatch:hover { transform: scale(1.12); }
+.pm-swatch.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft), 0 1px 4px rgba(0,0,0,.35); }
+.pm-swatch.active::after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .7rem; color: rgba(255,255,255,.9); text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+[data-theme="light"] .pm-swatch { box-shadow: 0 1px 3px rgba(0,0,0,.2); }
 .pm-wa-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px 0; font-size: .9rem; font-weight: 600; border-radius: 10px; background: #25d366; color: #fff; border: none; text-decoration: none; cursor: pointer; transition: opacity .15s; }
 .pm-wa-btn:hover { opacity: .88; }
 .pm-delivery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
@@ -2401,11 +2433,8 @@ html.lenis, html.lenis body { height: auto; }
 <nav class="nav">
   <div class="nav-inner">
     <a href="#hero" class="logo">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect width="20" height="20" rx="5" fill="currentColor"/>
-        <path d="M4 10h12M10 4v12" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>
-      Pro<span class="logo-dot"> Technology</span>
+      <span class="logo-badge">PT</span>
+      <span class="logo-text-pro">Pro</span><span class="logo-text-tech">&nbsp;Technology</span>
     </a>
     <div class="nav-search">
       <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -3210,6 +3239,11 @@ html.lenis, html.lenis body { height: auto; }
         <div class="prod-modal-divider"></div>
         <div class="prod-modal-desc" id="pmDesc"></div>
         <ul class="prod-modal-specs" id="pmSpecs"></ul>
+        <!-- Color variants -->
+        <div class="pm-variants-row" id="pmVariantsRow" style="display:none">
+          <div class="pm-variants-label">Color<span id="pmSelectedColorLabel"></span></div>
+          <div class="pm-swatches" id="pmSwatches"></div>
+        </div>
         <!-- Actions -->
         <button class="btn-primary pm-add-btn" onclick="addFromModal()">+ Add to Cart</button>
         <a id="pmWaBtn" class="pm-wa-btn" href="#" target="_blank" rel="noopener" style="display:none">
@@ -3511,7 +3545,8 @@ async function loadProducts() {
       oldPrice: p.old_price ? parseFloat(p.old_price) : null,
       icon: p.icon || "📦", badge: p.badge, desc: p.description || "",
       quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || "",
-      extraImages: Array.isArray(p.extra_images) ? p.extra_images : []
+      extraImages: Array.isArray(p.extra_images) ? p.extra_images : [],
+      variants: Array.isArray(p.variants) ? p.variants : []
     }));
     PROMOS = promos;
     buildCategoryUI(cats || []);
@@ -3757,7 +3792,7 @@ function updateCart() {
     <div class="cart-item" id="cart-item-${item.id}">
       <div class="cart-item-icon">${item.imageUrl ? `<img src="${esc(item.imageUrl)}" alt="${esc(item.name)}" onerror="this.parentElement.textContent='${esc(item.icon)}'">` : esc(item.icon)}</div>
       <div class="cart-item-info">
-        <div class="cart-item-name">${esc(item.name)}</div>
+        <div class="cart-item-name">${esc(item.name)}${item.variantLabel ? `<span style="display:block;font-size:.7rem;color:var(--fg-3);font-weight:500;margin-top:2px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${esc(item.variantColor||'#888')};margin-right:4px;vertical-align:middle"></span>${esc(item.variantLabel)}</span>` : ""}</div>
         <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
       </div>
       <div class="cart-item-qty">
@@ -3946,6 +3981,7 @@ function setPriceFilter(val) {
 
 // ── Product detail modal ──────────────────────────────────────────
 let currentModalProduct = null;
+let _pmCurrentVariant = null;
 let waNumber = "";
 
 let _pmCurrentImages = [];
@@ -3975,6 +4011,23 @@ function openProductDetail(id) {
     specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${esc(s)}</li>`).join("");
     specsEl.style.display = "";
   } else { specsEl.innerHTML = ""; specsEl.style.display = "none"; }
+
+  // Color variants
+  _pmCurrentVariant = null;
+  const varRow = document.getElementById("pmVariantsRow");
+  const swatchesEl = document.getElementById("pmSwatches");
+  const colorLabel = document.getElementById("pmSelectedColorLabel");
+  if (p.variants && p.variants.length) {
+    swatchesEl.innerHTML = p.variants.map((v, i) =>
+      `<button class="pm-swatch" style="background:${esc(v.color)}" title="${esc(v.label || v.color)}" onclick="pmSelectVariant(${i})"></button>`
+    ).join("");
+    colorLabel.textContent = "";
+    varRow.style.display = "";
+  } else {
+    varRow.style.display = "none";
+    swatchesEl.innerHTML = "";
+    colorLabel.textContent = "";
+  }
 
   // Populate gallery
   pmShowImage(0);
@@ -4049,6 +4102,30 @@ function pmShowImage(idx) {
   document.querySelectorAll(".prod-modal-thumb").forEach((t, i) => t.classList.toggle("active", i === idx));
 }
 
+function pmSelectVariant(idx) {
+  if (!currentModalProduct || !currentModalProduct.variants) return;
+  const v = currentModalProduct.variants[idx];
+  if (!v) return;
+  _pmCurrentVariant = v;
+  // Update label
+  const colorLabel = document.getElementById("pmSelectedColorLabel");
+  if (colorLabel) colorLabel.textContent = ": " + (v.label || v.color);
+  // Update active swatch
+  document.querySelectorAll(".pm-swatch").forEach((s, i) => s.classList.toggle("active", i === idx));
+  // Swap main image if variant has one
+  if (v.image_url) {
+    const mainEl = document.getElementById("pmMainImg");
+    const fallback = document.getElementById("pmImgFallback");
+    const existing = mainEl.querySelector("img");
+    if (existing) existing.remove();
+    fallback.textContent = "";
+    const img = document.createElement("img");
+    img.src = v.image_url;
+    img.alt = (currentModalProduct.name || "") + " – " + (v.label || v.color);
+    mainEl.insertBefore(img, mainEl.firstChild);
+  }
+}
+
 // Swipe support on main gallery image
 (function() {
   let _sx = 0, _sy = 0;
@@ -4087,10 +4164,19 @@ function closeProductDetail() {
 }
 
 function addFromModal() {
-  if (currentModalProduct) {
-    addToCart(currentModalProduct.id);
-    closeProductDetail();
+  if (!currentModalProduct) return;
+  addToCart(currentModalProduct.id);
+  // Attach selected color variant to cart item
+  if (_pmCurrentVariant) {
+    const item = cart.find(x => x.id === currentModalProduct.id);
+    if (item) {
+      item.variantLabel = _pmCurrentVariant.label || _pmCurrentVariant.color;
+      item.variantColor = _pmCurrentVariant.color;
+      if (_pmCurrentVariant.image_url) item.imageUrl = _pmCurrentVariant.image_url;
+      updateCart();
+    }
   }
+  closeProductDetail();
 }
 
 // ── Reviews & Q&A ────────────────────────────────────────────────
@@ -4416,7 +4502,7 @@ async function submitOrder() {
   const btn = document.getElementById("placeOrderBtn");
   btn.disabled = true; btn.textContent = "Placing order…";
   try {
-    const itemsList = cart.map(i => `• ${i.name} ×${i.qty}`).join("\n");
+    const itemsList = cart.map(i => `• ${i.name}${i.variantLabel ? ` (${i.variantLabel})` : ""} ×${i.qty}`).join("\n");
     await sbFetch("/rest/v1/pt_orders", {
       method: "POST",
       body: JSON.stringify({
@@ -4424,7 +4510,7 @@ async function submitOrder() {
         customer_phone: phone,
         customer_address: "",
         notes: document.getElementById("ord_notes").value.trim() || null,
-        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, ...(i.variantLabel ? { color: i.variantLabel } : {}) })),
         total: parseFloat(grandTotal.toFixed(2)),
         status: "pending"
       })

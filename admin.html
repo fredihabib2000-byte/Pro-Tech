@@ -565,6 +565,16 @@ select.status-sel:focus{border-color:var(--accent)}
     <div class="field"><label>Description</label><textarea id="p_desc" rows="2" placeholder="Short description…"></textarea></div>
     <div class="field"><label>Specs</label><textarea id="p_specs" rows="2" placeholder="Technical specs…"></textarea></div>
     <div class="field">
+      <label>Color Variants <span style="font-size:.72rem;color:var(--fg-3);font-weight:400">optional — customers can pick a color and see the matching image</span></label>
+      <div id="variantsList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px">
+        <input type="color" id="v_color" value="#3b82f6" title="Pick color" style="width:34px;height:34px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;flex-shrink:0">
+        <input id="v_label" placeholder="Color name (e.g. Dark Green)" style="flex:1;min-width:110px">
+        <input id="v_img" placeholder="Image URL for this color (optional)" style="flex:2;min-width:160px">
+        <button type="button" class="btn btn-ghost" onclick="addVariant()" style="padding:7px 14px;white-space:nowrap;flex-shrink:0">+ Add</button>
+      </div>
+    </div>
+    <div class="field">
       <label>Status</label>
       <select id="p_active"><option value="true">Active</option><option value="false">Inactive</option></select>
     </div>
@@ -1231,10 +1241,39 @@ function openProdModal(p){
   else{prevImg.src="";prevStatus.textContent="";previewWrap.style.display="none";placeholder.style.display="block";}
   document.getElementById("p_desc").value=p?.description||"";
   document.getElementById("p_specs").value=p?.specs||"";
+  _prodVariants=Array.isArray(p?.variants)?[...p.variants]:[];
+  renderVariantsList();
+  document.getElementById("v_label").value="";
+  document.getElementById("v_img").value="";
+  document.getElementById("v_color").value="#3b82f6";
   document.getElementById("p_active").value=String(p?.is_active!==false);
   document.getElementById("prodModal").classList.add("open");
 }
-function closeProdModal(){document.getElementById("prodModal").classList.remove("open");editProdId=null}
+function closeProdModal(){document.getElementById("prodModal").classList.remove("open");editProdId=null;_prodVariants=[]}
+
+let _prodVariants=[];
+function renderVariantsList(){
+  const el=document.getElementById("variantsList");
+  if(!_prodVariants.length){el.innerHTML='<div style="font-size:.8rem;color:var(--fg-3);padding:4px 0">No color variants added yet.</div>';return;}
+  el.innerHTML=_prodVariants.map((v,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-2);border-radius:8px;border:1px solid var(--border)">
+      <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${v.color};border:2px solid rgba(255,255,255,.2);flex-shrink:0"></span>
+      <span style="font-size:.85rem;font-weight:600;color:var(--fg);min-width:80px">${v.label||v.color}</span>
+      <span style="font-size:.72rem;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${v.image_url?'🖼 '+v.image_url:'No image'}</span>
+      <button type="button" onclick="removeVariant(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.8rem;padding:2px 8px;flex-shrink:0">✕</button>
+    </div>`).join("");
+}
+function addVariant(){
+  const color=document.getElementById("v_color").value;
+  const label=document.getElementById("v_label").value.trim();
+  const img=document.getElementById("v_img").value.trim();
+  if(!label){alert("Enter a color name (e.g. Dark Green)");return;}
+  _prodVariants.push({color,label,image_url:img||null});
+  document.getElementById("v_label").value="";
+  document.getElementById("v_img").value="";
+  renderVariantsList();
+}
+function removeVariant(idx){_prodVariants.splice(idx,1);renderVariantsList();}
 
 async function saveProduct(){
   const name=document.getElementById("p_name").value.trim();
@@ -1251,6 +1290,7 @@ async function saveProduct(){
     description:document.getElementById("p_desc").value.trim()||null,
     specs:document.getElementById("p_specs").value.trim()||null,
     is_active:document.getElementById("p_active").value==="true",
+    variants:_prodVariants,
     updated_at:new Date().toISOString()
   };
   try{
