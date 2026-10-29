@@ -3174,11 +3174,21 @@ html.lenis, html.lenis body { height: auto; }
             <input type="radio" name="payment_method" value="Cash on Delivery" checked style="accent-color:var(--accent)" onchange="updateOrderTotals()"> 💵 Cash
           </label>
           <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface-2);border:2px solid var(--border);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600" id="pm-wish-lbl">
-            <input type="radio" name="payment_method" value="Wish" style="accent-color:var(--accent)" onchange="updateOrderTotals()"> 📲 Wish
+            <input type="radio" name="payment_method" value="Wish" style="accent-color:var(--accent)" onchange="updateOrderTotals()">
+            <svg width="22" height="22" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:6px">
+              <rect width="40" height="40" rx="9" fill="#E31E24"/>
+              <!-- speed lines left -->
+              <rect x="4" y="13" width="10" height="3" rx="1.5" fill="white" opacity=".55"/>
+              <rect x="2" y="19" width="12" height="3" rx="1.5" fill="white" opacity=".75"/>
+              <rect x="4" y="25" width="10" height="3" rx="1.5" fill="white" opacity=".55"/>
+              <!-- W letter -->
+              <text x="17" y="30" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="18" fill="white" letter-spacing="-1">W</text>
+            </svg>
+            Whish
           </label>
         </div>
         <div id="wish-info" style="display:none;margin-top:8px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--accent);border-radius:10px;font-size:.82rem;line-height:1.6">
-          📲 <strong>Wish Payment:</strong> After placing your order, transfer the total amount to:<br>
+          <strong>Whish Payment:</strong> After placing your order, transfer the total amount to:<br>
           <strong style="font-size:1rem;color:var(--accent)">+961 70 107 139</strong><br>
           <span style="color:var(--fg-2)">Send payment screenshot on WhatsApp to confirm your order.</span>
         </div>
@@ -3659,7 +3669,7 @@ function showToast(msg) {
 
 // ── Theme toggle ──────────────────────────────────────────────────
 const themeBtn = document.getElementById("themeToggle");
-let isDark = true;
+let isDark = false;
 function applyTheme() {
   if (isDark) {
     delete document.documentElement.dataset.theme;
@@ -3668,6 +3678,7 @@ function applyTheme() {
   }
   themeBtn.textContent = isDark ? "☀️" : "🌙";
 }
+applyTheme();
 themeBtn.addEventListener("click", () => { isDark = !isDark; applyTheme(); });
 
 // ── Contact form → saves to Supabase ─────────────────────────────
