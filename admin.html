@@ -240,6 +240,7 @@ select.status-sel:focus{border-color:var(--accent)}
       <button class="sb-item" data-page="clients" onclick="goto(this)"><span class="icon">👥</span> Clients</button>
       <button class="sb-item" data-page="reports" onclick="goto(this)"><span class="icon">📈</span> Reports</button>
       <button class="sb-item" data-page="inventory" onclick="goto(this)"><span class="icon">🗃️</span> Inventory <span class="badge-dot" id="lowStockDot" style="display:none"></span></button>
+      <button class="sb-item" data-page="reviews" onclick="goto(this)"><span class="icon">⭐</span> Reviews <span class="badge-dot" id="reviewsDot" style="display:none"></span></button>
       <div class="sb-section">Other</div>
       <button class="sb-item" data-page="analytics" onclick="goto(this)"><span class="icon">📡</span> Analytics</button>
       <button class="sb-item" data-page="messages" onclick="goto(this)"><span class="icon">💬</span> Messages <span class="badge-dot" id="msgDot" style="display:none"></span></button>
@@ -489,6 +490,24 @@ select.status-sel:focus{border-color:var(--accent)}
           <button class="btn btn-primary btn-sm" onclick="changePassword()">Update Password</button>
           <div id="passMsg" style="font-size:.8rem;margin-top:8px;min-height:18px"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="page page-hidden" id="page-reviews">
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:10px">
+          <span class="card-title">Customer Reviews</span>
+          <div class="filter-tabs" id="reviewFilter">
+            <button class="ftab active" data-f="all" onclick="filterReviews(this)">All</button>
+            <button class="ftab" data-f="5" onclick="filterReviews(this)">★★★★★</button>
+            <button class="ftab" data-f="4" onclick="filterReviews(this)">★★★★</button>
+            <button class="ftab" data-f="3" onclick="filterReviews(this)">★★★</button>
+            <button class="ftab" data-f="2" onclick="filterReviews(this)">★★</button>
+            <button class="ftab" data-f="1" onclick="filterReviews(this)">★</button>
+          </div>
+        </div>
+        <div class="tbl-wrap" id="reviewsWrap"><div class="loading-state">Loading…</div></div>
       </div>
     </div>
 
@@ -797,7 +816,7 @@ function goto(el){
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open")}
 
 // ── NAVIGATION ───────────────────────────────────────────
-const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",analytics:"Analytics",messages:"Messages",settings:"Settings"};
+const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",reviews:"Reviews",analytics:"Analytics",messages:"Messages",settings:"Settings"};
 function goto(el){
   document.querySelectorAll(".sb-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
@@ -812,8 +831,58 @@ function goto(el){
   if(p==="clients")loadClients();
   if(p==="reports")loadReports();
   if(p==="inventory")loadInventory();
+  if(p==="reviews")loadReviews();
   if(p==="analytics")loadAnalytics();
   if(p==="messages")loadMessages();
+}
+
+// ── REVIEWS ──────────────────────────────────────────────
+let _allReviews = [];
+async function loadReviews() {
+  const wrap = document.getElementById("reviewsWrap");
+  wrap.innerHTML = '<div class="loading-state">Loading…</div>';
+  try {
+    const rows = await sb("/rest/v1/pt_product_reviews?select=*,pt_products(name)&order=created_at.desc");
+    _allReviews = rows || [];
+    const dot = document.getElementById("reviewsDot");
+    if (dot) { dot.style.display = _allReviews.length ? "" : "none"; dot.textContent = _allReviews.length; }
+    renderReviews("all");
+  } catch(e) { wrap.innerHTML = '<div class="loading-state">Failed to load reviews.</div>'; }
+}
+function filterReviews(btn) {
+  document.querySelectorAll("#reviewFilter .ftab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderReviews(btn.dataset.f);
+}
+function renderReviews(f) {
+  const wrap = document.getElementById("reviewsWrap");
+  const rows = f === "all" ? _allReviews : _allReviews.filter(r => String(r.rating) === f);
+  if (!rows.length) { wrap.innerHTML = '<div class="loading-state">No reviews found.</div>'; return; }
+  const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  wrap.innerHTML = `<table><thead><tr><th>Product</th><th>Reviewer</th><th>Rating</th><th>Title</th><th>Review</th><th>Date</th><th></th></tr></thead><tbody>` +
+    rows.map(r => {
+      const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
+      const pname = r.pt_products?.name || `#${r.product_id}`;
+      return `<tr>
+        <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(pname)}">${esc(pname)}</td>
+        <td>${esc(r.reviewer_name||"—")}</td>
+        <td style="color:#f5a623;font-size:1rem;letter-spacing:1px">${stars}</td>
+        <td style="max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.review_title||"—")}</td>
+        <td style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(r.review_text)}">${esc(r.review_text||"—")}</td>
+        <td style="white-space:nowrap">${new Date(r.created_at).toLocaleDateString()}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteReview(${r.id})">Delete</button></td>
+      </tr>`;
+    }).join("") + `</tbody></table>`;
+}
+async function deleteReview(id) {
+  if (!confirm("Delete this review?")) return;
+  try {
+    await sb("/rest/v1/pt_product_reviews?id=eq."+id, {method:"DELETE"});
+    _allReviews = _allReviews.filter(r => r.id !== id);
+    const active = document.querySelector("#reviewFilter .ftab.active");
+    renderReviews(active?.dataset.f || "all");
+    showToast("Review deleted","","");
+  } catch(e) { showToast("Error","Could not delete review",""); }
 }
 
 // ── DASHBOARD ────────────────────────────────────────────

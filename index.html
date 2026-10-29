@@ -1730,9 +1730,12 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .pm-form-cancel:hover { background: var(--surface-2); }
 .pm-form-submit { padding: 7px 14px; border-radius: 8px; font-size: .78rem; font-weight: 600; cursor: pointer; border: none; background: var(--accent); color: #fff; transition: opacity .15s; }
 .pm-form-submit:hover { opacity: .85; }
-.pm-star-picker { display: flex; gap: 4px; margin-bottom: 10px; }
-.pm-star-pick { font-size: 1.6rem; color: var(--border); cursor: pointer; transition: color .1s; user-select: none; line-height: 1; }
-.pm-star-pick.hov, .pm-star-pick.active { color: #f5a623; }
+.pm-star-picker-big { display: flex; gap: 6px; justify-content: center; margin-bottom: 6px; }
+.pm-star-big { font-size: 2.4rem; color: #ddd; cursor: pointer; transition: color .1s, transform .1s; user-select: none; line-height: 1; }
+[data-theme="light"] .pm-star-big { color: #ccc; }
+.pm-star-big.hov, .pm-star-big.active { color: #f5a623; transform: scale(1.1); }
+.pm-star-labels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--fg-3); font-weight: 600; margin-bottom: 14px; padding: 0 2px; }
+.pm-privacy-note { font-size: .72rem; color: var(--fg-3); text-align: center; margin: 10px 0 4px; line-height: 1.4; }
 .pm-review-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
 .pm-review-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 .pm-review-name { font-size: .8rem; font-weight: 700; color: var(--fg); }
@@ -1747,6 +1750,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .pm-qa-a::before { content: "A: "; font-weight: 600; color: var(--accent); }
 .pm-qa-meta { font-size: .7rem; color: var(--fg-3); margin-top: 4px; }
 .pm-reviews-empty { font-size: .78rem; color: var(--fg-3); text-align: center; padding: 10px 0; font-style: italic; }
+.pm-rev-success { background: #d1fae5; color: #065f46; border-radius: 8px; padding: 10px 14px; font-size: .82rem; font-weight: 600; margin-bottom: 10px; text-align: center; }
+[data-theme="light"] .pm-rev-success { background: #d1fae5; color: #065f46; }
 /* ── Category deal sections ── */
 .cat-section-wrap { border-top: 1px solid var(--border); }
 .cat-section-inner { padding: 28px 0 20px; }
@@ -3222,32 +3227,35 @@ html.lenis, html.lenis body { height: auto; }
         </div>
         <!-- Reviews & Q&A -->
         <div class="pm-reviews-section" id="pmReviewsSection">
-          <div class="pm-reviews-header">
-            <div class="pm-reviews-title-row">
-              <div class="pm-reviews-title">Customer Reviews</div>
-              <div class="pm-reviews-stars" id="pmReviewsStars">☆☆☆☆☆</div>
-              <div class="pm-reviews-avg" id="pmReviewsAvg"></div>
-            </div>
-            <div class="pm-reviews-actions">
-              <button class="pm-rev-btn" onclick="toggleReviewForm()">✏️ Write a Review</button>
-              <button class="pm-rev-btn pm-rev-btn-outline" onclick="toggleQuestionForm()">❓ Ask a Question</button>
-            </div>
+          <div class="pm-reviews-actions">
+            <button class="pm-rev-btn" onclick="openReviewForm()">✏️ Write a Review</button>
+            <button class="pm-rev-btn pm-rev-btn-outline" onclick="toggleQuestionForm()">❓ Ask a Question</button>
           </div>
-          <!-- Review form -->
+          <!-- Review form — Step 1: Star rating -->
           <div class="pm-review-form" id="pmReviewForm" style="display:none">
-            <div class="pm-form-title">Write a Review</div>
-            <div class="pm-star-picker" id="pmStarPicker">
-              <span class="pm-star-pick" data-v="1">★</span>
-              <span class="pm-star-pick" data-v="2">★</span>
-              <span class="pm-star-pick" data-v="3">★</span>
-              <span class="pm-star-pick" data-v="4">★</span>
-              <span class="pm-star-pick" data-v="5">★</span>
+            <div id="pmRevStep1">
+              <div class="pm-form-title" style="text-align:center;font-size:.85rem;margin-bottom:14px" id="pmRevProductName"></div>
+              <div class="pm-star-picker-big" id="pmStarPicker">
+                <span class="pm-star-big" data-v="1">★</span>
+                <span class="pm-star-big" data-v="2">★</span>
+                <span class="pm-star-big" data-v="3">★</span>
+                <span class="pm-star-big" data-v="4">★</span>
+                <span class="pm-star-big" data-v="5">★</span>
+              </div>
+              <div class="pm-star-labels"><span>Poor</span><span>Great</span></div>
             </div>
-            <input class="pm-form-input" id="pmRevName" type="text" placeholder="Your name">
-            <textarea class="pm-form-input pm-form-textarea" id="pmRevText" placeholder="Share your experience..."></textarea>
-            <div class="pm-form-actions">
-              <button class="pm-form-cancel" onclick="toggleReviewForm()">Cancel</button>
-              <button class="pm-form-submit" onclick="submitReview()">Submit Review</button>
+            <div id="pmRevStep2" style="display:none">
+              <div class="pm-form-title">Review content <span style="color:var(--red);font-size:.7rem">Required</span></div>
+              <textarea class="pm-form-input pm-form-textarea" id="pmRevText" placeholder="Start writing here..."></textarea>
+              <div class="pm-form-title" style="margin-top:4px">Review Title</div>
+              <input class="pm-form-input" id="pmRevTitle" type="text" placeholder="Give your review a title">
+              <div class="pm-form-title" style="margin-top:4px">Your Name</div>
+              <input class="pm-form-input" id="pmRevName" type="text" placeholder="Display name">
+              <div class="pm-privacy-note">We'll only contact you about your review if necessary. By submitting, you agree to our terms and conditions.</div>
+              <div class="pm-form-actions">
+                <button class="pm-form-cancel" onclick="revBack()">← Back</button>
+                <button class="pm-form-submit" onclick="submitReview()">Submit Review</button>
+              </div>
             </div>
           </div>
           <!-- Q&A form -->
@@ -3261,7 +3269,6 @@ html.lenis, html.lenis body { height: auto; }
               <button class="pm-form-submit" onclick="submitQuestion()">Submit Question</button>
             </div>
           </div>
-          <div class="pm-reviews-list" id="pmReviewsList"></div>
           <div class="pm-qa-list" id="pmQaList"></div>
         </div>
       </div>
@@ -4012,15 +4019,10 @@ function openProductDetail(id) {
     }
   }
 
-  // Load reviews & questions
-  loadProductReviews(p.id);
+  // Load Q&A, reset forms
   loadProductQuestions(p.id);
-  // Reset forms
   document.getElementById("pmReviewForm").style.display = "none";
   document.getElementById("pmQaForm").style.display = "none";
-  document.getElementById("pmReviewsStars").textContent = "☆☆☆☆☆";
-  document.getElementById("pmReviewsAvg").textContent = "";
-  document.getElementById("pmReviewsList").innerHTML = "";
   document.getElementById("pmQaList").innerHTML = "";
 
   document.getElementById("productDetailModal").classList.add("open");
@@ -4096,7 +4098,7 @@ function addFromModal() {
 let _reviewRating = 0;
 
 function initStarPicker() {
-  const stars = document.querySelectorAll(".pm-star-pick");
+  const stars = document.querySelectorAll(".pm-star-big");
   _reviewRating = 0;
   stars.forEach(s => { s.classList.remove("active", "hov"); });
   stars.forEach(s => {
@@ -4108,16 +4110,30 @@ function initStarPicker() {
     s.onclick = () => {
       _reviewRating = parseInt(s.dataset.v);
       stars.forEach(x => x.classList.toggle("active", parseInt(x.dataset.v) <= _reviewRating));
+      // Go to step 2 after star click
+      document.getElementById("pmRevStep1").style.display = "none";
+      document.getElementById("pmRevStep2").style.display = "";
     };
   });
 }
 
-function toggleReviewForm() {
-  const f = document.getElementById("pmReviewForm");
-  const isOpen = f.style.display !== "none";
+function openReviewForm() {
   document.getElementById("pmQaForm").style.display = "none";
-  f.style.display = isOpen ? "none" : "";
-  if (!isOpen) initStarPicker();
+  const f = document.getElementById("pmReviewForm");
+  if (f.style.display !== "none") { f.style.display = "none"; return; }
+  // Reset to step 1
+  document.getElementById("pmRevStep1").style.display = "";
+  document.getElementById("pmRevStep2").style.display = "none";
+  if (currentModalProduct) document.getElementById("pmRevProductName").textContent = currentModalProduct.name;
+  f.style.display = "";
+  initStarPicker();
+}
+
+function revBack() {
+  document.getElementById("pmRevStep2").style.display = "none";
+  document.getElementById("pmRevStep1").style.display = "";
+  _reviewRating = 0;
+  document.querySelectorAll(".pm-star-big").forEach(s => s.classList.remove("active","hov"));
 }
 
 function toggleQuestionForm() {
@@ -4127,37 +4143,7 @@ function toggleQuestionForm() {
   f.style.display = isOpen ? "none" : "";
 }
 
-async function loadProductReviews(productId) {
-  const listEl = document.getElementById("pmReviewsList");
-  const starsEl = document.getElementById("pmReviewsStars");
-  const avgEl = document.getElementById("pmReviewsAvg");
-  if (!listEl) return;
-  try {
-    const rows = await sbFetch(`/rest/v1/pt_product_reviews?product_id=eq.${productId}&order=created_at.desc&select=*`);
-    if (!rows || rows.length === 0) {
-      listEl.innerHTML = `<div class="pm-reviews-empty">No reviews yet — be the first!</div>`;
-      starsEl.textContent = "☆☆☆☆☆"; starsEl.classList.remove("has-reviews");
-      avgEl.textContent = "";
-      return;
-    }
-    const avg = rows.reduce((a, r) => a + r.rating, 0) / rows.length;
-    const full = Math.round(avg);
-    starsEl.textContent = "★".repeat(full) + "☆".repeat(5 - full);
-    starsEl.classList.add("has-reviews");
-    avgEl.textContent = `${avg.toFixed(1)} (${rows.length})`;
-    listEl.innerHTML = rows.map(r => `
-      <div class="pm-review-card">
-        <div class="pm-review-top">
-          <span class="pm-review-name">${esc(r.reviewer_name || "Anonymous")}</span>
-          <span class="pm-review-rating">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span>
-        </div>
-        ${r.review_text ? `<div class="pm-review-text">${esc(r.review_text)}</div>` : ""}
-        <div class="pm-review-date">${new Date(r.created_at).toLocaleDateString()}</div>
-      </div>`).join("");
-  } catch(e) {
-    listEl.innerHTML = `<div class="pm-reviews-empty">Could not load reviews.</div>`;
-  }
-}
+async function loadProductReviews(productId) { /* reviews shown in admin only */ }
 
 async function loadProductQuestions(productId) {
   const listEl = document.getElementById("pmQaList");
@@ -4179,26 +4165,37 @@ async function loadProductQuestions(productId) {
 async function submitReview() {
   const name = document.getElementById("pmRevName").value.trim();
   const text = document.getElementById("pmRevText").value.trim();
+  const title = document.getElementById("pmRevTitle").value.trim();
+  if (!text) { alert("Please write a review."); return; }
   if (!name) { alert("Please enter your name."); return; }
-  if (_reviewRating === 0) { alert("Please select a star rating."); return; }
   if (!currentModalProduct) return;
   const btn = document.querySelector("#pmReviewForm .pm-form-submit");
   btn.disabled = true; btn.textContent = "Submitting…";
   try {
     await sbFetch("/rest/v1/pt_product_reviews", {
       method: "POST",
-      body: JSON.stringify({ product_id: currentModalProduct.id, reviewer_name: name, rating: _reviewRating, review_text: text })
+      body: JSON.stringify({ product_id: currentModalProduct.id, reviewer_name: name, rating: _reviewRating, review_text: text, review_title: title || null })
     });
     document.getElementById("pmRevName").value = "";
     document.getElementById("pmRevText").value = "";
+    document.getElementById("pmRevTitle").value = "";
     _reviewRating = 0;
-    toggleReviewForm();
-    loadProductReviews(currentModalProduct.id);
+    document.getElementById("pmReviewForm").style.display = "none";
+    showRevSuccess();
   } catch(e) {
     alert("Failed to submit. Please try again.");
   } finally {
     btn.disabled = false; btn.textContent = "Submit Review";
   }
+}
+
+function showRevSuccess() {
+  const sec = document.getElementById("pmReviewsSection");
+  const toast = document.createElement("div");
+  toast.className = "pm-rev-success";
+  toast.textContent = "✓ Thank you! Your review has been submitted.";
+  sec.prepend(toast);
+  setTimeout(() => toast.remove(), 4000);
 }
 
 async function submitQuestion() {
