@@ -1,8 +1,9 @@
 """
-GainzAlgo V2 Alpha - XAUUSD Telegram Bot
+GainzAlgo V3 - XAUUSD Telegram Bot
 - Session filter: London + NY only (08:00–21:00 UTC = 11:00–00:00 Lebanon)
-- Dual-timeframe: 1h trend confirmation
-- State-based conditions (not just cross events) → regular signals in trending markets
+- Triple-timeframe: 4H macro + 1H trend + 15min entry
+- Volume Analysis: OBV trend + Volume Surge detection
+- State-based conditions → regular signals in trending markets
 - Three levels: ⚡ Setup (2 cond), 📡 Signal (3 cond), 🚀 Strong (4+ cond)
 - Daily brief at London open (11:00 Lebanon)
 """
@@ -39,8 +40,14 @@ STRONG_LEVEL = 4
 
 PIVOT_ZONE  = 0.35   # within X × ATR of a pivot level = "at key level"
 
+# Minimum score to actually send an alert (Setup=2 is detected but NOT sent)
+ALERT_MIN_SCORE = 3
+
 # Spam guard: don't re-alert same direction+reason within N minutes
-SPAM_MINUTES = 60
+SPAM_MINUTES = 90
+
+# Ranging filter: EMA spread / ATR must exceed this to confirm a trend
+EMA_TREND_MIN = 0.25
 
 last_alert = {}   # direction → (reason_key, timestamp)
 last_brief_date = None
@@ -143,6 +150,28 @@ def stoch_rsi(prices, rsi_period=14, stoch_period=14, smooth_k=3, smooth_d=3):
     d = sma(k, smooth_d) or k
     return k, d
 
+def obv(closes, volumes):
+    """On Balance Volume — rising OBV = institutional accumulation."""
+    if not volumes or len(closes) < 2:
+        return [0.0]
+    result = [0.0]
+    for i in range(1, len(closes)):
+        v = volumes[i] if i < len(volumes) else 0
+        if closes[i] > closes[i-1]:
+            result.append(result[-1] + v)
+        elif closes[i] < closes[i-1]:
+            result.append(result[-1] - v)
+        else:
+            result.append(result[-1])
+    return result
+
+def vol_surge(volumes, period=20, mult=1.5):
+    """True if latest volume is mult × average of last period bars."""
+    if not volumes or len(volumes) < period + 1:
+        return False
+    avg = sum(volumes[-period-1:-1]) / period
+    return avg > 0 and volumes[-1] > avg * mult
+
 def pivot_levels(highs, lows, closes):
     """
     Classic daily pivot points from yesterday's candles.
@@ -179,32 +208,45 @@ def _fetch(interval: str, size: int = 250):
     if "values" not in data:
         raise ValueError(f"API error: {data.get('message', data)}")
     vals = list(reversed(data["values"]))
-    return ([float(v["open"]) for v in vals],
-            [float(v["high"]) for v in vals],
-            [float(v["low"])  for v in vals],
-            [float(v["close"])for v in vals])
+    return ([float(v["open"])              for v in vals],
+            [float(v["high"])              for v in vals],
+            [float(v["low"])               for v in vals],
+            [float(v["close"])             for v in vals],
+            [float(v.get("volume") or 0)   for v in vals])
 
 def fetch_data():  return _fetch("15min", 250)
 def fetch_htf():   return _fetch("1h",    220)
+def fetch_4h():    return _fetch("4h",    120)
 
 
-# ── 1h trend ─────────────────────────────────────────────────────────────────
+# ── Multi-timeframe trend ─────────────────────────────────────────────────────
 
-def get_htf_trend() -> str:
+def get_htf_trend() -> tuple:
+    """Returns (trend_1h, trend_4h) — each is 'UP', 'DOWN', or 'NEUTRAL'."""
+    trend_1h = "NEUTRAL"
+    trend_4h = "NEUTRAL"
     try:
-        _, _, _, c = fetch_htf()
-        if len(c) < 205: return "NEUTRAL"
-        et = ema(c, 200); rs = rsi(c, 14)
-        if c[-1] > et[-1] and rs[-1] > 50: return "UP"
-        if c[-1] < et[-1] and rs[-1] < 50: return "DOWN"
+        _, _, _, c, _ = fetch_htf()
+        if len(c) >= 205:
+            et = ema(c, 200); rs = rsi(c, 14)
+            if c[-1] > et[-1] and rs[-1] > 50: trend_1h = "UP"
+            elif c[-1] < et[-1] and rs[-1] < 50: trend_1h = "DOWN"
     except Exception as e:
-        log.warning("HTF fetch: %s", e)
-    return "NEUTRAL"
+        log.warning("1H fetch: %s", e)
+    try:
+        _, _, _, c4, _ = fetch_4h()
+        if len(c4) >= 55:
+            et4 = ema(c4, 50); rs4 = rsi(c4, 14)
+            if c4[-1] > et4[-1] and rs4[-1] > 50: trend_4h = "UP"
+            elif c4[-1] < et4[-1] and rs4[-1] < 50: trend_4h = "DOWN"
+    except Exception as e:
+        log.warning("4H fetch: %s", e)
+    return trend_1h, trend_4h
 
 
 # ── Signal engine ─────────────────────────────────────────────────────────────
 
-def score_signals(price, opens, highs, lows, closes):
+def score_signals(price, opens, highs, lows, closes, volumes=None):
     ef_v = ema(closes, FAST_EMA)
     es_v = ema(closes, SLOW_EMA)
     et_v = ema(closes, TREND_EMA)
@@ -246,6 +288,18 @@ def score_signals(price, opens, highs, lows, closes):
         if d < nearest_dist:
             nearest_dist = d; nearest_pivot = f"{k} {v:.1f}"
 
+    # ── Volume analysis ───────────────────────────────────────────────────────
+    surge = False
+    obv_rising = False
+    obv_falling = False
+    if volumes and len(volumes) >= 22:
+        surge = vol_surge(volumes, period=20, mult=1.5)
+        ob = obv(closes, volumes)
+        # OBV trend: compare last 5 bars
+        if len(ob) >= 6:
+            obv_rising  = ob[-1] > ob[-6]
+            obv_falling = ob[-1] < ob[-6]
+
     # ── BUY conditions (ALL state-based — fire whenever conditions hold) ──
     buy_conds = {
         "Above EMA200":  cl[-1] > et[-1],
@@ -268,6 +322,12 @@ def score_signals(price, opens, highs, lows, closes):
     # Pivot: near support = great BUY entry (+1 bonus)
     if near_support:
         buy_conds["Near Support 🎯"] = True
+
+    # Volume: institutional accumulation signals
+    if surge and obv_rising:
+        buy_conds["Volume Surge 📈"] = True
+    elif obv_rising:
+        buy_conds["OBV Rising 📈"] = True
 
     # Bonus cross events (+1 if a cross just happened)
     if ef[-1] > es[-1] and ef[-2] <= es[-2]:        # EMA just crossed
@@ -300,6 +360,12 @@ def score_signals(price, opens, highs, lows, closes):
     if near_resistance:
         sell_conds["Near Resistance 🎯"] = True
 
+    # Volume: distribution signals
+    if surge and obv_falling:
+        sell_conds["Volume Surge 📉"] = True
+    elif obv_falling:
+        sell_conds["OBV Falling 📉"] = True
+
     if ef[-1] < es[-1] and ef[-2] >= es[-2]:
         sell_conds["EMA Cross ✨"] = True
     if mm[-1] < ms[-1] and mm[-2] >= ms[-2]:
@@ -329,6 +395,7 @@ def score_signals(price, opens, highs, lows, closes):
                 "atr": atr_val, "rsi": rs[-1],
                 "stoch_k": sk[-1], "bb_pct": bb_pct,
                 "nearest_pivot": nearest_pivot,
+                "vol_surge": surge,
             })
 
     results.sort(key=lambda x: x["score"], reverse=True)
@@ -346,15 +413,18 @@ def send(msg: str):
         log.error("Telegram: %s", e)
 
 
-def fmt_signal(sig: dict, session: str, htf: str, af: dict = None) -> str:
+def fmt_signal(sig: dict, session: str, trends: tuple, af: dict = None) -> str:
     score = sig["score"]; d = sig["direction"]
     if   score >= STRONG_LEVEL: header = f"🚀 <b>STRONG {d} — XAUUSD</b>"; stars = "⭐⭐⭐"
     elif score >= SIGNAL_LEVEL: header = f"📡 <b>{d} SIGNAL — XAUUSD</b>";  stars = "⭐⭐"
     else:                       header = f"⚡ <b>{d} SETUP — XAUUSD</b>";   stars = "⭐  (not a trade yet)"
 
-    htf_icon = "📈" if htf == "UP" else "📉" if htf == "DOWN" else "➡️"
-    emoji = "🟢" if d == "BUY" else "🔴"
-    now   = datetime.utcnow().strftime("%H:%M UTC")
+    htf_1h, htf_4h = trends if isinstance(trends, tuple) else (trends, "NEUTRAL")
+    icon_1h = "📈" if htf_1h == "UP" else "📉" if htf_1h == "DOWN" else "➡️"
+    icon_4h = "📈" if htf_4h == "UP" else "📉" if htf_4h == "DOWN" else "➡️"
+    vol_txt = "  🔥 Vol!" if sig.get("vol_surge") else ""
+    emoji   = "🟢" if d == "BUY" else "🔴"
+    now     = datetime.utcnow().strftime("%H:%M UTC")
 
     macro = ""
     if af:
@@ -369,7 +439,7 @@ def fmt_signal(sig: dict, session: str, htf: str, af: dict = None) -> str:
         f"━━━━━━━━━━━━━━━━",
         f"⏰ {now}  |  {session}",
         f"💡 {sig['reason']}",
-        f"🏆 {stars}  |  1H: {htf_icon} {htf}{macro}",
+        f"🏆 {stars}  |  4H: {icon_4h} {htf_4h}  |  1H: {icon_1h} {htf_1h}{vol_txt}{macro}",
         f"━━━━━━━━━━━━━━━━",
     ]
     if score >= SIGNAL_LEVEL:
@@ -396,8 +466,10 @@ def fmt_signal(sig: dict, session: str, htf: str, af: dict = None) -> str:
     return "\n".join(lines)
 
 
-def fmt_brief(price: float, rsi_v: float, atr_v: float, htf: str, af: dict = None) -> str:
-    htf_icon = "📈 Bullish" if htf == "UP" else "📉 Bearish" if htf == "DOWN" else "➡️ Neutral"
+def fmt_brief(price: float, rsi_v: float, atr_v: float, trends: tuple, af: dict = None) -> str:
+    htf_1h, htf_4h = trends if isinstance(trends, tuple) else (trends, "NEUTRAL")
+    htf_icon = "📈 Bullish" if htf_1h == "UP" else "📉 Bearish" if htf_1h == "DOWN" else "➡️ Neutral"
+    htf_4h_icon = "📈 Bullish" if htf_4h == "UP" else "📉 Bearish" if htf_4h == "DOWN" else "➡️ Neutral"
     macro = ""
     if af:
         y_icon = "📈" if af["yield"] == "RISING" else "📉" if af["yield"] == "FALLING" else "➡️"
@@ -414,6 +486,7 @@ def fmt_brief(price: float, rsi_v: float, atr_v: float, htf: str, af: dict = Non
         f"🌅 <b>LONDON SESSION OPEN — XAUUSD</b>\n"
         f"━━━━━━━━━━━━━━━━\n"
         f"Price : <b>{price:.2f}</b>\n"
+        f"4H    : {htf_4h_icon}\n"
         f"1H    : {htf_icon}\n"
         f"RSI   : {rsi_v:.1f}  |  ATR: {atr_v:.2f}{macro}\n"
         f"━━━━━━━━━━━━━━━━\n"
@@ -427,9 +500,10 @@ def run():
     global last_alert, last_brief_date
     log.info("GainzAlgo started")
     send(
-        "🤖 <b>GainzAlgo Bot Started ✅</b>\n"
+        "🤖 <b>GainzAlgo V3 Started ✅</b>\n"
         "XAUUSD — London + NY sessions (11:00–00:00 Lebanon 🇱🇧)\n"
-        "⚡ Setup (2 cond)  📡 Signal (3 cond)  🚀 Strong (4 cond)"
+        "📡 Signal (3+ cond)  🚀 Strong (4+ cond)\n"
+        "Filters: 4H + 1H + Trend + Volume"
     )
 
     while True:
@@ -443,16 +517,16 @@ def run():
         if is_london_open() and last_brief_date != today:
             last_brief_date = today
             try:
-                _, highs, lows, closes = fetch_data()
+                _, highs, lows, closes, _ = fetch_data()
                 price = closes[-1]
                 at_v  = atr(highs, lows, closes, ATR_PERIOD)[-1]
                 rs_v  = rsi(closes, RSI_PERIOD)[-1]
-                htf   = get_htf_trend()
+                trends = get_htf_trend()
                 af    = None
                 if ALPHA_VANTAGE_KEY:
                     from alpha_filters import get_all_filters
                     af = get_all_filters()
-                send(fmt_brief(price, rs_v, at_v, htf, af))
+                send(fmt_brief(price, rs_v, at_v, trends, af))
                 log.info("Daily brief sent")
             except Exception as e:
                 log.error("Brief error: %s", e)
@@ -463,9 +537,9 @@ def run():
             continue
 
         try:
-            opens, highs, lows, closes = fetch_data()
-            price = closes[-1]
-            htf   = get_htf_trend()
+            opens, highs, lows, closes, volumes = fetch_data()
+            price  = closes[-1]
+            trends = get_htf_trend()
 
             # Alpha Vantage filters (optional — only if key is set)
             af = None
@@ -481,25 +555,48 @@ def run():
                 except Exception as e:
                     log.warning("Alpha filters error: %s", e)
 
-            sig, atr_val, rsi_val = score_signals(price, opens, highs, lows, closes)
+            sig, atr_val, rsi_val = score_signals(price, opens, highs, lows, closes, volumes)
 
             if sig is None:
-                log.info("ATR spike — skipping")
+                log.info("ATR filter — skipping")
                 time.sleep(CHECK_EVERY)
                 continue
 
             d     = sig["direction"]
             score = sig["score"]
             rkey  = sig["reason_key"]
+            htf_1h, htf_4h = trends
 
-            # 1h filter: for full signals, HTF must agree or be neutral
-            if score >= SIGNAL_LEVEL:
-                htf_ok = (d == "BUY"  and htf in ("UP", "NEUTRAL")) or \
-                         (d == "SELL" and htf in ("DOWN", "NEUTRAL"))
-                if not htf_ok:
-                    log.info("HTF disagrees (%s vs %s) — suppressed", d, htf)
-                    time.sleep(CHECK_EVERY)
-                    continue
+            # Minimum score: don't send Setup alerts (score=2) — wait for real Signal
+            if score < ALERT_MIN_SCORE:
+                log.info("Score %d < %d — setup only, not sent", score, ALERT_MIN_SCORE)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # Ranging filter: EMA spread must show a real trend
+            ef_last = ema(closes, FAST_EMA)[-1]
+            es_last = ema(closes, SLOW_EMA)[-1]
+            ema_spread = abs(ef_last - es_last) / atr_val if atr_val else 0
+            if ema_spread < EMA_TREND_MIN:
+                log.info("Ranging market (EMA spread %.2f < %.2f) — skipping", ema_spread, EMA_TREND_MIN)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # 4H macro filter: ALL signals require 4H agreement or neutral
+            ok_4h = (d == "BUY"  and htf_4h in ("UP", "NEUTRAL")) or \
+                    (d == "SELL" and htf_4h in ("DOWN", "NEUTRAL"))
+            if not ok_4h:
+                log.info("4H disagrees (%s vs %s) — suppressed", d, htf_4h)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # 1H filter: ALL signals require 1H agreement or neutral
+            htf_ok = (d == "BUY"  and htf_1h in ("UP", "NEUTRAL")) or \
+                     (d == "SELL" and htf_1h in ("DOWN", "NEUTRAL"))
+            if not htf_ok:
+                log.info("1H disagrees (%s vs %s) — suppressed", d, htf_1h)
+                time.sleep(CHECK_EVERY)
+                continue
 
             # Alpha Vantage macro filter: suppress BUY when environment is bearish for gold
             if af and score >= SIGNAL_LEVEL:
@@ -522,8 +619,8 @@ def run():
                 continue
 
             last_alert[d] = (rkey, time.time())
-            send(fmt_signal(sig, session, htf, af))
-            log.info("Alert: %s score=%d HTF=%s @ %.2f", d, score, htf, price)
+            send(fmt_signal(sig, session, trends, af))
+            log.info("Alert: %s score=%d 4H=%s 1H=%s @ %.2f", d, score, htf_4h, htf_1h, price)
 
         except Exception as e:
             log.error("Error: %s", e)
