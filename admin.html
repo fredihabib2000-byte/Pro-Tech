@@ -590,7 +590,19 @@ select.status-sel:focus{border-color:var(--accent)}
   <div class="modal" style="max-width:380px">
     <h3 id="catModalTitle">Add Category</h3>
     <div class="field"><label>Category Name *</label><input id="cat_name" placeholder="e.g. Headphones" style="width:100%"></div>
-    <div class="field"><label>Image URL <span style="color:var(--fg-2);font-weight:400">(optional)</span></label><input id="cat_img" placeholder="https://images.unsplash.com/…" style="width:100%"></div>
+    <div class="field">
+      <label>Category Image <span style="color:var(--fg-2);font-weight:400">(optional)</span></label>
+      <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+        <label style="cursor:pointer;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.45rem .9rem;font-size:.88rem;display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Browse
+          <input id="cat_img_file" type="file" accept="image/*" style="display:none" onchange="previewCatImg(this,'cat_img_preview','cat_img')">
+        </label>
+        <img id="cat_img_preview" src="" alt="" style="display:none;width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--border)">
+        <span id="cat_img_filename" style="font-size:.8rem;color:var(--fg-2)"></span>
+      </div>
+      <input id="cat_img" type="hidden" value="">
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeCatModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCat()">Save</button>
@@ -1097,24 +1109,61 @@ function editCat(id){
   const imgCell=document.getElementById(`cat-img-${id}`);
   const row=document.getElementById(`cat-row-${id}`);
   nameCell.innerHTML=`<input id="cat-edit-name-${id}" class="form-input" style="width:100%;padding:.3rem .5rem;font-size:.9rem" value="${cat.name.replace(/"/g,'&quot;')}">`;
-  imgCell.innerHTML=`<input id="cat-edit-img-${id}" class="form-input" style="width:100%;padding:.3rem .5rem;font-size:.82rem" placeholder="Image URL" value="${(cat.image_url||'').replace(/"/g,'&quot;')}">`;
+  imgCell.innerHTML=`
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <label style="cursor:pointer;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.3rem .7rem;font-size:.8rem;white-space:nowrap">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:.25rem"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Browse
+        <input id="cat-edit-img-file-${id}" type="file" accept="image/*" style="display:none" onchange="previewCatImg(this,'cat-edit-img-preview-${id}','cat-edit-img-${id}')">
+      </label>
+      <img id="cat-edit-img-preview-${id}" src="${cat.image_url||''}" alt="" style="${cat.image_url?'':'display:none;'}width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border)">
+      <input id="cat-edit-img-${id}" type="hidden" value="${(cat.image_url||'').replace(/"/g,'&quot;')}">
+    </div>`;
   const actionsCell=row.querySelector("td:last-child");
   actionsCell.innerHTML=`
     <button class="btn btn-sm" style="background:var(--accent);color:#fff" onclick="saveEditCat(${id})">Save</button>
     <button class="btn btn-ghost btn-sm" onclick="renderCategoriesTable()">Cancel</button>`;
   document.getElementById(`cat-edit-name-${id}`).focus();
-  [document.getElementById(`cat-edit-name-${id}`),document.getElementById(`cat-edit-img-${id}`)].forEach(el=>{
-    el.addEventListener("keydown",e=>{if(e.key==="Enter")saveEditCat(id);if(e.key==="Escape")renderCategoriesTable();});
-  });
+  document.getElementById(`cat-edit-name-${id}`).addEventListener("keydown",e=>{if(e.key==="Enter")saveEditCat(id);if(e.key==="Escape")renderCategoriesTable();});
+}
+
+function previewCatImg(input, previewId, hiddenId) {
+  const file = input.files[0];
+  if (!file) return;
+  const preview = document.getElementById(previewId);
+  const hidden = document.getElementById(hiddenId);
+  const nameEl = document.getElementById('cat_img_filename');
+  const reader = new FileReader();
+  reader.onload = e => {
+    if (preview) { preview.src = e.target.result; preview.style.display = 'block'; }
+    if (nameEl) nameEl.textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+  if (hidden) hidden.dataset.pendingFile = '1';
+}
+
+async function uploadCatImage(fileInputId) {
+  const input = document.getElementById(fileInputId);
+  if (!input || !input.files[0]) return null;
+  const file = input.files[0];
+  const ext = file.name.split('.').pop().toLowerCase();
+  const path = `cat-${Date.now()}.${ext}`;
+  const { data, error } = await _sb.storage.from('category-images').upload(path, file, { upsert: true });
+  if (error) throw error;
+  const { data: pub } = _sb.storage.from('category-images').getPublicUrl(path);
+  return pub.publicUrl;
 }
 
 async function saveEditCat(id){
   const nameInput=document.getElementById(`cat-edit-name-${id}`);
   const imgInput=document.getElementById(`cat-edit-img-${id}`);
+  const fileInput=document.getElementById(`cat-edit-img-file-${id}`);
   const newName=nameInput?nameInput.value.trim():"";
-  const newImg=imgInput?imgInput.value.trim():"";
   if(!newName){alert("Category name cannot be empty.");return;}
+  let newImg=imgInput?imgInput.value.trim():"";
   try{
+    if(fileInput&&fileInput.files[0]){
+      newImg=await uploadCatImage(`cat-edit-img-file-${id}`)||newImg;
+    }
     await sb(`/rest/v1/pt_categories?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({name:newName,image_url:newImg||null}),headers:{"Prefer":"return=minimal"}});
     const cat=allCategories.find(c=>c.id===id);
     if(cat){cat.name=newName;cat.image_url=newImg||null;}
@@ -1135,6 +1184,11 @@ function populateCategoryDropdown(){
 function openCatModal(){
   document.getElementById("cat_name").value="";
   document.getElementById("cat_img").value="";
+  document.getElementById("cat_img_file").value="";
+  const prev=document.getElementById("cat_img_preview");
+  if(prev){prev.style.display="none";prev.src="";}
+  const fn=document.getElementById("cat_img_filename");
+  if(fn)fn.textContent="";
   document.getElementById("catModal").classList.add("open");
   setTimeout(()=>document.getElementById("cat_name").focus(),100);
 }
@@ -1142,9 +1196,13 @@ function closeCatModal(){document.getElementById("catModal").classList.remove("o
 
 async function saveCat(){
   const name=document.getElementById("cat_name").value.trim();
-  const img=document.getElementById("cat_img").value.trim();
   if(!name){alert("Enter a category name.");return;}
+  let img=null;
   try{
+    const fileInput=document.getElementById("cat_img_file");
+    if(fileInput&&fileInput.files[0]){
+      img=await uploadCatImage("cat_img_file");
+    }
     const created=await sb("/rest/v1/pt_categories",{method:"POST",body:JSON.stringify({name,image_url:img||null})});
     if(created&&created[0])allCategories.push(created[0]);
     allCategories.sort((a,b)=>a.name.localeCompare(b.name));
