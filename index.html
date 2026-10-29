@@ -88,19 +88,19 @@
   color-scheme: dark;
 }
 :root[data-theme="light"] {
-  --bg: #f5f7fa;
+  --bg: #f4f6f9;
   --surface: #ffffff;
-  --surface-2: #f1f4f9;
+  --surface-2: #eef1f7;
   --fg: #0f172a;
   --fg-2: #475569;
   --fg-3: #94a3b8;
-  --accent: #1e3a8a;
-  --accent-hover: #1e40af;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
   --accent-soft: #dbeafe;
-  --border: #e2e8f0;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.08);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,.10);
+  --border: #e0e6f0;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.07);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.09);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
   color-scheme: light;
 }
 
@@ -142,12 +142,16 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 /* ── Top bar ──────────────────────────────────────────────────── */
 .top-bar {
-  background: #050505;
-  border-bottom: 1px solid #1e1e1e;
-  color: rgba(255,255,255,.75);
+  background: #1a3a6b;
+  border-bottom: none;
+  color: rgba(255,255,255,.85);
   font-size: .76rem;
   font-weight: 500;
   padding: 7px 20px;
+}
+[data-theme="light"] .top-bar {
+  background: #2563eb;
+  color: rgba(255,255,255,.92);
 }
 .top-bar-inner {
   max-width: 1200px;
@@ -941,7 +945,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 @media (max-width: 1100px) { .products-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 720px)  { .products-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
-@media (max-width: 440px)  { .products-grid { grid-template-columns: 1fr; } }
+@media (max-width: 440px)  { .products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+@media (max-width: 340px)  { .products-grid { grid-template-columns: 1fr; } }
 .product-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -992,6 +997,10 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .product-badge.sale { background: #e53e3e; }
 .product-badge.new { background: var(--success); }
 .product-body { padding: 12px 14px 14px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+@media (max-width: 440px) {
+  .product-body { padding: 8px 10px 10px; }
+  .product-name { font-size: .8rem; }
+}
 .product-cat {
   font-size: .7rem;
   font-weight: 600;
@@ -1666,6 +1675,38 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .pm-contact-strip { text-align: center; font-size: .75rem; color: var(--fg-3); padding: 10px 0 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 .pm-contact-strip a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .prod-modal-actions { display: none; }
+/* ── Similar Products in modal ── */
+.pm-similar-section { border-top: 1px solid var(--border); padding: 16px 0 4px; margin-top: 4px; }
+.pm-similar-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-3); margin-bottom: 12px; }
+.pm-similar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+@media (max-width: 400px) { .pm-similar-grid { grid-template-columns: repeat(2, 1fr); } }
+.pm-similar-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.pm-similar-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--accent); }
+.pm-similar-card:active { transform: scale(.97); }
+.pm-similar-card-img {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+.pm-similar-card-img img { max-height: 60px; max-width: 100%; object-fit: contain; }
+.pm-similar-card-name { font-size: .68rem; font-weight: 600; color: var(--fg); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; margin-bottom: 3px; }
+.pm-similar-card-price { font-size: .75rem; color: var(--accent); font-weight: 700; }
 /* ── Lightbox ── */
 .pm-lightbox {
   display: none;
@@ -3118,6 +3159,11 @@ html.lenis, html.lenis body { height: auto; }
           <div class="pm-delivery-tile"><span class="ico">🛡️</span><span>Warranty coverage</span></div>
         </div>
         <div class="pm-contact-strip">Need product help? <a href="#" onclick="closeProductDetail()">Contact Pro Technology</a></div>
+        <!-- Similar products -->
+        <div class="pm-similar-section" id="pmSimilarSection" style="display:none">
+          <div class="pm-similar-title">More in this Category</div>
+          <div class="pm-similar-grid" id="pmSimilarGrid"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -3842,6 +3888,28 @@ function openProductDetail(id) {
     waBtn.href = `https://wa.me/${waNumber.replace(/\D/g,"")}?text=${msg}`;
     waBtn.style.display = "flex";
   } else { waBtn.style.display = "none"; }
+
+  // Similar products (same category, up to 6)
+  const simSection = document.getElementById("pmSimilarSection");
+  const simGrid = document.getElementById("pmSimilarGrid");
+  const simProds = PRODUCTS.filter(x => x.id !== p.id && x.cat === p.cat && x.quantity > 0).slice(0, 6);
+  if (simSection && simGrid) {
+    if (simProds.length > 0) {
+      simGrid.innerHTML = simProds.map(sp => `
+        <div class="pm-similar-card" onclick="openProductDetail(${sp.id})">
+          <div class="pm-similar-card-img">
+            ${sp.imageUrl
+              ? `<img src="${esc(sp.imageUrl)}" alt="${esc(sp.name)}" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=font-size:2rem;line-height:64px>${esc(sp.icon||'📦')}</span>'">`
+              : `<span style="font-size:2rem;line-height:64px">${esc(sp.icon||'📦')}</span>`}
+          </div>
+          <div class="pm-similar-card-name">${esc(sp.name)}</div>
+          <div class="pm-similar-card-price">$${sp.price.toLocaleString()}</div>
+        </div>`).join("");
+      simSection.style.display = "";
+    } else {
+      simSection.style.display = "none";
+    }
+  }
 
   document.getElementById("productDetailModal").classList.add("open");
   document.body.style.overflow = "hidden";
