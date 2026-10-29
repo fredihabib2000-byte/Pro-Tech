@@ -3782,8 +3782,10 @@ function buildCategoryUI(cats) {
       <div class="cat-name">All Products</div>
       <div class="cat-count">${totalActive} items</div>
     </div>` + cats.map((c, i) => {
-      const { img, color } = getCatMeta(c.name, i);
-      const imgTag = img ? `<img src="${esc(img)}" alt="${esc(catLabel(c.name))}" loading="lazy" onerror="this.style.display='none'">` : '';
+      const meta = getCatMeta(c.name, i);
+      const resolvedImg = c.image_url || meta.img;
+      const color = meta.color;
+      const imgTag = resolvedImg ? `<img src="${esc(resolvedImg)}" alt="${esc(catLabel(c.name))}" loading="lazy" onerror="this.style.display='none'">` : '';
       const count = PRODUCTS.filter(p => p.cat === c.name && p.quantity > 0).length;
       return `<div class="category-card" data-cat="${esc(c.name)}">
         <div class="cat-icon-wrap ${color}">${imgTag}</div>
