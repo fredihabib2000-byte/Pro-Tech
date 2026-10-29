@@ -1707,6 +1707,59 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .pm-similar-card-img img { max-height: 60px; max-width: 100%; object-fit: contain; }
 .pm-similar-card-name { font-size: .68rem; font-weight: 600; color: var(--fg); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; margin-bottom: 3px; }
 .pm-similar-card-price { font-size: .75rem; color: var(--accent); font-weight: 700; }
+/* ── Reviews & Q&A ── */
+.pm-reviews-section { border-top: 1px solid var(--border); padding: 16px 0 4px; margin-top: 4px; }
+.pm-reviews-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.pm-reviews-title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pm-reviews-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-3); }
+.pm-reviews-avg { font-size: .72rem; color: var(--fg-3); }
+.pm-reviews-stars { color: var(--border); font-size: 1rem; letter-spacing: 2px; }
+.pm-reviews-stars.has-reviews { color: #f5a623; }
+.pm-reviews-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.pm-rev-btn { padding: 7px 14px; border-radius: 8px; font-size: .78rem; font-weight: 600; cursor: pointer; border: none; background: var(--accent); color: #fff; transition: opacity .15s; }
+.pm-rev-btn:hover { opacity: .85; }
+.pm-rev-btn-outline { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); }
+.pm-rev-btn-outline:hover { background: var(--accent); color: #fff; opacity: 1; }
+.pm-review-form, .pm-qa-form { background: var(--surface-2); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
+.pm-form-title { font-size: .8rem; font-weight: 700; color: var(--fg); margin-bottom: 10px; }
+.pm-form-input { display: block; width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); font-size: .82rem; margin-bottom: 8px; font-family: inherit; outline: none; transition: border-color .15s; }
+.pm-form-input:focus { border-color: var(--accent); }
+.pm-form-textarea { min-height: 72px; resize: vertical; }
+.pm-form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+.pm-form-cancel { padding: 7px 14px; border-radius: 8px; font-size: .78rem; font-weight: 600; cursor: pointer; border: 1.5px solid var(--border); background: transparent; color: var(--fg-2); transition: background .15s; }
+.pm-form-cancel:hover { background: var(--surface-2); }
+.pm-form-submit { padding: 7px 14px; border-radius: 8px; font-size: .78rem; font-weight: 600; cursor: pointer; border: none; background: var(--accent); color: #fff; transition: opacity .15s; }
+.pm-form-submit:hover { opacity: .85; }
+.pm-star-picker { display: flex; gap: 4px; margin-bottom: 10px; }
+.pm-star-pick { font-size: 1.6rem; color: var(--border); cursor: pointer; transition: color .1s; user-select: none; line-height: 1; }
+.pm-star-pick.hov, .pm-star-pick.active { color: #f5a623; }
+.pm-review-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.pm-review-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.pm-review-name { font-size: .8rem; font-weight: 700; color: var(--fg); }
+.pm-review-rating { color: #f5a623; font-size: .85rem; }
+.pm-review-text { font-size: .8rem; color: var(--fg-2); line-height: 1.5; margin-top: 2px; }
+.pm-review-date { font-size: .7rem; color: var(--fg-3); margin-top: 4px; }
+.pm-qa-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-3); margin: 12px 0 8px; }
+.pm-qa-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.pm-qa-q { font-size: .8rem; font-weight: 600; color: var(--fg); margin-bottom: 2px; }
+.pm-qa-q::before { content: "Q: "; color: var(--accent); }
+.pm-qa-a { font-size: .8rem; color: var(--fg-2); padding: 5px 10px; border-left: 2px solid var(--accent); margin-top: 6px; }
+.pm-qa-a::before { content: "A: "; font-weight: 600; color: var(--accent); }
+.pm-qa-meta { font-size: .7rem; color: var(--fg-3); margin-top: 4px; }
+.pm-reviews-empty { font-size: .78rem; color: var(--fg-3); text-align: center; padding: 10px 0; font-style: italic; }
+/* ── Category deal sections ── */
+.cat-section-wrap { border-top: 1px solid var(--border); }
+.cat-section-inner { padding: 28px 0 20px; }
+.cat-section-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+.cat-section-title { font-family: var(--display); font-size: 1.25rem; font-weight: 800; color: var(--fg); }
+.cat-section-sub { font-size: .78rem; color: var(--fg-3); margin-top: 3px; }
+.cat-section-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .cat-section-row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .cat-section-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
+@media (max-width: 440px)  { .cat-section-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+.cat-section-show-all-wrap { text-align: center; margin-top: 18px; }
+.cat-section-show-all { display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; border: 2px solid var(--accent); color: var(--accent); background: transparent; border-radius: 8px; font-size: .88rem; font-weight: 700; cursor: pointer; transition: background .15s, color .15s; }
+.cat-section-show-all:hover { background: var(--accent); color: #fff; }
 /* ── Lightbox ── */
 .pm-lightbox {
   display: none;
@@ -2493,6 +2546,9 @@ html.lenis, html.lenis body { height: auto; }
   </div>
 </section>
 
+<!-- ── CATEGORY DEAL SECTIONS ──────────────────────────────────── -->
+<div id="catSectionsArea" style="background:var(--bg)"></div>
+
 <!-- ── PRODUCTS ───────────────────────────────────────────────── -->
 <section class="section" id="products" style="background: var(--bg)">
   <div class="container">
@@ -3164,6 +3220,50 @@ html.lenis, html.lenis body { height: auto; }
           <div class="pm-similar-title">More in this Category</div>
           <div class="pm-similar-grid" id="pmSimilarGrid"></div>
         </div>
+        <!-- Reviews & Q&A -->
+        <div class="pm-reviews-section" id="pmReviewsSection">
+          <div class="pm-reviews-header">
+            <div class="pm-reviews-title-row">
+              <div class="pm-reviews-title">Customer Reviews</div>
+              <div class="pm-reviews-stars" id="pmReviewsStars">☆☆☆☆☆</div>
+              <div class="pm-reviews-avg" id="pmReviewsAvg"></div>
+            </div>
+            <div class="pm-reviews-actions">
+              <button class="pm-rev-btn" onclick="toggleReviewForm()">✏️ Write a Review</button>
+              <button class="pm-rev-btn pm-rev-btn-outline" onclick="toggleQuestionForm()">❓ Ask a Question</button>
+            </div>
+          </div>
+          <!-- Review form -->
+          <div class="pm-review-form" id="pmReviewForm" style="display:none">
+            <div class="pm-form-title">Write a Review</div>
+            <div class="pm-star-picker" id="pmStarPicker">
+              <span class="pm-star-pick" data-v="1">★</span>
+              <span class="pm-star-pick" data-v="2">★</span>
+              <span class="pm-star-pick" data-v="3">★</span>
+              <span class="pm-star-pick" data-v="4">★</span>
+              <span class="pm-star-pick" data-v="5">★</span>
+            </div>
+            <input class="pm-form-input" id="pmRevName" type="text" placeholder="Your name">
+            <textarea class="pm-form-input pm-form-textarea" id="pmRevText" placeholder="Share your experience..."></textarea>
+            <div class="pm-form-actions">
+              <button class="pm-form-cancel" onclick="toggleReviewForm()">Cancel</button>
+              <button class="pm-form-submit" onclick="submitReview()">Submit Review</button>
+            </div>
+          </div>
+          <!-- Q&A form -->
+          <div class="pm-qa-form" id="pmQaForm" style="display:none">
+            <div class="pm-form-title">Ask a Question</div>
+            <input class="pm-form-input" id="pmQaName" type="text" placeholder="Display name">
+            <input class="pm-form-input" id="pmQaEmail" type="email" placeholder="Email (optional)">
+            <textarea class="pm-form-input pm-form-textarea" id="pmQaText" placeholder="Your question..."></textarea>
+            <div class="pm-form-actions">
+              <button class="pm-form-cancel" onclick="toggleQuestionForm()">Cancel</button>
+              <button class="pm-form-submit" onclick="submitQuestion()">Submit Question</button>
+            </div>
+          </div>
+          <div class="pm-reviews-list" id="pmReviewsList"></div>
+          <div class="pm-qa-list" id="pmQaList"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -3405,6 +3505,7 @@ async function loadProducts() {
     PROMOS = promos;
     buildCategoryUI(cats || []);
     renderProducts();
+    buildCategorySections();
     renderNewArrivals();
     _LOC_READY.then(() => trackEvent('page_view'));
   } catch (e) {
@@ -3911,6 +4012,17 @@ function openProductDetail(id) {
     }
   }
 
+  // Load reviews & questions
+  loadProductReviews(p.id);
+  loadProductQuestions(p.id);
+  // Reset forms
+  document.getElementById("pmReviewForm").style.display = "none";
+  document.getElementById("pmQaForm").style.display = "none";
+  document.getElementById("pmReviewsStars").textContent = "☆☆☆☆☆";
+  document.getElementById("pmReviewsAvg").textContent = "";
+  document.getElementById("pmReviewsList").innerHTML = "";
+  document.getElementById("pmQaList").innerHTML = "";
+
   document.getElementById("productDetailModal").classList.add("open");
   document.body.style.overflow = "hidden";
 }
@@ -3978,6 +4090,194 @@ function addFromModal() {
     addToCart(currentModalProduct.id);
     closeProductDetail();
   }
+}
+
+// ── Reviews & Q&A ────────────────────────────────────────────────
+let _reviewRating = 0;
+
+function initStarPicker() {
+  const stars = document.querySelectorAll(".pm-star-pick");
+  _reviewRating = 0;
+  stars.forEach(s => { s.classList.remove("active", "hov"); });
+  stars.forEach(s => {
+    s.onmouseenter = () => {
+      const v = parseInt(s.dataset.v);
+      stars.forEach(x => x.classList.toggle("hov", parseInt(x.dataset.v) <= v));
+    };
+    s.onmouseleave = () => stars.forEach(x => x.classList.remove("hov"));
+    s.onclick = () => {
+      _reviewRating = parseInt(s.dataset.v);
+      stars.forEach(x => x.classList.toggle("active", parseInt(x.dataset.v) <= _reviewRating));
+    };
+  });
+}
+
+function toggleReviewForm() {
+  const f = document.getElementById("pmReviewForm");
+  const isOpen = f.style.display !== "none";
+  document.getElementById("pmQaForm").style.display = "none";
+  f.style.display = isOpen ? "none" : "";
+  if (!isOpen) initStarPicker();
+}
+
+function toggleQuestionForm() {
+  const f = document.getElementById("pmQaForm");
+  const isOpen = f.style.display !== "none";
+  document.getElementById("pmReviewForm").style.display = "none";
+  f.style.display = isOpen ? "none" : "";
+}
+
+async function loadProductReviews(productId) {
+  const listEl = document.getElementById("pmReviewsList");
+  const starsEl = document.getElementById("pmReviewsStars");
+  const avgEl = document.getElementById("pmReviewsAvg");
+  if (!listEl) return;
+  try {
+    const rows = await sbFetch(`/rest/v1/pt_product_reviews?product_id=eq.${productId}&order=created_at.desc&select=*`);
+    if (!rows || rows.length === 0) {
+      listEl.innerHTML = `<div class="pm-reviews-empty">No reviews yet — be the first!</div>`;
+      starsEl.textContent = "☆☆☆☆☆"; starsEl.classList.remove("has-reviews");
+      avgEl.textContent = "";
+      return;
+    }
+    const avg = rows.reduce((a, r) => a + r.rating, 0) / rows.length;
+    const full = Math.round(avg);
+    starsEl.textContent = "★".repeat(full) + "☆".repeat(5 - full);
+    starsEl.classList.add("has-reviews");
+    avgEl.textContent = `${avg.toFixed(1)} (${rows.length})`;
+    listEl.innerHTML = rows.map(r => `
+      <div class="pm-review-card">
+        <div class="pm-review-top">
+          <span class="pm-review-name">${esc(r.reviewer_name || "Anonymous")}</span>
+          <span class="pm-review-rating">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span>
+        </div>
+        ${r.review_text ? `<div class="pm-review-text">${esc(r.review_text)}</div>` : ""}
+        <div class="pm-review-date">${new Date(r.created_at).toLocaleDateString()}</div>
+      </div>`).join("");
+  } catch(e) {
+    listEl.innerHTML = `<div class="pm-reviews-empty">Could not load reviews.</div>`;
+  }
+}
+
+async function loadProductQuestions(productId) {
+  const listEl = document.getElementById("pmQaList");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+  try {
+    const rows = await sbFetch(`/rest/v1/pt_product_questions?product_id=eq.${productId}&order=created_at.desc&select=*`);
+    if (!rows || rows.length === 0) return;
+    listEl.innerHTML = `<div class="pm-qa-title">Customer Q&A</div>` +
+      rows.map(r => `
+        <div class="pm-qa-card">
+          <div class="pm-qa-q">${esc(r.question)}</div>
+          ${r.answer ? `<div class="pm-qa-a">${esc(r.answer)}</div>` : ""}
+          <div class="pm-qa-meta">${esc(r.display_name || "Customer")} · ${new Date(r.created_at).toLocaleDateString()}</div>
+        </div>`).join("");
+  } catch(e) {}
+}
+
+async function submitReview() {
+  const name = document.getElementById("pmRevName").value.trim();
+  const text = document.getElementById("pmRevText").value.trim();
+  if (!name) { alert("Please enter your name."); return; }
+  if (_reviewRating === 0) { alert("Please select a star rating."); return; }
+  if (!currentModalProduct) return;
+  const btn = document.querySelector("#pmReviewForm .pm-form-submit");
+  btn.disabled = true; btn.textContent = "Submitting…";
+  try {
+    await sbFetch("/rest/v1/pt_product_reviews", {
+      method: "POST",
+      body: JSON.stringify({ product_id: currentModalProduct.id, reviewer_name: name, rating: _reviewRating, review_text: text })
+    });
+    document.getElementById("pmRevName").value = "";
+    document.getElementById("pmRevText").value = "";
+    _reviewRating = 0;
+    toggleReviewForm();
+    loadProductReviews(currentModalProduct.id);
+  } catch(e) {
+    alert("Failed to submit. Please try again.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Submit Review";
+  }
+}
+
+async function submitQuestion() {
+  const name = document.getElementById("pmQaName").value.trim();
+  const email = document.getElementById("pmQaEmail").value.trim();
+  const q = document.getElementById("pmQaText").value.trim();
+  if (!name) { alert("Please enter your display name."); return; }
+  if (!q) { alert("Please enter your question."); return; }
+  if (!currentModalProduct) return;
+  const btn = document.querySelector("#pmQaForm .pm-form-submit");
+  btn.disabled = true; btn.textContent = "Submitting…";
+  try {
+    await sbFetch("/rest/v1/pt_product_questions", {
+      method: "POST",
+      body: JSON.stringify({ product_id: currentModalProduct.id, display_name: name, email: email || null, question: q })
+    });
+    document.getElementById("pmQaName").value = "";
+    document.getElementById("pmQaEmail").value = "";
+    document.getElementById("pmQaText").value = "";
+    toggleQuestionForm();
+    loadProductQuestions(currentModalProduct.id);
+  } catch(e) {
+    alert("Failed to submit. Please try again.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Submit Question";
+  }
+}
+
+// ── Category deal sections ────────────────────────────────────────
+function buildCategorySections() {
+  const area = document.getElementById("catSectionsArea");
+  if (!area) return;
+  const catMap = {};
+  for (const p of PRODUCTS) {
+    if (p.quantity <= 0) continue;
+    if (!catMap[p.cat]) catMap[p.cat] = [];
+    catMap[p.cat].push(p);
+  }
+  const catKeys = Object.keys(catMap).filter(k => catMap[k].length >= 2);
+  if (catKeys.length === 0) { area.innerHTML = ""; return; }
+  const catSubtitles = {
+    laptops: "Lenovo, HP, Dell, Apple & much more",
+    phones: "iPhone, Samsung, Xiaomi & much more",
+    tablets: "iPad, Samsung, Lenovo & much more",
+    accessories: "Cables, cases, chargers & much more",
+    audio: "Earphones, speakers, headphones & much more",
+    gaming: "Controllers, consoles, headsets & much more",
+    networking: "Routers, switches & much more",
+    printers: "Laser & inkjet printers & much more",
+    storage: "SSDs, HDDs, USB drives & much more",
+  };
+  area.innerHTML = catKeys.map(cat => {
+    const prods = catMap[cat].slice(0, 6);
+    const label = esc(catLabel(cat));
+    const sub = esc(catSubtitles[cat] || `Top ${catLabel(cat).toLowerCase()} deals`);
+    return `
+      <div class="cat-section-wrap">
+        <div class="container cat-section-inner">
+          <div class="cat-section-header">
+            <div>
+              <div class="cat-section-title">Best ${label} Deals</div>
+              <div class="cat-section-sub">${sub}</div>
+            </div>
+          </div>
+          <div class="cat-section-row">${prods.map(p => productCardHTML(p)).join("")}</div>
+          <div class="cat-section-show-all-wrap">
+            <button class="cat-section-show-all" onclick="filterByCat('${cat.replace(/'/g,"\\'")}')">Show All ${label} &rarr;</button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function filterByCat(cat) {
+  activeFilter = cat;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
+  document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
+  renderProducts();
+  document.getElementById("products").scrollIntoView({ behavior: "smooth" });
 }
 
 // ── Order form ────────────────────────────────────────────────────
