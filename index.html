@@ -3531,28 +3531,78 @@ function renderNewArrivals() {
 }
 
 // ── Load products from Supabase ───────────────────────────────────
+const _CACHE_KEY = 'pt_store_cache_v2';
+const _CACHE_TTL = 4 * 60 * 1000; // 4 minutes
+
+function _mapProduct(p) {
+  return {
+    id: p.id, name: p.name, cat: p.category, price: parseFloat(p.price),
+    oldPrice: p.old_price ? parseFloat(p.old_price) : null,
+    icon: p.icon || "📦", badge: p.badge, desc: p.description || "",
+    quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || "",
+    extraImages: Array.isArray(p.extra_images) ? p.extra_images : [],
+    variants: Array.isArray(p.variants) ? p.variants : []
+  };
+}
+
+function _applyStoreData(products, promos, cats) {
+  PRODUCTS = products;
+  PROMOS = promos;
+  buildCategoryUI(cats || []);
+  renderProducts();
+  buildCategorySections();
+  renderNewArrivals();
+}
+
+async function _fetchStoreData() {
+  const [products, promos, cats] = await Promise.all([
+    sbFetch("/rest/v1/pt_products?is_active=eq.true&order=category.asc,name.asc&select=id,name,category,price,old_price,icon,badge,description,quantity,image_url,specs,extra_images,variants"),
+    sbFetch("/rest/v1/pt_promotions?is_active=eq.true&select=*"),
+    sbFetch("/rest/v1/pt_categories?select=name&order=name.asc")
+  ]);
+  const mapped = (products || []).map(_mapProduct);
+  try {
+    localStorage.setItem(_CACHE_KEY, JSON.stringify({ ts: Date.now(), products: mapped, promos: promos || [], cats: cats || [] }));
+  } catch(e) {}
+  return { products: mapped, promos: promos || [], cats: cats || [] };
+}
+
 async function loadProducts() {
   const grid = document.getElementById("productsGrid");
-  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">Loading products...</div>`;
+
+  // Try cache first — render instantly, then revalidate in background
+  let fromCache = false;
   try {
-    const [products, promos, cats] = await Promise.all([
-      sbFetch("/rest/v1/pt_products?is_active=eq.true&order=category.asc,name.asc&select=*"),
-      sbFetch("/rest/v1/pt_promotions?is_active=eq.true&select=*"),
-      sbFetch("/rest/v1/pt_categories?select=name&order=name.asc")
-    ]);
-    PRODUCTS = products.map(p => ({
-      id: p.id, name: p.name, cat: p.category, price: parseFloat(p.price),
-      oldPrice: p.old_price ? parseFloat(p.old_price) : null,
-      icon: p.icon || "📦", badge: p.badge, desc: p.description || "",
-      quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || "",
-      extraImages: Array.isArray(p.extra_images) ? p.extra_images : [],
-      variants: Array.isArray(p.variants) ? p.variants : []
-    }));
-    PROMOS = promos;
-    buildCategoryUI(cats || []);
-    renderProducts();
-    buildCategorySections();
-    renderNewArrivals();
+    const raw = localStorage.getItem(_CACHE_KEY);
+    if (raw) {
+      const c = JSON.parse(raw);
+      if (c && c.products && (Date.now() - c.ts) < _CACHE_TTL) {
+        _applyStoreData(c.products, c.promos || [], c.cats || []);
+        _LOC_READY.then(() => trackEvent('page_view'));
+        fromCache = true;
+        // Silently revalidate in background
+        _fetchStoreData().then(d => _applyStoreData(d.products, d.promos, d.cats)).catch(() => {});
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // No valid cache — show skeleton cards while fetching
+  grid.innerHTML = Array(8).fill(0).map(() => `
+    <div class="swipe-wrap">
+      <div class="product-card" style="pointer-events:none">
+        <div class="product-img" style="background:var(--surface-2);animation:shimmer 1.5s infinite linear"></div>
+        <div class="product-body">
+          <div style="height:12px;background:var(--surface-2);border-radius:6px;margin-bottom:8px;width:60%;animation:shimmer 1.5s infinite linear"></div>
+          <div style="height:16px;background:var(--surface-2);border-radius:6px;margin-bottom:12px;animation:shimmer 1.5s infinite linear"></div>
+          <div style="height:20px;background:var(--surface-2);border-radius:6px;width:40%;animation:shimmer 1.5s infinite linear"></div>
+        </div>
+      </div>
+    </div>`).join("");
+
+  try {
+    const d = await _fetchStoreData();
+    _applyStoreData(d.products, d.promos, d.cats);
     _LOC_READY.then(() => trackEvent('page_view'));
   } catch (e) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--fg-3)">Failed to load products. Please refresh.</div>`;
