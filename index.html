@@ -761,15 +761,19 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .category-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .category-card.active::after { opacity: 1; }
 .cat-icon-wrap {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.9rem;
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  overflow: hidden;
   transition: transform .22s;
   flex-shrink: 0;
+  background: var(--surface-2);
+}
+.cat-icon-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .category-card:hover .cat-icon-wrap { transform: scale(1.1) rotate(-4deg); }
 .cat-icon-wrap.c-blue   { background: linear-gradient(135deg,#1e3a5f,#2563a8); }
@@ -2543,7 +2547,7 @@ html.lenis, html.lenis body { height: auto; }
     <p class="section-sub">Everything your business needs, organized for easy browsing.</p>
     <div class="categories-grid" id="categoriesGrid">
       <div class="category-card active" data-cat="all">
-        <div class="cat-icon-wrap c-blue">🛒</div>
+        <div class="cat-icon-wrap c-blue"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&q=80&auto=format&fit=crop" alt="All Products" loading="lazy" onerror="this.style.display='none'"></div>
         <div class="cat-name">All Products</div>
         <div class="cat-count">…</div>
       </div>
@@ -3626,41 +3630,35 @@ function catLabel(cat) {
 
 // ── Category icon / colour lookup ────────────────────────────────
 const CAT_META = [
-  { k: ["laptop","computer"],              icon: "💻", color: "c-blue"   },
-  { k: ["gaming consoles","gaming_ps5"],   icon: "🎮", color: "c-green"  },
-  { k: ["gaming headset","gaming_headset"],icon: "🎧", color: "c-purple" },
-  { k: ["gaming keyboard","gaming_keyboard"],icon:"⌨️", color: "c-blue"  },
-  { k: ["gaming mice","gaming_mice"],      icon: "🖱️", color: "c-pink"   },
-  { k: ["gaming furniture"],               icon: "🪑", color: "c-amber"  },
-  { k: ["gaming accessories","gaming_accessories"],icon:"🕹️",color:"c-teal"},
-  { k: ["pc & laptop","pc_accessories"],   icon: "🖥️", color: "c-teal"   },
-  { k: ["phone accessories"],              icon: "📱", color: "c-orange" },
-  { k: ["pos & barcode","barcode","pos_barcode"],icon:"🏧",color:"c-purple"},
-  { k: ["camera"],                         icon: "📷", color: "c-blue"   },
-  { k: ["earphone","headphone","earbud"],  icon: "🎵", color: "c-pink"   },
-  { k: ["speaker"],                        icon: "🔊", color: "c-teal"   },
-  { k: ["smart watch","smartwatch"],       icon: "⌚", color: "c-amber"  },
-  { k: ["smart gadget"],                   icon: "💡", color: "c-green"  },
-  { k: ["power bank"],                     icon: "🔋", color: "c-teal"   },
-  { k: ["networking","network"],           icon: "📡", color: "c-blue"   },
-  { k: ["streaming"],                      icon: "📺", color: "c-purple" },
-  { k: ["charger"],                        icon: "⚡", color: "c-amber"  },
-  { k: ["cable"],                          icon: "🔌", color: "c-orange" },
-  { k: ["microphone"],                     icon: "🎙️", color: "c-pink"   },
-  { k: ["keyboards & mice","keyboards"],   icon: "⌨️", color: "c-blue"   },
-  { k: ["toys","toy"],                     icon: "🚗", color: "c-green"  },
-  { k: ["printer","scanner"],              icon: "🖨️", color: "c-green"  },
-  { k: ["cash drawer"],                    icon: "💰", color: "c-amber"  },
-  { k: ["display","monitor","screen"],     icon: "🖥️", color: "c-teal"   },
-  { k: ["accessor"],                       icon: "📦", color: "c-orange" },
+  { k: ["laptop","computer"],               img: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200&q=80&auto=format&fit=crop", color: "c-blue"   },
+  { k: ["gaming"],                          img: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=200&q=80&auto=format&fit=crop", color: "c-green"  },
+  { k: ["earphone","headphone","earbud"],   img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80&auto=format&fit=crop", color: "c-pink"   },
+  { k: ["audio & sound","audio"],           img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80&auto=format&fit=crop", color: "c-pink"   },
+  { k: ["speaker"],                         img: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=200&q=80&auto=format&fit=crop", color: "c-teal"   },
+  { k: ["camera"],                          img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=200&q=80&auto=format&fit=crop", color: "c-blue"   },
+  { k: ["cable"],                           img: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=200&q=80&auto=format&fit=crop", color: "c-orange" },
+  { k: ["charger"],                         img: "https://images.unsplash.com/photo-1553708881-ab56898a3eb5?w=200&q=80&auto=format&fit=crop", color: "c-amber"  },
+  { k: ["power bank","ups"],                img: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=200&q=80&auto=format&fit=crop", color: "c-teal"   },
+  { k: ["networking","network"],            img: "https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=200&q=80&auto=format&fit=crop", color: "c-blue"   },
+  { k: ["streaming"],                       img: "https://images.unsplash.com/photo-1593359677879-a4bb92f4346a?w=200&q=80&auto=format&fit=crop", color: "c-purple" },
+  { k: ["car"],                             img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=200&q=80&auto=format&fit=crop", color: "c-amber"  },
+  { k: ["light","lighting"],                img: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=200&q=80&auto=format&fit=crop", color: "c-green"  },
+  { k: ["personal care","grooming","shav"], img: "https://images.unsplash.com/photo-1503602642458-232111445657?w=200&q=80&auto=format&fit=crop", color: "c-pink"   },
+  { k: ["pos","barcode","business"],        img: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200&q=80&auto=format&fit=crop", color: "c-purple" },
+  { k: ["toys","toy","rc"],                 img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80&auto=format&fit=crop", color: "c-green"  },
+  { k: ["laptop accessor","pc & laptop","pc_accessor"], img: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=200&q=80&auto=format&fit=crop", color: "c-teal"  },
+  { k: ["smart watch","smartwatch"],        img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&q=80&auto=format&fit=crop", color: "c-amber"  },
+  { k: ["microphone"],                      img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=200&q=80&auto=format&fit=crop", color: "c-pink"   },
+  { k: ["display","monitor","screen"],      img: "https://images.unsplash.com/photo-1547082299-de196ea013d6?w=200&q=80&auto=format&fit=crop", color: "c-teal"   },
+  { k: ["accessor","phone accessor"],       img: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=200&q=80&auto=format&fit=crop", color: "c-orange" },
 ];
 const FALLBACK_COLORS = ["c-blue","c-purple","c-green","c-amber","c-pink","c-teal","c-orange"];
 function getCatMeta(name, idx) {
   const lower = name.toLowerCase();
   for (const m of CAT_META) {
-    if (m.k.some(k => lower.includes(k))) return { icon: m.icon, color: m.color };
+    if (m.k.some(k => lower.includes(k))) return { img: m.img, color: m.color };
   }
-  return { icon: "📦", color: FALLBACK_COLORS[idx % FALLBACK_COLORS.length] };
+  return { img: null, color: FALLBACK_COLORS[idx % FALLBACK_COLORS.length] };
 }
 
 // ── Build dynamic category cards & filter buttons ─────────────────
@@ -3670,14 +3668,15 @@ function buildCategoryUI(cats) {
   if (cGrid) {
     const totalActive = PRODUCTS.filter(p => p.quantity > 0).length;
     cGrid.innerHTML = `<div class="category-card active" data-cat="all">
-      <div class="cat-icon-wrap c-blue">🛒</div>
+      <div class="cat-icon-wrap c-blue"><img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=200&q=80&auto=format&fit=crop" alt="All Products" loading="lazy" onerror="this.style.display='none'"></div>
       <div class="cat-name">All Products</div>
       <div class="cat-count">${totalActive} items</div>
     </div>` + cats.map((c, i) => {
-      const { icon, color } = getCatMeta(c.name, i);
+      const { img, color } = getCatMeta(c.name, i);
       const count = PRODUCTS.filter(p => p.cat === c.name && p.quantity > 0).length;
+      const imgTag = img ? `<img src="${esc(img)}" alt="${esc(catLabel(c.name))}" loading="lazy" onerror="this.style.display='none'">` : '';
       return `<div class="category-card" data-cat="${esc(c.name)}">
-        <div class="cat-icon-wrap ${color}">${icon}</div>
+        <div class="cat-icon-wrap ${color}">${imgTag}</div>
         <div class="cat-name">${esc(catLabel(c.name))}</div>
         <div class="cat-count">${count} item${count !== 1 ? 's' : ''}</div>
       </div>`;
