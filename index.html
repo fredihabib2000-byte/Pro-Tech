@@ -1557,6 +1557,15 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 @media (max-width: 680px) {
   .prod-modal-body { grid-template-columns: 1fr; overflow-y: auto; }
+  .prod-modal-gallery { overflow: visible; flex-shrink: 0; }
+  .prod-modal-main-img { flex: none; height: 260px; min-height: 0; }
+  .prod-modal-thumbs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .prod-modal-thumb { width: 80px; height: 80px; }
 }
 /* ── Gallery panel ── */
 .prod-modal-gallery {
