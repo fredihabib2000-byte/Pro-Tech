@@ -1622,6 +1622,9 @@ button { cursor: pointer; font-family: inherit; border: none; }
   align-items: center;
   justify-content: center;
   transition: border-color .15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 .prod-modal-thumb.active { border-color: var(--accent); }
 .prod-modal-thumb:hover { border-color: var(--accent); }
@@ -3808,8 +3811,11 @@ function openProductDetail(id) {
   const thumbsEl = document.getElementById("pmThumbs");
   if (_pmCurrentImages.length > 1) {
     thumbsEl.innerHTML = _pmCurrentImages.map((url, i) =>
-      `<div class="prod-modal-thumb${i===0?" active":""}" onclick="pmShowImage(${i})"><img src="${url}" alt="" loading="lazy"></div>`
+      `<div class="prod-modal-thumb${i===0?" active":""}" data-idx="${i}"><img src="${url}" alt="" loading="lazy" draggable="false"></div>`
     ).join("");
+    thumbsEl.querySelectorAll(".prod-modal-thumb").forEach(el => {
+      el.addEventListener("pointerdown", function(e) { e.preventDefault(); pmShowImage(+this.dataset.idx); });
+    });
     thumbsEl.style.display = "flex";
   } else {
     thumbsEl.innerHTML = "";
@@ -3847,6 +3853,25 @@ function pmShowImage(idx) {
   // Update active thumb
   document.querySelectorAll(".prod-modal-thumb").forEach((t, i) => t.classList.toggle("active", i === idx));
 }
+
+// Swipe support on main gallery image
+(function() {
+  let _sx = 0, _sy = 0;
+  document.getElementById("pmMainImg").addEventListener("touchstart", function(e) {
+    _sx = e.touches[0].clientX; _sy = e.touches[0].clientY;
+  }, { passive: true });
+  document.getElementById("pmMainImg").addEventListener("touchend", function(e) {
+    if (!e.changedTouches.length) return;
+    const dx = e.changedTouches[0].clientX - _sx;
+    const dy = e.changedTouches[0].clientY - _sy;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      const next = (_pmCurrentIdx + (dx < 0 ? 1 : -1) + _pmCurrentImages.length) % _pmCurrentImages.length;
+      pmShowImage(next);
+    } else if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+      openLightbox();
+    }
+  }, { passive: true });
+})();
 
 function openLightbox() {
   const url = _pmCurrentImages[_pmCurrentIdx];
