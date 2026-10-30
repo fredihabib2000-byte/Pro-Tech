@@ -1894,6 +1894,19 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .cat-section-show-all-wrap { text-align: center; margin-top: 18px; }
 .cat-section-show-all { display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; border: 2px solid var(--accent); color: var(--accent); background: transparent; border-radius: 8px; font-size: .88rem; font-weight: 700; cursor: pointer; transition: background .15s, color .15s; }
 .cat-section-show-all:hover { background: var(--accent); color: #fff; }
+/* ── Horizontal category cards (zcellshop style) ── */
+.hcat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+@media (max-width: 900px) { .hcat-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .hcat-row { grid-template-columns: 1fr; } }
+.hcat-card { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.hcat-card:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+.hcat-img { width: 80px; height: 80px; object-fit: contain; flex-shrink: 0; border-radius: 6px; background: var(--surface-2); }
+.hcat-img-ph { width: 80px; height: 80px; flex-shrink: 0; border-radius: 6px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+.hcat-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.hcat-name { font-size: .82rem; font-weight: 600; color: var(--fg); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hcat-price { font-size: .92rem; font-weight: 800; color: var(--accent); }
+.hcat-btn { align-self: flex-start; padding: 5px 14px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-size: .75rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+.hcat-btn:hover { background: var(--accent-hover); }
 /* ── Lightbox ── */
 .pm-lightbox {
   display: none;
@@ -4449,46 +4462,81 @@ async function submitQuestion() {
 }
 
 // ── Category deal sections ────────────────────────────────────────
+function hcatCardHTML(p, cat) {
+  const price = p.price ? `$${Number(p.price).toFixed(2)}` : '';
+  const img = p.image_url
+    ? `<img class="hcat-img" src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">`
+    : `<div class="hcat-img-ph">📦</div>`;
+  return `<div class="hcat-card" onclick="filterByCat('${cat}')">
+    ${img}
+    <div class="hcat-info">
+      <div class="hcat-name">${esc(p.name)}</div>
+      ${price ? `<div class="hcat-price">${price}</div>` : ''}
+      <button class="hcat-btn" onclick="event.stopPropagation();openProductModal(${p.id})">View →</button>
+    </div>
+  </div>`;
+}
+
 function buildCategorySections() {
   const area = document.getElementById("catSectionsArea");
   if (!area) return;
+
+  const catLabels = {
+    laptops:"💻 Laptops", phones:"📱 Phones", tablets:"📋 Tablets",
+    accessories:"🔌 Accessories", audio:"🎧 Audio", gaming:"🎮 Gaming",
+    networking:"🌐 Networking", printers:"🖨️ Printers", storage:"💾 Storage",
+    pos:"🖥️ POS Systems", scanners:"📠 Scanners", cameras:"📷 Cameras",
+  };
+
   const catMap = {};
   for (const p of PRODUCTS) {
     if (p.quantity <= 0) continue;
-    if (!catMap[p.cat]) catMap[p.cat] = [];
-    catMap[p.cat].push(p);
+    const k = p.cat || 'accessories';
+    if (!catMap[k]) catMap[k] = [];
+    catMap[k].push(p);
   }
-  const catKeys = Object.keys(catMap).filter(k => catMap[k].length >= 2);
-  if (catKeys.length === 0) { area.innerHTML = ""; return; }
-  const catSubtitles = {
-    laptops: "Lenovo, HP, Dell, Apple & much more",
-    phones: "iPhone, Samsung, Xiaomi & much more",
-    tablets: "iPad, Samsung, Lenovo & much more",
-    accessories: "Cables, cases, chargers & much more",
-    audio: "Earphones, speakers, headphones & much more",
-    gaming: "Controllers, consoles, headsets & much more",
-    networking: "Routers, switches & much more",
-    printers: "Laser & inkjet printers & much more",
-    storage: "SSDs, HDDs, USB drives & much more",
-  };
-  const bestSellers = PRODUCTS.filter(p => p.quantity > 0 && p.badge && p.badge.toLowerCase().includes('best'));
-  const featured = bestSellers.length >= 2 ? bestSellers : PRODUCTS.filter(p => p.quantity > 0).slice(0, 8);
-  if (featured.length < 2) { area.innerHTML = ""; return; }
-  area.innerHTML = `
-    <div class="cat-section-wrap">
+
+  // Best Sellers
+  const best = PRODUCTS.filter(p => p.quantity > 0 && p.badge && p.badge.toLowerCase().includes('best'));
+  const featured = best.length >= 2 ? best : PRODUCTS.filter(p => p.quantity > 0).slice(0, 4);
+
+  // Top 3 categories by product count (min 3 products)
+  const topCats = Object.entries(catMap)
+    .filter(([, v]) => v.length >= 3)
+    .sort((a, b) => b[1].length - a[1].length)
+    .slice(0, 3);
+
+  let html = '';
+
+  if (featured.length >= 2) {
+    html += `<div class="cat-section-wrap">
       <div class="container cat-section-inner">
         <div class="cat-section-header">
           <div>
             <div class="cat-section-title">⭐ Best Sellers</div>
-            <div class="cat-section-sub">Our most popular products — loved by customers</div>
+            <div class="cat-section-sub">Most popular — loved by customers</div>
           </div>
+          <button class="cat-section-show-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">View All →</button>
         </div>
-        <div class="cat-section-row">${featured.slice(0,8).map(p => productCardHTML(p)).join("")}</div>
-        <div class="cat-section-show-all-wrap">
-          <button class="cat-section-show-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Browse All Products &rarr;</button>
-        </div>
+        <div class="cat-section-row">${featured.slice(0,4).map(p => productCardHTML(p)).join('')}</div>
       </div>
     </div>`;
+  }
+
+  for (const [cat, prods] of topCats) {
+    const label = catLabels[cat] || cat;
+    html += `<div class="cat-section-wrap">
+      <div class="container cat-section-inner">
+        <div class="cat-section-header">
+          <div class="cat-section-title">${label}</div>
+          <button class="cat-section-show-all" onclick="filterByCat('${cat}')">View full catalog →</button>
+        </div>
+        <div class="hcat-row">${prods.slice(0,4).map(p => hcatCardHTML(p, cat)).join('')}</div>
+      </div>
+    </div>`;
+  }
+
+  area.innerHTML = html;
 }
 
 function filterByCat(cat) {
