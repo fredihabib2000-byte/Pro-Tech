@@ -4531,9 +4531,10 @@ async function submitQuestion() {
 // ── Category deal sections ────────────────────────────────────────
 function hcatCardHTML(p, cat) {
   const price = p.price ? `$${Number(p.price).toFixed(2)}` : '';
-  const img = p.image_url
-    ? `<img class="hcat-img" src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">`
-    : `<div class="hcat-img-ph">📦</div>`;
+  const imgSrc = p.imageUrl || p.image_url;
+  const img = imgSrc
+    ? `<img class="hcat-img" src="${esc(imgSrc)}" alt="${esc(p.name)}" loading="lazy">`
+    : `<div class="hcat-img-ph">${p.icon || '📦'}</div>`;
   return `<div class="hcat-card" onclick="filterByCat('${cat}')">
     ${img}
     <div class="hcat-info">
