@@ -408,6 +408,54 @@ button { cursor: pointer; font-family: inherit; border: none; }
   text-align: center;
 }
 .nav-drop-viewall:hover { background: var(--accent-soft); }
+
+/* Sub-category text links inside big-cat dropdown */
+.nav-drop-subcat-list { padding: 6px 0; }
+.nav-drop-subcat-link {
+  display: block;
+  padding: 9px 20px;
+  font-size: .83rem;
+  font-weight: 500;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color .12s, background .12s, padding-left .12s;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-drop-subcat-link:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding-left: 28px;
+}
+
+/* Mobile nav accordion */
+.mobile-nav-bigcat { border-bottom: 1px solid var(--border); }
+.mobile-nav-bigbtn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: none !important;
+}
+.mobile-nav-bigbtn .nav-cat-chevron { transition: transform .2s; }
+.mobile-nav-bigbtn.open .nav-cat-chevron { transform: rotate(180deg); }
+.mobile-nav-subs { background: var(--surface-2); }
+.mobile-nav-sub {
+  display: block;
+  padding: 11px 36px;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: color .12s, background .12s;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-nav-sub:last-child { border-bottom: none; }
+.mobile-nav-sub:hover { color: var(--accent); background: var(--accent-soft); }
+.mobile-nav-sub-all { font-weight: 700; color: var(--accent); padding-left: 24px; }
+
 @media (max-width: 960px) { .nav-cats { display: none; } }
 
 /* ── Nav search ───────────────────────────────────────────────── */
@@ -3714,6 +3762,14 @@ let PRODUCTS = [];
 let PROMOS = [];
 let cart = [];
 
+const BIG_CATS = [
+  { label: 'Computers & Office', emoji: '💻', subs: ['Laptops & Computers','Laptop Accessories','Keyboards & Mouses','POS & Business'] },
+  { label: 'Gaming',             emoji: '🎮', subs: ['Gaming','Streaming','Toys & RC'] },
+  { label: 'Audio & Sound',      emoji: '🎧', subs: ['Headphones & Earphones','Speakers','Audio & Sound'] },
+  { label: 'Smart & Cameras',    emoji: '📷', subs: ['Smart Devices','Cameras','Lighting','Networking'] },
+  { label: 'Accessories',        emoji: '🔌', subs: ['Accessories','Cables','Chargers','Power Banks & UPS','Car Accessories','Personal Care'] },
+];
+
 // Escape untrusted strings before injecting into innerHTML
 function esc(str) {
   return String(str ?? "")
@@ -3727,6 +3783,7 @@ let activeFilter = "all";
 let activeSort = "alpha-asc";
 let activePriceFilter = "all";
 let activeBrandFilter = "";
+let activeBigCatSubs = [];
 let searchTerm = "";
 const PAGE_SIZE = 24;
 let visibleCount = PAGE_SIZE;
@@ -3764,85 +3821,80 @@ function _mapProduct(p) {
 }
 
 function buildCatNav() {
-  const CAT_META = [
-    { keys: ['laptop','computer'],       emoji: '💻', label: 'Laptops' },
-    { keys: ['phone','mobile'],          emoji: '📱', label: 'Phones' },
-    { keys: ['tablet'],                  emoji: '📋', label: 'Tablets' },
-    { keys: ['pos','business','cashier'],emoji: '🖥️', label: 'POS Systems' },
-    { keys: ['printer'],                 emoji: '🖨️', label: 'Printers' },
-    { keys: ['scanner'],                 emoji: '📠', label: 'Scanners' },
-    { keys: ['accessor'],                emoji: '🔌', label: 'Accessories' },
-    { keys: ['network'],                 emoji: '🌐', label: 'Networking' },
-    { keys: ['audio','sound','speaker'], emoji: '🎧', label: 'Audio' },
-    { keys: ['storage','drive','disk'],  emoji: '💾', label: 'Storage' },
-  ];
-  function getMeta(cat) {
-    const lc = cat.toLowerCase();
-    const m = CAT_META.find(e => e.keys.some(k => lc.includes(k)));
-    return m || { emoji: '📦', label: cat };
-  }
-  const usedCats = [...new Set(PRODUCTS.map(p => p.cat).filter(Boolean))].sort();
+  const usedCats = new Set(PRODUCTS.map(p => p.cat).filter(Boolean));
   const chevron = `<svg class="nav-cat-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>`;
 
-  // ── Desktop: dropdown nav ──────────────────────────────────────
+  // ── Desktop: 5 big-cat dropdowns ──────────────────────────────
   const navCats = document.getElementById('navCats');
   if (navCats) {
     let h = '';
-    usedCats.forEach(cat => {
-      const {emoji, label} = getMeta(cat);
-      const safecat = cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      const topProds = PRODUCTS.filter(p => p.cat === cat && p.quantity > 0).slice(0, 5);
-      let dropRows = topProds.map(p => {
-        const imgSrc = p.imageUrl || p.image_url;
-        const thumb = imgSrc
-          ? `<img src="${esc(imgSrc)}" alt="" loading="lazy">`
-          : `<span style="font-size:1.1rem">${p.icon || '📦'}</span>`;
-        const price = p.price ? `$${Number(p.price).toFixed(2)}` : '';
-        return `<div class="nav-drop-product" onclick="filterByCat('${safecat}');document.getElementById('products').scrollIntoView({behavior:'smooth'})">
-          <div class="nav-drop-thumb">${thumb}</div>
-          <div class="nav-drop-info">
-            <div class="nav-drop-name">${esc(p.name)}</div>
-            ${price ? `<div class="nav-drop-price">${price}</div>` : ''}
-          </div>
-        </div>`;
+    BIG_CATS.forEach(({label, emoji, subs}) => {
+      const activeSubs = subs.filter(s => usedCats.has(s));
+      if (!activeSubs.length) return;
+      const safeLabel = label.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const subsJson = JSON.stringify(activeSubs);
+      const subLinks = activeSubs.map(s => {
+        const safeSub = s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        return `<a class="nav-drop-subcat-link" onclick="filterByCat('${safeSub}')">${esc(s)}</a>`;
       }).join('');
       h += `<div class="nav-cat-item">
-        <button class="nav-cat-trigger" onclick="filterByCat('${safecat}')">${emoji} ${label}${chevron}</button>
+        <button class="nav-cat-trigger" data-big="${esc(label)}" onclick="filterByCats('${safeLabel}',${subsJson})">${emoji} ${label}${chevron}</button>
         <div class="nav-cat-dropdown">
-          <div class="nav-drop-header">Top ${label}</div>
-          ${dropRows}
-          <button class="nav-drop-viewall" onclick="filterByCat('${safecat}')">View all ${label} →</button>
+          <div class="nav-drop-header">${emoji} ${label}</div>
+          <div class="nav-drop-subcat-list">${subLinks}</div>
+          <button class="nav-drop-viewall" onclick="filterByCats('${safeLabel}',${subsJson})">View all ${label} →</button>
         </div>
       </div>`;
     });
     navCats.innerHTML = h;
   }
 
-  // ── Tablet: scrollable flat row ────────────────────────────────
+  // ── Tablet: 5 big-cat scrollable row ──────────────────────────
   const tabletInner = document.getElementById('catNavInner');
   if (tabletInner) {
     let h = `<a class="cat-nav-link" onclick="filterByCat('all')">🛍️ All</a>`;
-    usedCats.forEach(c => {
-      const {emoji, label} = getMeta(c);
-      h += `<a class="cat-nav-link" onclick="filterByCat('${c.replace(/'/g,"\\'")}'">${emoji} ${label}</a>`;
+    BIG_CATS.forEach(({label, emoji, subs}) => {
+      const activeSubs = subs.filter(s => usedCats.has(s));
+      if (!activeSubs.length) return;
+      const safeLabel = label.replace(/'/g,"\\'");
+      const subsJson = JSON.stringify(activeSubs);
+      h += `<a class="cat-nav-link" data-big="${esc(label)}" onclick="filterByCats('${safeLabel}',${subsJson})">${emoji} ${label}</a>`;
     });
     h += `<a class="cat-nav-link" href="#contact">📞 Contact</a>`;
     tabletInner.innerHTML = h;
   }
 
-  // ── Mobile: slide-in panel ─────────────────────────────────────
+  // ── Mobile: accordion panel ────────────────────────────────────
   const panel = document.querySelector('.mobile-nav-panel');
   if (panel) {
     let h = `<button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>`;
     h += `<a class="mobile-nav-link" onclick="filterByCat('all');closeMobileNav()">🛍️ All Products</a>`;
-    usedCats.forEach(c => {
-      const {emoji, label} = getMeta(c);
-      h += `<a class="mobile-nav-link" onclick="filterByCat('${c.replace(/'/g,"\\'")}');closeMobileNav()">${emoji} ${label}</a>`;
+    BIG_CATS.forEach(({label, emoji, subs}) => {
+      const activeSubs = subs.filter(s => usedCats.has(s));
+      if (!activeSubs.length) return;
+      const safeLabel = label.replace(/'/g,"\\'");
+      const subsJson = JSON.stringify(activeSubs);
+      const subLinks = activeSubs.map(s => {
+        const safeSub = s.replace(/'/g,"\\'");
+        return `<a class="mobile-nav-sub" onclick="filterByCat('${safeSub}');closeMobileNav()">${esc(s)}</a>`;
+      }).join('') + `<a class="mobile-nav-sub mobile-nav-sub-all" onclick="filterByCats('${safeLabel}',${subsJson});closeMobileNav()">View all ${esc(label)} →</a>`;
+      h += `<div class="mobile-nav-bigcat">
+        <button class="mobile-nav-link mobile-nav-bigbtn" onclick="toggleMobileSub(this)">${emoji} ${esc(label)}${chevron}</button>
+        <div class="mobile-nav-subs" hidden>${subLinks}</div>
+      </div>`;
     });
     h += `<a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>`;
     h += `<a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>`;
     panel.innerHTML = h;
   }
+}
+
+function toggleMobileSub(btn) {
+  const subs = btn.nextElementSibling;
+  const wasOpen = !subs.hidden;
+  document.querySelectorAll('.mobile-nav-subs').forEach(s => { s.hidden = true; });
+  document.querySelectorAll('.mobile-nav-bigbtn').forEach(b => b.classList.remove('open'));
+  if (!wasOpen) { subs.hidden = false; btn.classList.add('open'); }
 }
 
 function _applyStoreData(products, promos, cats) {
@@ -3949,7 +4001,9 @@ function renderProducts(appendFrom) {
   const grid = document.getElementById("productsGrid");
   const lmWrap = document.getElementById("loadMoreWrap");
   const filtered = PRODUCTS.filter(p => {
-    const matchCat = activeFilter === "all" || p.cat === activeFilter;
+    const matchCat = activeFilter === "all"
+      ? (activeBigCatSubs.length > 0 ? activeBigCatSubs.includes(p.cat) : true)
+      : p.cat === activeFilter;
     const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm) || (p.desc||"").toLowerCase().includes(searchTerm);
     const price = p.price || 0;
     const matchPrice = activePriceFilter === "all"
@@ -4778,7 +4832,6 @@ function buildCategorySections() {
 }
 
 function filterByCat(cat) {
-  // Resolve short codes like 'laptops' → 'Laptops & Computers' from loaded products
   if (cat && cat !== 'all') {
     const lower = cat.toLowerCase();
     const allCats = [...new Set(PRODUCTS.map(p => p.cat).filter(Boolean))];
@@ -4788,17 +4841,39 @@ function filterByCat(cat) {
     cat = exact || prefix || contains || cat;
   }
   activeFilter = cat;
+  activeBigCatSubs = [];
   activeBrandFilter = "";
+  visibleCount = PAGE_SIZE;
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
   document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
   document.querySelectorAll(".brand-chip").forEach(c => c.classList.remove("active"));
-  document.querySelectorAll(".cat-nav-link[onclick]").forEach(a => {
-    const m = (a.getAttribute("onclick") || "").match(/'([^']+)'/);
-    a.classList.toggle("cat-active", m && (m[1] === cat || m[1] === activeFilter));
+  // Highlight tablet row
+  document.querySelectorAll(".cat-nav-link[data-big]").forEach(a => {
+    const big = BIG_CATS.find(b => b.label === a.dataset.big);
+    a.classList.toggle("cat-active", big ? big.subs.includes(cat) : false);
   });
-  document.querySelectorAll(".nav-cat-trigger").forEach(btn => {
-    const m = (btn.getAttribute("onclick") || "").match(/'([^']+)'/);
-    btn.classList.toggle("cat-active", m && (m[1] === cat || m[1] === activeFilter));
+  // Highlight desktop trigger by parent big-cat
+  document.querySelectorAll(".nav-cat-trigger[data-big]").forEach(btn => {
+    const big = BIG_CATS.find(b => b.label === btn.dataset.big);
+    btn.classList.toggle("cat-active", big ? big.subs.includes(cat) : false);
+  });
+  renderProducts();
+  document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+}
+
+function filterByCats(label, subs) {
+  activeBigCatSubs = subs;
+  activeFilter = "all";
+  activeBrandFilter = "";
+  visibleCount = PAGE_SIZE;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
+  document.querySelectorAll(".category-card").forEach(c => c.classList.remove("active"));
+  document.querySelectorAll(".brand-chip").forEach(c => c.classList.remove("active"));
+  document.querySelectorAll(".nav-cat-trigger[data-big]").forEach(btn => {
+    btn.classList.toggle("cat-active", btn.dataset.big === label);
+  });
+  document.querySelectorAll(".cat-nav-link[data-big]").forEach(a => {
+    a.classList.toggle("cat-active", a.dataset.big === label);
   });
   renderProducts();
   document.getElementById("products").scrollIntoView({ behavior: "smooth" });
