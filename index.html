@@ -639,120 +639,168 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 /* ── Ink & Toner promo banner ─────────────────────────────────── */
 .ink-banner {
-  background: #0a0e1a;
+  background: #f1f5fb;
   overflow: hidden;
   position: relative;
+  border-top: 1px solid #e2e8f3;
+  border-bottom: 1px solid #e2e8f3;
+}
+.ink-banner::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 340px; height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37,99,235,.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+.ink-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: -40px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239,68,68,.05) 0%, transparent 70%);
+  pointer-events: none;
 }
 .ink-banner-inner {
   max-width: 1200px;
   margin-inline: auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.15fr;
   align-items: center;
-  min-height: 300px;
+  min-height: 320px;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
 }
-.ink-banner-content {
-  padding: 52px 48px 52px 32px;
+.ink-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+.ink-content {
+  padding: 48px 48px 48px 0;
   position: relative;
   z-index: 2;
 }
-.ink-banner-label {
+.ink-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.15);
+  gap: 6px;
+  background: rgba(37,99,235,.1);
+  color: var(--accent);
   border-radius: 99px;
   padding: 4px 14px;
-  font-size: .73rem;
-  font-weight: 600;
-  color: rgba(255,255,255,.7);
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  margin-bottom: 18px;
-}
-.ink-banner-title {
-  font-family: var(--display);
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.15;
-  margin-bottom: 10px;
-}
-.ink-banner-title span { color: #ef4444; }
-.ink-banner-sub {
-  font-size: .9rem;
-  color: rgba(255,255,255,.6);
-  margin-bottom: 28px;
-  line-height: 1.6;
-}
-.ink-brands {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-.ink-brand-chip {
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 8px;
-  padding: 7px 16px;
-  font-size: .82rem;
+  font-size: .72rem;
   font-weight: 700;
-  color: rgba(255,255,255,.85);
-  letter-spacing: .04em;
-  transition: background .15s, border-color .15s;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 14px;
 }
-.ink-brand-chip.canon { color: #ef4444; border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.08); }
-.ink-brand-chip:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.25); }
+.ink-headline {
+  font-family: var(--display);
+  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  font-weight: 900;
+  line-height: .98;
+  margin-bottom: 10px;
+  color: #0f172a;
+  letter-spacing: -.01em;
+}
+.ink-headline .line-accent { color: #ef4444; display: block; }
+.ink-tagline {
+  font-size: .88rem;
+  color: #64748b;
+  margin-bottom: 24px;
+  letter-spacing: .01em;
+}
+.ink-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.ink-feat {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ink-feat.quality { background: #1e293b; color: #fff; }
+.ink-feat.value   { background: #f59e0b; color: #fff; }
+.ink-feat-icon {
+  width: 34px; height: 34px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.15);
+  font-size: 1.1rem;
+}
+.ink-feat-text strong {
+  display: block;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.ink-feat-text span { font-size: .72rem; opacity: .82; }
+.ink-brand-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.ink-brand-pill {
+  background: #fff;
+  border: 1px solid #dde3ef;
+  border-radius: 8px;
+  padding: 5px 13px;
+  font-size: .78rem;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: .04em;
+  transition: border-color .15s, color .15s;
+}
+.ink-brand-pill:hover { border-color: var(--accent); color: var(--accent); }
 .ink-banner-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #ef4444;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #fff;
   font-size: .88rem;
   font-weight: 700;
   padding: 12px 26px;
   border-radius: 99px;
   text-decoration: none;
-  transition: background .15s, transform .15s;
+  transition: transform .15s, box-shadow .15s;
   cursor: pointer;
   border: none;
+  box-shadow: 0 4px 14px rgba(37,99,235,.32);
 }
-.ink-banner-cta:hover { background: #dc2626; transform: translateY(-2px); }
-.ink-banner-image {
-  position: relative;
-  height: 300px;
-  overflow: hidden;
+.ink-banner-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(37,99,235,.44); }
+.ink-note {
+  margin-top: 10px;
+  font-size: .76rem;
+  color: #94a3b8;
 }
-.ink-banner-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  opacity: .85;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ink-banner { background: #111827; border-color: #1e293b; }
+  :root:not([data-theme="light"]) .ink-headline { color: #f1f5f9; }
+  :root:not([data-theme="light"]) .ink-tagline { color: #94a3b8; }
+  :root:not([data-theme="light"]) .ink-brand-pill { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+  :root:not([data-theme="light"]) .ink-note { color: #64748b; }
+  :root:not([data-theme="light"]) .ink-eyebrow { background: rgba(37,99,235,.16); }
 }
-.ink-banner-image::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to right, #0a0e1a 0%, transparent 40%);
-  z-index: 1;
-}
-.ink-banner-image-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8rem;
-  background: linear-gradient(135deg, #1a1f35, #0d1124);
-}
+:root[data-theme="dark"] .ink-banner { background: #111827; border-color: #1e293b; }
+:root[data-theme="dark"] .ink-headline { color: #f1f5f9; }
+:root[data-theme="dark"] .ink-tagline { color: #94a3b8; }
+:root[data-theme="dark"] .ink-brand-pill { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+:root[data-theme="dark"] .ink-note { color: #64748b; }
+:root[data-theme="dark"] .ink-eyebrow { background: rgba(37,99,235,.16); }
 @media (max-width: 768px) {
   .ink-banner-inner { grid-template-columns: 1fr; }
-  .ink-banner-image { height: 200px; }
-  .ink-banner-content { padding: 36px 24px; }
+  .ink-visual { padding: 28px 24px 0; }
+  .ink-visual svg { max-height: 190px; }
+  .ink-content { padding: 20px max(16px, env(safe-area-inset-left, 0px)) 36px; }
 }
 
 /* ── Stats bar ────────────────────────────────────────────────── */
@@ -2697,146 +2745,95 @@ html.lenis, html.lenis body { height: auto; }
 <!-- ── INK & TONER BANNER ──────────────────────────────────────── -->
 <div class="ink-banner">
   <div class="ink-banner-inner">
-    <div class="ink-banner-content">
-      <div class="ink-banner-label">🖨️ Printer Consumables</div>
-      <h2 class="ink-banner-title">Trusted Ink, Toner<br>&amp; <span>Drum Supplies</span></h2>
-      <p class="ink-banner-sub">Original &amp; compatible cartridges, toner kits, and drum units for all major brands. Fast delivery across Lebanon.</p>
-      <div class="ink-brands">
-        <div class="ink-brand-chip">HP</div>
-        <div class="ink-brand-chip canon">Canon</div>
-        <div class="ink-brand-chip" style="font-family:'Arial Black',sans-serif;font-size:.78rem">brother</div>
-        <div class="ink-brand-chip" style="letter-spacing:.1em">XEROX</div>
-        <div class="ink-brand-chip" style="letter-spacing:.06em">SAMSUNG</div>
-        <div class="ink-brand-chip">Epson</div>
+    <!-- Toner cartridge illustration -->
+    <div class="ink-visual">
+      <svg viewBox="0 0 360 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:360px" aria-hidden="true">
+        <!-- background soft circle -->
+        <ellipse cx="180" cy="245" rx="150" ry="16" fill="#00000015"/>
+        <!-- Yellow cartridge (back) -->
+        <g transform="translate(18,30) rotate(-6,100,35)">
+          <rect x="0" y="0" width="210" height="58" rx="11" fill="#fbbf24"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#f59e0b"/>
+          <rect x="0" y="11" width="210" height="11" fill="#f59e0b"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#fde68a" opacity=".55"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#d97706"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">Y</text>
+          <rect x="4" y="31" width="202" height="1.5" rx="1" fill="#fff" opacity=".25"/>
+        </g>
+        <!-- Magenta cartridge -->
+        <g transform="translate(32,75) rotate(-3,100,35)">
+          <rect x="0" y="0" width="210" height="58" rx="11" fill="#ec4899"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#db2777"/>
+          <rect x="0" y="11" width="210" height="11" fill="#db2777"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#fbcfe8" opacity=".4"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#be185d"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">M</text>
+          <rect x="4" y="31" width="202" height="1.5" rx="1" fill="#fff" opacity=".25"/>
+        </g>
+        <!-- Cyan cartridge -->
+        <g transform="translate(46,120) rotate(-1,100,35)">
+          <rect x="0" y="0" width="210" height="58" rx="11" fill="#06b6d4"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#0891b2"/>
+          <rect x="0" y="11" width="210" height="11" fill="#0891b2"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#a5f3fc" opacity=".4"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#0e7490"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">C</text>
+          <rect x="4" y="31" width="202" height="1.5" rx="1" fill="#fff" opacity=".25"/>
+        </g>
+        <!-- Black cartridge (front) -->
+        <g transform="translate(60,165)">
+          <rect x="0" y="0" width="210" height="62" rx="11" fill="#1e293b"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#0f172a"/>
+          <rect x="0" y="11" width="210" height="11" fill="#0f172a"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#94a3b8" opacity=".2"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#020617"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">K</text>
+          <rect x="4" y="32" width="202" height="1.5" rx="1" fill="#fff" opacity=".1"/>
+          <text x="100" y="52" font-family="Arial,sans-serif" font-size="7.5" fill="#64748b" text-anchor="middle" letter-spacing="2">TONER CARTRIDGE</text>
+        </g>
+        <!-- Decorative dots -->
+        <circle cx="18" cy="18" r="12" fill="#2563eb" opacity=".08"/>
+        <circle cx="345" cy="50" r="18" fill="#ef4444" opacity=".07"/>
+        <rect x="8" y="210" width="32" height="32" rx="7" fill="#f59e0b" opacity=".07" transform="rotate(18,24,226)"/>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div class="ink-content">
+      <div class="ink-eyebrow">🖨️ Printer Consumables</div>
+      <h2 class="ink-headline">
+        PRINT MORE
+        <span class="line-accent">SPEND LESS</span>
+      </h2>
+      <p class="ink-tagline">Sharp text · Clean documents · Great value</p>
+      <div class="ink-features">
+        <div class="ink-feat quality">
+          <div class="ink-feat-icon">📄</div>
+          <div class="ink-feat-text">
+            <strong>HIGH QUALITY</strong>
+            <span>Crisp, professional prints</span>
+          </div>
+        </div>
+        <div class="ink-feat value">
+          <div class="ink-feat-icon">💰</div>
+          <div class="ink-feat-text">
+            <strong>COST-EFFECTIVE</strong>
+            <span>Best price guaranteed</span>
+          </div>
+        </div>
+      </div>
+      <div class="ink-brand-row">
+        <div class="ink-brand-pill">HP</div>
+        <div class="ink-brand-pill">Canon</div>
+        <div class="ink-brand-pill" style="letter-spacing:.1em">XEROX</div>
+        <div class="ink-brand-pill">Samsung</div>
+        <div class="ink-brand-pill">Epson</div>
+        <div class="ink-brand-pill" style="font-family:'Arial Black',sans-serif;font-size:.72rem">brother</div>
       </div>
       <button class="ink-banner-cta" onclick="setFilter('printers'); document.getElementById('products').scrollIntoView({behavior:'smooth'})">
         Shop Now
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
-    </div>
-    <div class="ink-banner-image">
-      <div class="ink-banner-image-fallback" style="font-size:0;background:linear-gradient(135deg,#0a0a12,#0d1020);position:relative;overflow:hidden">
-        <!-- Canon / Xerox laser printer SVG illustration -->
-        <svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;position:absolute;inset:0" aria-hidden="true">
-          <!-- ambient glow -->
-          <radialGradient id="glow1" cx="50%" cy="60%" r="50%">
-            <stop offset="0%" stop-color="#d4af37" stop-opacity=".18"/>
-            <stop offset="100%" stop-color="#d4af37" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="glow2" cx="50%" cy="60%" r="40%">
-            <stop offset="0%" stop-color="#6080ff" stop-opacity=".12"/>
-            <stop offset="100%" stop-color="#6080ff" stop-opacity="0"/>
-          </radialGradient>
-          <rect width="480" height="320" fill="url(#glow1)"/>
-          <rect width="480" height="320" fill="url(#glow2)"/>
-
-          <!-- Main printer body -->
-          <rect x="80" y="140" width="320" height="118" rx="10" fill="#1c1c24" stroke="#3a3a4a" stroke-width="1.5"/>
-          <!-- top lighter panel -->
-          <rect x="80" y="140" width="320" height="32" rx="10" fill="#242432"/>
-          <rect x="80" y="158" width="320" height="14" fill="#242432"/>
-
-          <!-- paper output tray (top) -->
-          <rect x="110" y="112" width="260" height="32" rx="6" fill="#161620" stroke="#2e2e3e" stroke-width="1.2"/>
-          <!-- paper coming out -->
-          <rect x="125" y="102" width="230" height="16" rx="3" fill="#f0f0ee" opacity=".92"/>
-          <rect x="130" y="105" width="220" height="1.5" fill="#ddd" opacity=".5"/>
-          <rect x="130" y="109" width="180" height="1" fill="#ddd" opacity=".4"/>
-          <!-- paper shadow -->
-          <rect x="125" y="116" width="230" height="4" rx="1" fill="#000" opacity=".3"/>
-
-          <!-- paper input slot (bottom) -->
-          <rect x="110" y="258" width="260" height="22" rx="5" fill="#131318" stroke="#2a2a3a" stroke-width="1"/>
-
-          <!-- front panel details -->
-          <!-- control strip -->
-          <rect x="100" y="170" width="190" height="26" rx="5" fill="#181820" stroke="#2e2e3c" stroke-width="1"/>
-          <!-- LCD display -->
-          <rect x="108" y="175" width="80" height="16" rx="3" fill="#0d1f18"/>
-          <rect x="110" y="177" width="76" height="12" rx="2" fill="#0a2a1a"/>
-          <text x="148" y="187" font-family="monospace" font-size="7" fill="#22dd88" text-anchor="middle">READY</text>
-
-          <!-- buttons -->
-          <circle cx="205" cy="183" r="6" fill="#d4af37" opacity=".9"/>
-          <circle cx="221" cy="183" r="5" fill="#333" stroke="#555" stroke-width="1"/>
-          <circle cx="235" cy="183" r="5" fill="#333" stroke="#555" stroke-width="1"/>
-          <circle cx="249" cy="183" r="5" fill="#e74c3c" opacity=".85"/>
-          <!-- power LED -->
-          <circle cx="274" cy="183" r="4" fill="#22cc66"/>
-          <circle cx="274" cy="183" r="2" fill="#aaffcc"/>
-
-          <!-- brand label area -->
-          <rect x="290" y="162" width="98" height="36" rx="4" fill="#1a1a24"/>
-          <!-- CANON logo style text -->
-          <text x="339" y="178" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#e0e0e0" text-anchor="middle" letter-spacing="2">CANON</text>
-          <!-- model text -->
-          <text x="339" y="191" font-family="Arial,sans-serif" font-size="6.5" fill="#888" text-anchor="middle" letter-spacing="1">imageRUNNER</text>
-
-          <!-- side vent lines -->
-          <g stroke="#2a2a38" stroke-width="1" opacity=".7">
-            <line x1="86" y1="165" x2="86" y2="240"/>
-            <line x1="90" y1="165" x2="90" y2="240"/>
-            <line x1="94" y1="165" x2="94" y2="240"/>
-          </g>
-          <g stroke="#2a2a38" stroke-width="1" opacity=".7">
-            <line x1="386" y1="165" x2="386" y2="240"/>
-            <line x1="390" y1="165" x2="390" y2="240"/>
-            <line x1="394" y1="165" x2="394" y2="240"/>
-          </g>
-
-          <!-- front door seam -->
-          <line x1="100" y1="210" x2="380" y2="210" stroke="#2a2a38" stroke-width="1"/>
-
-          <!-- Toner level indicators (small bar) -->
-          <g transform="translate(105, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="14" width="6" height="14" rx="1" fill="#111111"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">K</text>
-          </g>
-          <g transform="translate(118, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="8" width="6" height="20" rx="1" fill="#0d4e8f"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">C</text>
-          </g>
-          <g transform="translate(131, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="10" width="6" height="18" rx="1" fill="#8b1a1a"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">M</text>
-          </g>
-          <g transform="translate(144, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="5" width="6" height="23" rx="1" fill="#7a6800"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">Y</text>
-          </g>
-
-          <!-- base / feet -->
-          <rect x="115" y="256" width="30" height="8" rx="3" fill="#111118"/>
-          <rect x="335" y="256" width="30" height="8" rx="3" fill="#111118"/>
-
-          <!-- shadow under printer -->
-          <ellipse cx="240" cy="270" rx="150" ry="12" fill="#000" opacity=".35"/>
-
-          <!-- Xerox badge (second printer / small) -->
-          <rect x="315" y="215" width="58" height="22" rx="3" fill="#1a1a24" stroke="#2a2a38" stroke-width="1"/>
-          <text x="344" y="229" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#d4af37" text-anchor="middle" letter-spacing="1.5">XEROX</text>
-
-          <!-- floating toner cartridge hint top right -->
-          <g transform="translate(370,50) rotate(-12)">
-            <rect x="0" y="0" width="64" height="22" rx="6" fill="#222230" stroke="#444460" stroke-width="1.2"/>
-            <rect x="6" y="6" width="40" height="10" rx="3" fill="#111"/>
-            <rect x="8" y="8" width="36" height="6" rx="2" fill="#0d1a30"/>
-            <circle cx="52" cy="11" r="5" fill="#1e3a5f" stroke="#4488cc" stroke-width="1"/>
-            <text x="32" y="28" font-family="Arial" font-size="6" fill="#888" text-anchor="middle">Toner Cartridge</text>
-          </g>
-
-          <!-- floating ink drop left -->
-          <g transform="translate(28,90)">
-            <path d="M18 0 C18 0 4 16 4 24 A14 14 0 0 0 32 24 C32 16 18 0 18 0Z" fill="#d4af37" opacity=".25"/>
-            <text x="18" y="50" font-family="Arial" font-size="7" fill="#d4af37" opacity=".6" text-anchor="middle">Original</text>
-            <text x="18" y="59" font-family="Arial" font-size="7" fill="#d4af37" opacity=".6" text-anchor="middle">Ink</text>
-          </g>
-        </svg>
-      </div>
+      <p class="ink-note">💬 Send us your printer model — we'll find the right cartridge</p>
     </div>
   </div>
 </div>
