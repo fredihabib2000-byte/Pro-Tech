@@ -142,70 +142,81 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 /* ── Top bar ──────────────────────────────────────────────────── */
 .top-bar {
-  background: linear-gradient(90deg, #0d1e45 0%, #122660 40%, #1a3a8a 80%, #0f2050 100%);
-  border-bottom: 1px solid rgba(255,255,255,.07);
-  color: rgba(255,255,255,.88);
-  font-size: .74rem;
+  background: #0b1829;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  color: rgba(255,255,255,.82);
+  font-size: .75rem;
   font-weight: 500;
-  padding: 8px 20px;
-  position: relative;
-  overflow: hidden;
 }
-.top-bar::after {
-  content: '';
-  position: absolute;
-  inset: 0 0 0 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.03) 50%, transparent 100%);
-  pointer-events: none;
-}
-[data-theme="light"] .top-bar {
-  background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #1d4ed8 100%);
-  border-bottom: 1px solid rgba(255,255,255,.12);
-  color: rgba(255,255,255,.95);
-}
+[data-theme="light"] .top-bar { background: #0f2050; }
 .top-bar-inner {
   max-width: 1200px;
   margin-inline: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 1;
+  gap: 16px;
+  padding-block: 9px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .top-bar-left, .top-bar-right {
   display: flex; align-items: center; gap: 10px;
 }
-.top-bar-flag { font-size: .9rem; }
-.top-delivery-text { opacity: .75; letter-spacing: .01em; }
+.top-social-icons { display: flex; align-items: center; gap: 6px; }
+.top-social-icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.85);
+  text-decoration: none;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.top-social-icon:hover { background: var(--accent); color: #fff; }
+.top-follow-label {
+  color: rgba(255,255,255,.55);
+  font-size: .72rem;
+  letter-spacing: .03em;
+  font-weight: 500;
+}
+.top-bar-divider { width: 1px; height: 13px; background: rgba(255,255,255,.14); }
+.top-get-in-touch {
+  color: rgba(255,255,255,.55);
+  font-size: .72rem;
+  letter-spacing: .02em;
+}
 .top-social-link {
   color: rgba(255,255,255,.78);
   text-decoration: none;
-  display: flex; align-items: center; gap: 4px;
-  transition: color .15s, opacity .15s;
+  display: flex; align-items: center; gap: 5px;
+  transition: color .15s;
   white-space: nowrap;
-  padding: 2px 0;
+  font-size: .75rem;
 }
-.top-social-link svg { opacity: .9; flex-shrink: 0; }
+.top-social-link svg { opacity: .8; flex-shrink: 0; }
 .top-social-link:hover { color: #fff; }
 .top-social-link:hover svg { opacity: 1; }
 .top-social-label { font-size: .71rem; letter-spacing: .01em; }
-.top-bar-sep { opacity: .25; user-select: none; }
-@media (max-width: 720px) { .top-social-label { display: none; } .top-delivery-text { display: none; } }
-@media (max-width: 460px) { .top-bar-left { display: none; } }
+.top-bar-flag { font-size: .9rem; }
+.top-delivery-text { color: rgba(255,255,255,.72); letter-spacing: .01em; }
+.top-bar-sep { opacity: .22; user-select: none; }
+@media (max-width: 720px) { .top-get-in-touch { display: none; } .top-delivery-text { display: none; } .top-bar-divider { display: none; } }
+@media (max-width: 480px) { .top-bar-left .top-follow-label { display: none; } }
+@media (max-width: 400px) { .top-bar-left { display: none; } }
 
 
 /* ── Nav search ───────────────────────────────────────────────── */
 .nav-search {
-  flex: 1;
-  max-width: 380px;
+  flex: 2;
+  max-width: 520px;
   display: flex;
   align-items: center;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 99px;
-  padding: 7px 14px;
+  padding: 8px 16px;
   gap: 8px;
   transition: border-color .15s, box-shadow .15s;
 }
@@ -325,8 +336,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .cart-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
+  gap: 5px;
+  padding: 8px 14px;
   background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
   color: #fff;
   border-radius: var(--r-sm);
@@ -334,13 +345,14 @@ button { cursor: pointer; font-family: inherit; border: none; }
   font-weight: 600;
   transition: opacity .15s, transform .1s, box-shadow .15s;
   box-shadow: 0 2px 10px rgba(37,99,235,.35);
+  position: relative;
 }
 .cart-btn:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,.45); }
 .cart-count {
   background: #fff;
   color: var(--accent);
   border-radius: 99px;
-  font-size: .7rem;
+  font-size: .68rem;
   font-weight: 700;
   padding: 1px 6px;
   min-width: 18px;
@@ -359,6 +371,42 @@ button { cursor: pointer; font-family: inherit; border: none; }
 @media (max-width: 720px) {
   .nav-links { display: none; }
 }
+
+/* ── Category nav row ─────────────────────────────────────── */
+.cat-nav {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.cat-nav-inner {
+  display: flex;
+  align-items: center;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0;
+}
+.cat-nav-inner::-webkit-scrollbar { display: none; }
+.cat-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 11px 14px;
+  font-size: .81rem;
+  font-weight: 600;
+  color: var(--fg-2);
+  white-space: nowrap;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s, background .15s;
+  user-select: none;
+  text-decoration: none;
+}
+.cat-nav-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.cat-nav-link.cat-active { color: var(--accent); border-bottom-color: var(--accent); }
+@media (max-width: 720px) { .cat-nav { display: none; } }
 
 /* ── Hero Banner ───────────────────────────────────────────────── */
 .hero-banner {
@@ -2513,25 +2561,22 @@ html.lenis, html.lenis body { height: auto; }
 <div class="top-bar">
   <div class="top-bar-inner">
     <div class="top-bar-left">
-      <a class="top-social-link" href="https://www.instagram.com/proo_fcell" target="_blank" rel="noopener" title="Instagram">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-        <span class="top-social-label">proo_fcell</span>
-      </a>
-      <span class="top-bar-sep">·</span>
-      <a class="top-social-link" href="https://www.facebook.com/share/1He9SXirGQ/" target="_blank" rel="noopener" title="Facebook">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-        <span class="top-social-label">Pro Technology</span>
-      </a>
-      <span class="top-bar-sep">·</span>
-      <a class="top-social-link" href="https://www.tiktok.com/@procell89" target="_blank" rel="noopener" title="TikTok">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
-        <span class="top-social-label">@procell89</span>
-      </a>
+      <div class="top-social-icons">
+        <a class="top-social-icon" href="https://www.instagram.com/proo_fcell" target="_blank" rel="noopener" title="Instagram">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a class="top-social-icon" href="https://www.facebook.com/share/1He9SXirGQ/" target="_blank" rel="noopener" title="Facebook">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        </a>
+        <a class="top-social-icon" href="https://www.tiktok.com/@procell89" target="_blank" rel="noopener" title="TikTok">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+        </a>
+      </div>
+      <span class="top-follow-label">Follow us!</span>
     </div>
     <div class="top-bar-right">
-      <span class="top-bar-flag">🇱🇧</span>
-      <span class="top-delivery-text">Fast delivery across Lebanon</span>
-      <span class="top-bar-sep">·</span>
+      <span class="top-get-in-touch">Get in touch with us</span>
+      <div class="top-bar-divider"></div>
       <a id="topWaLink" class="top-social-link" href="https://wa.me/96170107139" style="display:none">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
         +961 70 107 139
@@ -2540,6 +2585,9 @@ html.lenis, html.lenis body { height: auto; }
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
         <span id="topPhoneNum">+961 70 107 139</span>
       </a>
+      <div class="top-bar-divider"></div>
+      <span class="top-bar-flag">🇱🇧</span>
+      <span class="top-delivery-text">Delivery across Lebanon</span>
     </div>
   </div>
 </div>
@@ -2558,15 +2606,9 @@ html.lenis, html.lenis body { height: auto; }
       <span class="logo-text-pro">Pro</span><span class="logo-text-tech">&nbsp;Technology</span>
     </a>
     <div class="nav-search">
-      <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <input type="text" id="navSearchInput" placeholder="Search products…">
+      <svg width="15" height="15" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input type="text" id="navSearchInput" placeholder="Search products, brands and more…">
     </div>
-    <ul class="nav-links">
-      <li><a href="#categories">Categories</a></li>
-      <li><a href="#products">Products</a></li>
-      <li><a href="#why-us">Why Us</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
     <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMobileNav()">
       <span class="ham-line"></span>
       <span class="ham-line"></span>
@@ -2575,8 +2617,26 @@ html.lenis, html.lenis body { height: auto; }
     <div class="nav-right">
       <button class="theme-btn" id="themeToggle" title="Toggle theme">☀️</button>
       <button class="cart-btn" id="cartBtn">
-        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        <span class="cart-count" id="cartCount">0</span>
       </button>
+    </div>
+  </div>
+  <!-- Category nav row -->
+  <div class="cat-nav">
+    <div class="cat-nav-inner">
+      <a class="cat-nav-link" onclick="filterByCat('all')">🛍️ All Products</a>
+      <a class="cat-nav-link" onclick="filterByCat('laptops')">💻 Laptops</a>
+      <a class="cat-nav-link" onclick="filterByCat('phones')">📱 Phones</a>
+      <a class="cat-nav-link" onclick="filterByCat('tablets')">📋 Tablets</a>
+      <a class="cat-nav-link" onclick="filterByCat('pos')">🖥️ POS Systems</a>
+      <a class="cat-nav-link" onclick="filterByCat('printers')">🖨️ Printers</a>
+      <a class="cat-nav-link" onclick="filterByCat('scanners')">📠 Scanners</a>
+      <a class="cat-nav-link" onclick="filterByCat('accessories')">🔌 Accessories</a>
+      <a class="cat-nav-link" onclick="filterByCat('networking')">🌐 Networking</a>
+      <a class="cat-nav-link" onclick="filterByCat('audio')">🎧 Audio</a>
+      <a class="cat-nav-link" onclick="filterByCat('storage')">💾 Storage</a>
+      <a class="cat-nav-link" href="#contact">📞 Contact</a>
     </div>
   </div>
 </nav>
@@ -2585,10 +2645,17 @@ html.lenis, html.lenis body { height: auto; }
 <div class="mobile-nav" id="mobileNav" onclick="if(event.target===this)closeMobileNav()">
   <div class="mobile-nav-panel">
     <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
-    <a class="mobile-nav-link" href="#categories" onclick="closeMobileNav()">🏪 Categories</a>
-    <a class="mobile-nav-link" href="#products" onclick="closeMobileNav()">📦 Products</a>
+    <a class="mobile-nav-link" onclick="filterByCat('all');closeMobileNav()">🛍️ All Products</a>
+    <a class="mobile-nav-link" onclick="filterByCat('laptops');closeMobileNav()">💻 Laptops</a>
+    <a class="mobile-nav-link" onclick="filterByCat('phones');closeMobileNav()">📱 Phones</a>
+    <a class="mobile-nav-link" onclick="filterByCat('tablets');closeMobileNav()">📋 Tablets</a>
+    <a class="mobile-nav-link" onclick="filterByCat('pos');closeMobileNav()">🖥️ POS Systems</a>
+    <a class="mobile-nav-link" onclick="filterByCat('printers');closeMobileNav()">🖨️ Printers</a>
+    <a class="mobile-nav-link" onclick="filterByCat('scanners');closeMobileNav()">📠 Scanners</a>
+    <a class="mobile-nav-link" onclick="filterByCat('accessories');closeMobileNav()">🔌 Accessories</a>
+    <a class="mobile-nav-link" onclick="filterByCat('networking');closeMobileNav()">🌐 Networking</a>
+    <a class="mobile-nav-link" onclick="filterByCat('audio');closeMobileNav()">🎧 Audio</a>
     <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
-    <a class="mobile-nav-link" href="#faq" onclick="closeMobileNav()">❓ FAQ</a>
     <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
   </div>
 </div>
@@ -4545,6 +4612,10 @@ function filterByCat(cat) {
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
   document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
   document.querySelectorAll(".brand-chip").forEach(c => c.classList.remove("active"));
+  document.querySelectorAll(".cat-nav-link[onclick]").forEach(a => {
+    const m = (a.getAttribute("onclick") || "").match(/'([^']+)'/);
+    a.classList.toggle("cat-active", m && m[1] === cat);
+  });
   renderProducts();
   document.getElementById("products").scrollIntoView({ behavior: "smooth" });
 }
