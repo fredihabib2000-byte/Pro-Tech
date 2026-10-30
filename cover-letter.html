@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frederic Habib — Cover Letter</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap">
+<style>
+  :root {
+    --bg: #F4F6FA; --paper: #FFFFFF; --fg: #18243A; --muted: #5C6A80;
+    --accent: #1E4D8C; --accent-mid: #3A6FBA; --accent-light: #E6EDF8;
+    --border: #D2DCE9; --placeholder-bg: #FFF4E0; --placeholder-fg: #B35A00;
+    --strip: #1E4D8C; --gh-bg: #F0F5FC; --gh-border: #C0D1E8;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Source Serif 4', Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0F1620; --paper: #192132; --fg: #DDE4F0; --muted: #8A9BB5;
+      --accent: #4A82CC; --accent-mid: #6699DD; --accent-light: #1A2D4A;
+      --border: #2A3D58; --placeholder-bg: #2E2000; --placeholder-fg: #FFB347;
+      --strip: #4A82CC; --gh-bg: #162030; --gh-border: #2A3D58;
+      color-scheme: dark;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.7; padding: 32px max(16px, env(safe-area-inset-left,0px)); padding-right: max(16px, env(safe-area-inset-right,0px)); }
+  .page-wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  .notice { background: var(--placeholder-bg); border: 1px solid var(--placeholder-fg); border-radius: 6px; padding: 10px 14px; font-size: 13px; color: var(--placeholder-fg); }
+  .notice strong { font-weight: 600; }
+  .letter { background: var(--paper); border: 1px solid var(--border); border-radius: 3px; display: flex; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+  .accent-strip { width: 5px; flex-shrink: 0; background: var(--strip); }
+  .letter-body { flex: 1; padding: 40px 44px; min-width: 0; }
+  @media (max-width: 560px) { .letter-body { padding: 28px 20px; } }
+  .letterhead { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; padding-bottom: 24px; border-bottom: 1.5px solid var(--border); margin-bottom: 28px; }
+  .lh-name { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -.3px; color: var(--accent); margin: 0 0 2px; }
+  .lh-title { font-size: 12.5px; font-weight: 300; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 0; }
+  .lh-contact { text-align: right; font-size: 13px; color: var(--muted); line-height: 1.8; }
+  .lh-contact a { color: var(--accent-mid); text-decoration: none; }
+  .lh-contact a:hover { text-decoration: underline; }
+  @media (max-width: 500px) { .lh-contact { text-align: left; } }
+  .date-line { font-size: 13.5px; color: var(--muted); margin-bottom: 20px; font-style: italic; }
+  .addressee { margin-bottom: 24px; font-size: 14.5px; line-height: 1.6; }
+  .salutation { margin-bottom: 18px; font-size: 15px; }
+  p { margin: 0 0 16px; max-width: 65ch; }
+  .ph { background: var(--placeholder-bg); color: var(--placeholder-fg); border-radius: 3px; padding: 0 4px; font-style: italic; font-size: .95em; }
+  .closing { margin-top: 28px; font-size: 15px; }
+  .sig-name { font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--accent); margin: 12px 0 4px; }
+  .sig-detail { font-size: 13px; color: var(--muted); line-height: 1.8; }
+  .sig-detail a { color: var(--accent-mid); text-decoration: none; }
+  .gh-section { background: var(--paper); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+  .gh-header { background: var(--accent-light); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 10px; }
+  .gh-header h2 { font-family: var(--font-display); font-size: 14px; font-weight: 600; margin: 0; color: var(--accent); }
+  .gh-icon { width: 18px; height: 18px; fill: var(--accent); flex-shrink: 0; }
+  .gh-note { font-size: 12.5px; color: var(--muted); font-style: italic; margin-left: auto; }
+  .gh-projects { padding: 20px 28px 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  @media (max-width: 560px) { .gh-header { padding: 12px 16px; } .gh-projects { padding: 16px; } }
+  .gh-card { background: var(--gh-bg); border: 1px solid var(--gh-border); border-radius: 4px; padding: 16px 18px; }
+  .gh-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .gh-repo-name { font-size: 14px; font-weight: 600; color: var(--accent-mid); }
+  .gh-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; background: var(--accent-light); color: var(--accent); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+  .gh-desc { font-size: 13px; color: var(--muted); margin: 0 0 10px; line-height: 1.55; }
+  .gh-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .gh-tag { font-size: 11px; background: var(--paper); border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; color: var(--muted); font-family: 'Courier New', monospace; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="notice">
+    <strong>Customise before sending:</strong> Replace all <span class="ph">highlighted fields</span> with the actual company name, position, and hiring manager's details.
+  </div>
+
+  <div class="letter">
+    <div class="accent-strip"></div>
+    <div class="letter-body">
+      <div class="letterhead">
+        <div>
+          <h1 class="lh-name">Frederic Habib</h1>
+          <p class="lh-title">IT Manager &middot; Technical Support &middot; Backend Developer</p>
+        </div>
+        <div class="lh-contact">
+          +961 71 925 840<br>
+          <a href="mailto:fredihabib2000@gmail.com">fredihabib2000@gmail.com</a><br>
+          <a href="https://linkedin.com/in/Frederic-Habib" target="_blank">linkedin.com/in/Frederic-Habib</a><br>
+          <a href="https://github.com/fredihabib2000-byte" target="_blank">github.com/fredihabib2000-byte</a>
+        </div>
+      </div>
+      <div class="date-line">October 21, 2026</div>
+      <div class="addressee">
+        <span class="ph">[Hiring Manager's Name]</span><br>
+        <span class="ph">[Title]</span><br>
+        <span class="ph">[Company Name]</span><br>
+        <span class="ph">[City, Country]</span>
+      </div>
+      <div class="salutation">Dear <span class="ph">[Hiring Manager's Name / Hiring Team]</span>,</div>
+      <p>I am writing to apply for the <span class="ph">[Position Title]</span> role at <span class="ph">[Company Name]</span>. With over four years of experience spanning IT management, enterprise technical support, and infrastructure administration — backed by a Bachelor’s in Computer &amp; Communication Engineering (GPA 3.5) and an ongoing Master’s — I bring the technical depth and customer-first mindset that demanding IT environments require.</p>
+      <p>In my current position as IT Manager at KORE, I oversee all IT operations across three branches: administering Microsoft 365 and Azure Active Directory, configuring and maintaining Cisco firewalls, supporting a company-wide SAP ERP deployment, and acting as the single point of contact for all employee technical issues. Before this, as a Support Engineer at Infosysta, I handled enterprise incident tickets end-to-end — running SQL and MySQL queries for database investigation, using Linux for log analysis, and maintaining the team’s knowledge base. Earlier still, three years as an IT Technical Support Specialist at Omega Software gave me deep experience with POS/ERP systems, remote support tools, and user training across retail and restaurant environments.</p>
+      <p>What I believe sets me apart is that I do not only support software — I build it. On GitHub, I have shipped three production projects: <strong>Prixo</strong>, a multi-tenant SaaS Electronic Shelf Label manager in Python (FastAPI), PostgreSQL via Supabase, and Docker — with live license gating, plan-tier enforcement, and full tenant isolation; <strong>Pro Technology</strong>, a full-stack technology product e-commerce site with a feature-complete admin dashboard; and <strong>Gold (XAUUSD)</strong>, an automated gold trading signal bot that integrates MetaTrader 5, Kalshi prediction markets, and QuiverQuant alternative data with custom alpha filters, deployed on Railway. These projects demonstrate that I can design and deliver real-world systems, not just maintain them.</p>
+      <p>I communicate fluently in English, Arabic, and French, which I have found valuable when working across diverse teams and client bases. I am comfortable documenting systems thoroughly, training non-technical users, and escalating the right problems to the right people at the right time.</p>
+      <p>I would welcome the chance to bring this combination of infrastructure management, hands-on development, and service-desk experience to <span class="ph">[Company Name]</span>. I am available at your convenience for a call or interview.</p>
+      <div class="closing">Sincerely,</div>
+      <div class="sig-name">Frederic Habib</div>
+      <div class="sig-detail">
+        +961 71 925 840 &nbsp;&middot;&nbsp;
+        <a href="mailto:fredihabib2000@gmail.com">fredihabib2000@gmail.com</a><br>
+        <a href="https://linkedin.com/in/Frederic-Habib" target="_blank">linkedin.com/in/Frederic-Habib</a> &nbsp;&middot;&nbsp;
+        <a href="https://github.com/fredihabib2000-byte" target="_blank">github.com/fredihabib2000-byte</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="gh-section">
+    <div class="gh-header">
+      <svg class="gh-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+      <h2>GitHub Projects — Supporting Evidence</h2>
+      <span class="gh-note">github.com/fredihabib2000-byte</span>
+    </div>
+    <div class="gh-projects">
+      <div class="gh-card">
+        <div class="gh-card-top">
+          <span class="gh-repo-name">Prixo — ESL SaaS Manager</span>
+          <span class="gh-badge">Production</span>
+        </div>
+        <p class="gh-desc">Multi-tenant, license-gated SaaS for Electronic Shelf Labels. Plan tiers (Basic / Pro / Enterprise) with hard usage caps, live license enforcement, owner admin console, and a full Supabase migration path from SQLite.</p>
+        <div class="gh-tags">
+          <span class="gh-tag">Python</span><span class="gh-tag">FastAPI</span><span class="gh-tag">PostgreSQL</span><span class="gh-tag">Supabase</span><span class="gh-tag">Docker</span><span class="gh-tag">Caddy</span><span class="gh-tag">Multi-tenant</span>
+        </div>
+      </div>
+      <div class="gh-card">
+        <div class="gh-card-top">
+          <span class="gh-repo-name">Pro Technology — E-Commerce</span>
+          <span class="gh-badge">Deployed</span>
+        </div>
+        <p class="gh-desc">Full-stack technology product e-commerce website with a feature-complete admin dashboard. Built in HTML, CSS, and JavaScript with product management, inventory, and order admin panels. Deployed on Railway.</p>
+        <div class="gh-tags">
+          <span class="gh-tag">HTML</span><span class="gh-tag">CSS</span><span class="gh-tag">JavaScript</span><span class="gh-tag">Admin Panel</span><span class="gh-tag">Railway</span><span class="gh-tag">E-Commerce</span>
+        </div>
+      </div>
+      <div class="gh-card">
+        <div class="gh-card-top">
+          <span class="gh-repo-name">Gold — XAUUSD Signal Bot</span>
+          <span class="gh-badge">Deployed</span>
+        </div>
+        <p class="gh-desc">Automated gold (XAUUSD) trading signal system combining MetaTrader 5 (MT5) execution, Kalshi prediction market data, QuiverQuant alternative financial data, and custom alpha filters for signal generation.</p>
+        <div class="gh-tags">
+          <span class="gh-tag">Python</span><span class="gh-tag">MT5</span><span class="gh-tag">Kalshi API</span><span class="gh-tag">QuiverQuant</span><span class="gh-tag">Alpha Filters</span><span class="gh-tag">FinTech</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
