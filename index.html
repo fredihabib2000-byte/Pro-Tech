@@ -4608,6 +4608,15 @@ function buildCategorySections() {
 }
 
 function filterByCat(cat) {
+  // Resolve short codes like 'laptops' → 'Laptops & Computers' from loaded products
+  if (cat && cat !== 'all') {
+    const lower = cat.toLowerCase();
+    const allCats = [...new Set(PRODUCTS.map(p => p.cat).filter(Boolean))];
+    const exact = allCats.find(c => c.toLowerCase() === lower);
+    const prefix = allCats.find(c => c.toLowerCase().startsWith(lower));
+    const contains = allCats.find(c => c.toLowerCase().includes(lower));
+    cat = exact || prefix || contains || cat;
+  }
   activeFilter = cat;
   activeBrandFilter = "";
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
@@ -4615,7 +4624,7 @@ function filterByCat(cat) {
   document.querySelectorAll(".brand-chip").forEach(c => c.classList.remove("active"));
   document.querySelectorAll(".cat-nav-link[onclick]").forEach(a => {
     const m = (a.getAttribute("onclick") || "").match(/'([^']+)'/);
-    a.classList.toggle("cat-active", m && m[1] === cat);
+    a.classList.toggle("cat-active", m && (m[1] === cat || m[1] === activeFilter));
   });
   renderProducts();
   document.getElementById("products").scrollIntoView({ behavior: "smooth" });
