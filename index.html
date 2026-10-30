@@ -3577,7 +3577,7 @@ function renderNewArrivals() {
 }
 
 // ── Load products from Supabase ───────────────────────────────────
-const _CACHE_KEY = 'pt_store_cache_v2';
+const _CACHE_KEY = 'pt_store_cache_v3';
 const _CACHE_TTL = 4 * 60 * 1000; // 4 minutes
 
 function _mapProduct(p) {
@@ -3604,7 +3604,7 @@ async function _fetchStoreData() {
   const [products, promos, cats] = await Promise.all([
     sbFetch("/rest/v1/pt_products?is_active=eq.true&order=category.asc,name.asc&select=id,name,category,price,old_price,icon,badge,description,quantity,image_url,specs,extra_images,variants"),
     sbFetch("/rest/v1/pt_promotions?is_active=eq.true&select=*"),
-    sbFetch("/rest/v1/pt_categories?select=name&order=name.asc")
+    sbFetch("/rest/v1/pt_categories?select=name,image_url&order=name.asc")
   ]);
   const mapped = (products || []).map(_mapProduct);
   try {
