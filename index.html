@@ -280,21 +280,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 .nav-links a:hover { color: var(--fg); background: var(--surface-2); }
 .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.track-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  background: transparent;
-  color: var(--fg-2);
-  border: 1.5px solid var(--border);
-  border-radius: var(--r-sm);
-  font-size: .82rem;
-  font-weight: 500;
-  transition: color .15s, border-color .15s, background .15s;
-  white-space: nowrap;
-}
-.track-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent)12; }
 .cart-btn {
   display: flex;
   align-items: center;
@@ -2403,7 +2388,6 @@ html.lenis, html.lenis body { height: auto; }
   .nav-inner { padding-inline: 14px; gap: 10px; }
   .logo { font-size: 1.2rem; }
   .cart-btn { padding: 8px 12px; font-size: .8rem; gap: 5px; }
-  .track-btn { display: none; }
   .products-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .product-img { font-size: 3rem; }
   .product-body { padding: 12px; }
@@ -2469,7 +2453,6 @@ html.lenis, html.lenis body { height: auto; }
     </button>
     <div class="nav-right">
       <button class="theme-btn" id="themeToggle" title="Toggle theme">☀️</button>
-      <button class="track-btn" onclick="openTrackModal()" title="Track your order">📦 Track Order</button>
       <button class="cart-btn" id="cartBtn">
         🛒 Cart <span class="cart-count" id="cartCount">0</span>
       </button>
@@ -2486,7 +2469,6 @@ html.lenis, html.lenis body { height: auto; }
     <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
     <a class="mobile-nav-link" href="#faq" onclick="closeMobileNav()">❓ FAQ</a>
     <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
-    <a class="mobile-nav-link" href="#" onclick="closeMobileNav();openTrackModal()">📦 Track Order</a>
   </div>
 </div>
 
@@ -3146,7 +3128,6 @@ html.lenis, html.lenis body { height: auto; }
       <h4>Customer Care</h4>
       <ul>
         <li><a href="#faq" onclick="document.getElementById('faq').scrollIntoView({behavior:'smooth'});return false;">Help &amp; FAQ</a></li>
-        <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Track Order</a></li>
         <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Returns</a></li>
         <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Warranty</a></li>
         <li><a href="#contact" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'});return false;">Contact Us</a></li>
@@ -3404,40 +3385,13 @@ html.lenis, html.lenis body { height: auto; }
   </div>
 </div>
 
-<!-- ── TRACK ORDER MODAL ──────────────────────────────────────── -->
-<div class="order-modal-overlay" id="trackModal" onclick="if(event.target===this)closeTrackModal()">
-  <div class="order-modal" style="max-width:440px">
-    <div class="order-modal-header">
-      <h2>📦 Track Your Order</h2>
-      <button class="order-modal-close" onclick="closeTrackModal()">✕</button>
-    </div>
-    <div class="order-modal-body">
-      <p style="color:var(--fg-2);margin-bottom:1.2rem;font-size:.93rem">Enter your Order ID and phone number to check your order status.</p>
-      <div class="field">
-        <label for="track_id">Order ID</label>
-        <input type="number" id="track_id" placeholder="e.g. 1023" min="1">
-      </div>
-      <div class="field">
-        <label for="track_phone">Phone Number</label>
-        <input type="tel" id="track_phone" placeholder="+961 70 123 456">
-      </div>
-      <div id="trackResult" style="display:none;margin-top:1.2rem"></div>
-    </div>
-    <div class="order-modal-footer">
-      <button class="btn-secondary" onclick="closeTrackModal()">Cancel</button>
-      <button class="btn-primary" id="trackBtn" onclick="trackOrder()">Track Order</button>
-    </div>
-  </div>
-</div>
 
 <!-- ── WHATSAPP SUCCESS OVERLAY ───────────────────────────────── -->
 <div class="wa-success-overlay" id="waSuccessOverlay">
   <div class="wa-success-card">
     <div class="wa-success-icon">✅</div>
     <h3>Order Received!</h3>
-    <p id="waSuccessOrderId" style="display:none;background:var(--bg-2,#f3f4f6);border-radius:.6rem;padding:.55rem .9rem;font-size:.9rem;margin-bottom:.8rem;color:var(--fg-2)">Your Order ID: <strong id="waSuccessOrderIdVal" style="color:var(--accent,#2563eb);font-size:1.05rem"></strong></p>
     <p id="waSuccessMsg">Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.</p>
-    <button class="btn-secondary" style="margin-bottom:.6rem;width:100%;font-size:.9rem" id="waTrackBtn" onclick="closeWaSuccess();openTrackModal()" style="display:none">📦 Track My Order</button>
     <a class="wa-btn" id="waSuccessBtn" href="#" target="_blank" rel="noopener">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.558 4.116 1.535 5.845L.057 23.49a.75.75 0 0 0 .918.935l5.83-1.527A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.797 9.797 0 0 1-4.99-1.363l-.358-.212-3.712.973.99-3.607-.233-.37A9.794 9.794 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
       Open WhatsApp
@@ -4544,94 +4498,8 @@ function closeOrderModal() {
 function closeWaSuccess() {
   document.getElementById("waSuccessOverlay").classList.remove("open");
   document.body.style.overflow = "";
-  // reset order ID display for next order
-  const idEl = document.getElementById("waSuccessOrderId");
-  const trackBtn = document.getElementById("waTrackBtn");
-  if (idEl) idEl.style.display = "none";
-  if (trackBtn) trackBtn.style.display = "none";
 }
 
-function openTrackModal(prefillId, prefillPhone) {
-  const modal = document.getElementById("trackModal");
-  if (!modal) return;
-  document.getElementById("trackResult").style.display = "none";
-  document.getElementById("trackResult").innerHTML = "";
-  if (prefillId) document.getElementById("track_id").value = prefillId;
-  if (prefillPhone) document.getElementById("track_phone").value = prefillPhone;
-  modal.classList.add("open");
-  document.body.style.overflow = "hidden";
-}
-
-function closeTrackModal() {
-  document.getElementById("trackModal").classList.remove("open");
-  document.body.style.overflow = "";
-}
-
-async function trackOrder() {
-  const idVal = document.getElementById("track_id").value.trim();
-  const phone = document.getElementById("track_phone").value.trim();
-  const resultEl = document.getElementById("trackResult");
-  if (!idVal || !phone) { showToast("Please enter your Order ID and phone number."); return; }
-  const btn = document.getElementById("trackBtn");
-  btn.disabled = true; btn.textContent = "Checking…";
-  resultEl.style.display = "none"; resultEl.innerHTML = "";
-  try {
-    const data = await sbFetch(`/rest/v1/rpc/track_order`, {
-      method: "POST",
-      body: JSON.stringify({ p_id: parseInt(idVal, 10), p_phone: phone })
-    });
-    if (!data || (Array.isArray(data) && !data.length)) {
-      resultEl.innerHTML = `<div style="padding:1rem;border-radius:.75rem;background:var(--bg-2,#fef2f2);color:#dc2626;font-size:.9rem;text-align:center">❌ No order found with that ID and phone number.<br><small>Double-check and try again.</small></div>`;
-    } else {
-      const o = Array.isArray(data) ? data[0] : data;
-      const statusMap = {
-        pending: { label: "Pending", icon: "⏳", color: "#f59e0b", step: 1 },
-        processing: { label: "Processing", icon: "🔧", color: "#3b82f6", step: 2 },
-        shipped: { label: "On the Way", icon: "🚚", color: "#8b5cf6", step: 3 },
-        delivered: { label: "Delivered", icon: "✅", color: "#10b981", step: 4 },
-        cancelled: { label: "Cancelled", icon: "❌", color: "#ef4444", step: 0 }
-      };
-      const st = statusMap[o.status] || { label: o.status, icon: "📦", color: "#6b7280", step: 1 };
-      const steps = ["Pending", "Processing", "On the Way", "Delivered"];
-      const stepBar = st.step > 0 ? `
-        <div style="display:flex;align-items:center;gap:0;margin:1rem 0 .5rem">
-          ${steps.map((s, i) => {
-            const done = i + 1 <= st.step;
-            const active = i + 1 === st.step;
-            return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.25rem">
-              <div style="width:28px;height:28px;border-radius:50%;background:${done ? st.color : 'var(--bg-2,#e5e7eb)'};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:${done ? '#fff' : '#9ca3af'};${active ? `box-shadow:0 0 0 3px ${st.color}44` : ''}">${i+1}</div>
-              <span style="font-size:.68rem;color:${done ? st.color : 'var(--fg-2,#9ca3af)'};font-weight:${active?700:400};white-space:nowrap">${s}</span>
-            </div>${i < 3 ? `<div style="flex:2;height:2px;background:${done && i+1<st.step ? st.color : 'var(--bg-2,#e5e7eb)'};margin-bottom:1.2rem"></div>` : ''}`;
-          }).join('')}
-        </div>` : '';
-      const itemsHtml = o.items ? o.items.map(it => `<li style="padding:.25rem 0;border-bottom:1px solid var(--bg-2,#e5e7eb)">${it.name}${it.color?` <span style="color:var(--fg-2)">(${it.color})</span>`:''} &times;${it.qty} — <strong>$${(it.price*it.qty).toFixed(2)}</strong></li>`).join("") : "";
-      const date = new Date(o.created_at).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-      resultEl.innerHTML = `
-        <div style="border-radius:.75rem;border:1.5px solid ${st.color}44;overflow:hidden">
-          <div style="background:${st.color}18;padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem">
-            <span style="font-size:1.3rem">${st.icon}</span>
-            <div>
-              <div style="font-weight:700;color:${st.color}">${st.label}</div>
-              <div style="font-size:.78rem;color:var(--fg-2)">Order #${o.id} · ${date}</div>
-            </div>
-          </div>
-          <div style="padding:.75rem 1rem">
-            ${stepBar}
-            ${itemsHtml ? `<ul style="list-style:none;padding:0;margin:.5rem 0;font-size:.88rem">${itemsHtml}</ul>` : ""}
-            <div style="display:flex;justify-content:space-between;font-weight:700;padding-top:.5rem;border-top:1.5px solid var(--bg-2,#e5e7eb);font-size:.95rem">
-              <span>Total</span><span>$${parseFloat(o.total).toFixed(2)}</span>
-            </div>
-          </div>
-        </div>`;
-    }
-    resultEl.style.display = "block";
-  } catch(e) {
-    resultEl.innerHTML = `<div style="padding:1rem;border-radius:.75rem;background:var(--bg-2,#fef2f2);color:#dc2626;font-size:.9rem;text-align:center">❌ Could not retrieve order. Please try again.</div>`;
-    resultEl.style.display = "block";
-  } finally {
-    btn.disabled = false; btn.textContent = "Track Order";
-  }
-}
 
 // ── Legal modals ──────────────────────────────────────────────
 const LEGAL_CONTENT = {
@@ -4781,13 +4649,6 @@ Subtotal: $${subtotal.toFixed(2)}${fee > 0 ? `\nDelivery: $${fee.toFixed(2)}` : 
 ${orderType === "Pickup" ? "Customer will pick up from store." : "Please confirm delivery location."}`
     );
     document.getElementById("waSuccessBtn").href = `https://wa.me/${ownerNum}?text=${ownerMsg}`;
-    if (orderId) {
-      const idEl = document.getElementById("waSuccessOrderId");
-      const idVal = document.getElementById("waSuccessOrderIdVal");
-      const trackBtn = document.getElementById("waTrackBtn");
-      if (idEl && idVal) { idEl.style.display = "block"; idVal.textContent = "#" + orderId; }
-      if (trackBtn) { trackBtn.style.display = "block"; trackBtn.onclick = () => { closeWaSuccess(); openTrackModal(orderId, phone); }; }
-    }
     cart = [];
     updateCart();
     closeOrderModal();
