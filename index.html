@@ -4018,8 +4018,17 @@ async function loadStoreSettings() {
     }
     if (s.phone)     document.getElementById("contact-phone").textContent   = s.phone;
     if (s.address)   document.getElementById("contact-address").textContent = s.address;
-    if (s.storeName) { document.getElementById("footer-store-name").textContent = s.storeName; document.title = s.storeName + " – Store"; }
-    if (s.tagline)   document.getElementById("footer-tagline").textContent  = s.tagline;
+    if (s.store_name || s.storeName) {
+      const name = s.store_name || s.storeName;
+      const el = document.getElementById("footer-store-name");
+      if (el) el.textContent = name;
+      document.title = name + " – Store";
+    }
+    if (s.tagline)   { const el = document.getElementById("footer-tagline"); if (el) el.textContent = s.tagline; }
+    if (s.delivery_fee !== undefined && s.delivery_fee !== "") {
+      const parsed = parseFloat(s.delivery_fee);
+      if (!isNaN(parsed)) DELIVERY_FEE = parsed;
+    }
 
     // Social buttons — only render what's set
     const socialLinks = [
@@ -4486,7 +4495,7 @@ function filterByCat(cat) {
 }
 
 // ── Order form ────────────────────────────────────────────────────
-const DELIVERY_FEE = 5;
+let DELIVERY_FEE = 5; // default; overridden by pt_settings.delivery_fee
 
 function updateOrderTotals() {
   const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);

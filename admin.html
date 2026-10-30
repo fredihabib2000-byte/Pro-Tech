@@ -465,10 +465,12 @@ select.status-sel:focus{border-color:var(--accent)}
         <!-- Store Info -->
         <div class="settings-card">
           <h4>Store Info</h4>
+          <div class="setting-row"><label>Store Name</label><input id="s_store_name" placeholder="Pro Technology"></div>
           <div class="setting-row"><label>Phone</label><input id="s_phone" placeholder="+961 71 925 840"></div>
           <div class="setting-row"><label>WhatsApp</label><input id="s_whatsapp" placeholder="96171925840"></div>
           <div class="setting-row"><label>Email</label><input id="s_email" placeholder="info@example.com"></div>
           <div class="setting-row"><label>Address</label><input id="s_address" placeholder="Beirut, Lebanon"></div>
+          <div class="setting-row"><label>Delivery Fee ($)</label><input id="s_delivery_fee" type="number" step="0.01" min="0" placeholder="5.00"></div>
           <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="saveSettings()">Save Changes</button>
         </div>
         <!-- Social -->
@@ -2053,10 +2055,12 @@ async function loadSettings(){
   try{
     const rows=await sb("/rest/v1/pt_settings?select=key,value")||[];
     rows.forEach(r=>{settingsData[r.key]=r.value||""});
+    document.getElementById("s_store_name").value=settingsData.store_name||"";
     document.getElementById("s_phone").value=settingsData.phone||"";
     document.getElementById("s_whatsapp").value=settingsData.whatsapp||"";
     document.getElementById("s_email").value=settingsData.email||"";
     document.getElementById("s_address").value=settingsData.address||"";
+    document.getElementById("s_delivery_fee").value=settingsData.delivery_fee||"";
     document.getElementById("s_instagram").value=settingsData.instagram||"";
     document.getElementById("s_facebook").value=settingsData.facebook||"";
     document.getElementById("s_tiktok").value=settingsData.tiktok||"";
@@ -2078,10 +2082,12 @@ function toggleBanner(){
 
 async function saveSettings(){
   const keys={
+    store_name:document.getElementById("s_store_name").value.trim(),
     phone:document.getElementById("s_phone").value.trim(),
     whatsapp:document.getElementById("s_whatsapp").value.trim(),
     email:document.getElementById("s_email").value.trim(),
     address:document.getElementById("s_address").value.trim(),
+    delivery_fee:document.getElementById("s_delivery_fee").value.trim(),
     instagram:document.getElementById("s_instagram").value.trim(),
     facebook:document.getElementById("s_facebook").value.trim(),
     tiktok:document.getElementById("s_tiktok").value.trim(),
@@ -2090,9 +2096,12 @@ async function saveSettings(){
     promo_banner_active:String(document.getElementById("bannerToggle").classList.contains("on"))
   };
   try{
-    await Promise.all(Object.entries(keys).map(([k,v])=>
-      sb(`/rest/v1/pt_settings?key=eq.${k}`,{method:"PATCH",body:JSON.stringify({value:v,updated_at:new Date().toISOString()})})
-    ));
+    // UPSERT so missing keys get created, not silently dropped
+    await sb("/rest/v1/pt_settings",{
+      method:"POST",
+      headers:{"Prefer":"resolution=merge-duplicates"},
+      body:JSON.stringify(Object.entries(keys).map(([k,v])=>({key:k,value:v,updated_at:new Date().toISOString()})))
+    });
     showFlash("Settings saved!");
     settingsData={...settingsData,...keys};
   }catch(e){showFlash("Failed to save settings.","err")}
