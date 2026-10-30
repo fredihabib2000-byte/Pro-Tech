@@ -273,9 +273,9 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .nav-cats {
   display: flex;
   align-items: stretch;
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 .nav-cat-item {
   position: relative;
@@ -286,8 +286,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0 12px;
-  font-size: .815rem;
+  padding: 0 9px;
+  font-size: .78rem;
   font-weight: 600;
   color: var(--fg-2);
   background: none;
@@ -468,9 +468,9 @@ button { cursor: pointer; font-family: inherit; border: none; }
   padding: 0 4px 0 14px;
   gap: 6px;
   min-width: 0;
-  max-width: 320px;
-  flex: 1;
-  margin: 10px 16px;
+  max-width: 260px;
+  flex: 1 1 180px;
+  margin: 10px 12px;
   transition: border-color .15s, box-shadow .15s;
 }
 .nav-search:focus-within {
@@ -3823,6 +3823,8 @@ function _mapProduct(p) {
 function buildCatNav() {
   const usedCats = new Set(PRODUCTS.map(p => p.cat).filter(Boolean));
   const chevron = `<svg class="nav-cat-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>`;
+  // Encode a sub-list for safe storage in a data-subs HTML attribute (pipe-separated)
+  const encodeSubs = arr => arr.join('|').replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
 
   // ── Desktop: 5 big-cat dropdowns ──────────────────────────────
   const navCats = document.getElementById('navCats');
@@ -3831,18 +3833,16 @@ function buildCatNav() {
     BIG_CATS.forEach(({label, emoji, subs}) => {
       const activeSubs = subs.filter(s => usedCats.has(s));
       if (!activeSubs.length) return;
-      const safeLabel = label.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      const subsJson = JSON.stringify(activeSubs);
       const subLinks = activeSubs.map(s => {
         const safeSub = s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
         return `<a class="nav-drop-subcat-link" onclick="filterByCat('${safeSub}')">${esc(s)}</a>`;
       }).join('');
       h += `<div class="nav-cat-item">
-        <button class="nav-cat-trigger" data-big="${esc(label)}" onclick="filterByCats('${safeLabel}',${subsJson})">${emoji} ${label}${chevron}</button>
+        <button class="nav-cat-trigger" data-big="${esc(label)}" data-subs="${encodeSubs(activeSubs)}" onclick="filterByCats(this.dataset.big,this.dataset.subs.split('|'))">${emoji} ${esc(label)}${chevron}</button>
         <div class="nav-cat-dropdown">
-          <div class="nav-drop-header">${emoji} ${label}</div>
+          <div class="nav-drop-header">${emoji} ${esc(label)}</div>
           <div class="nav-drop-subcat-list">${subLinks}</div>
-          <button class="nav-drop-viewall" onclick="filterByCats('${safeLabel}',${subsJson})">View all ${label} →</button>
+          <button class="nav-drop-viewall" data-big="${esc(label)}" data-subs="${encodeSubs(activeSubs)}" onclick="filterByCats(this.dataset.big,this.dataset.subs.split('|'))">View all ${esc(label)} →</button>
         </div>
       </div>`;
     });
@@ -3856,9 +3856,7 @@ function buildCatNav() {
     BIG_CATS.forEach(({label, emoji, subs}) => {
       const activeSubs = subs.filter(s => usedCats.has(s));
       if (!activeSubs.length) return;
-      const safeLabel = label.replace(/'/g,"\\'");
-      const subsJson = JSON.stringify(activeSubs);
-      h += `<a class="cat-nav-link" data-big="${esc(label)}" onclick="filterByCats('${safeLabel}',${subsJson})">${emoji} ${label}</a>`;
+      h += `<a class="cat-nav-link" data-big="${esc(label)}" data-subs="${encodeSubs(activeSubs)}" onclick="filterByCats(this.dataset.big,this.dataset.subs.split('|'))">${emoji} ${esc(label)}</a>`;
     });
     h += `<a class="cat-nav-link" href="#contact">📞 Contact</a>`;
     tabletInner.innerHTML = h;
@@ -3872,12 +3870,10 @@ function buildCatNav() {
     BIG_CATS.forEach(({label, emoji, subs}) => {
       const activeSubs = subs.filter(s => usedCats.has(s));
       if (!activeSubs.length) return;
-      const safeLabel = label.replace(/'/g,"\\'");
-      const subsJson = JSON.stringify(activeSubs);
       const subLinks = activeSubs.map(s => {
         const safeSub = s.replace(/'/g,"\\'");
         return `<a class="mobile-nav-sub" onclick="filterByCat('${safeSub}');closeMobileNav()">${esc(s)}</a>`;
-      }).join('') + `<a class="mobile-nav-sub mobile-nav-sub-all" onclick="filterByCats('${safeLabel}',${subsJson});closeMobileNav()">View all ${esc(label)} →</a>`;
+      }).join('') + `<a class="mobile-nav-sub mobile-nav-sub-all" data-big="${esc(label)}" data-subs="${encodeSubs(activeSubs)}" onclick="filterByCats(this.dataset.big,this.dataset.subs.split('|'));closeMobileNav()">View all ${esc(label)} →</a>`;
       h += `<div class="mobile-nav-bigcat">
         <button class="mobile-nav-link mobile-nav-bigbtn" onclick="toggleMobileSub(this)">${emoji} ${esc(label)}${chevron}</button>
         <div class="mobile-nav-subs" hidden>${subLinks}</div>
