@@ -2622,42 +2622,16 @@ html.lenis, html.lenis body { height: auto; }
       </button>
     </div>
   </div>
-  <!-- Category nav row -->
+  <!-- Category nav row — built dynamically by buildCatNav() -->
   <div class="cat-nav">
-    <div class="cat-nav-inner">
-      <a class="cat-nav-link" onclick="filterByCat('all')">🛍️ All Products</a>
-      <a class="cat-nav-link" onclick="filterByCat('laptops')">💻 Laptops</a>
-      <a class="cat-nav-link" onclick="filterByCat('phones')">📱 Phones</a>
-      <a class="cat-nav-link" onclick="filterByCat('tablets')">📋 Tablets</a>
-      <a class="cat-nav-link" onclick="filterByCat('pos')">🖥️ POS Systems</a>
-      <a class="cat-nav-link" onclick="filterByCat('printers')">🖨️ Printers</a>
-      <a class="cat-nav-link" onclick="filterByCat('scanners')">📠 Scanners</a>
-      <a class="cat-nav-link" onclick="filterByCat('accessories')">🔌 Accessories</a>
-      <a class="cat-nav-link" onclick="filterByCat('networking')">🌐 Networking</a>
-      <a class="cat-nav-link" onclick="filterByCat('audio')">🎧 Audio</a>
-      <a class="cat-nav-link" onclick="filterByCat('storage')">💾 Storage</a>
-      <a class="cat-nav-link" href="#contact">📞 Contact</a>
-    </div>
+    <div class="cat-nav-inner"></div>
   </div>
 </nav>
 
 <!-- ── MOBILE NAV ────────────────────────────────────────── -->
 <div class="mobile-nav" id="mobileNav" onclick="if(event.target===this)closeMobileNav()">
-  <div class="mobile-nav-panel">
-    <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
-    <a class="mobile-nav-link" onclick="filterByCat('all');closeMobileNav()">🛍️ All Products</a>
-    <a class="mobile-nav-link" onclick="filterByCat('laptops');closeMobileNav()">💻 Laptops</a>
-    <a class="mobile-nav-link" onclick="filterByCat('phones');closeMobileNav()">📱 Phones</a>
-    <a class="mobile-nav-link" onclick="filterByCat('tablets');closeMobileNav()">📋 Tablets</a>
-    <a class="mobile-nav-link" onclick="filterByCat('pos');closeMobileNav()">🖥️ POS Systems</a>
-    <a class="mobile-nav-link" onclick="filterByCat('printers');closeMobileNav()">🖨️ Printers</a>
-    <a class="mobile-nav-link" onclick="filterByCat('scanners');closeMobileNav()">📠 Scanners</a>
-    <a class="mobile-nav-link" onclick="filterByCat('accessories');closeMobileNav()">🔌 Accessories</a>
-    <a class="mobile-nav-link" onclick="filterByCat('networking');closeMobileNav()">🌐 Networking</a>
-    <a class="mobile-nav-link" onclick="filterByCat('audio');closeMobileNav()">🎧 Audio</a>
-    <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
-    <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
-  </div>
+  <!-- mobile nav panel — built dynamically by buildCatNav() -->
+  <div class="mobile-nav-panel"></div>
 </div>
 
 <!-- ── HERO ───────────────────────────────────────────────────── -->
@@ -3676,10 +3650,56 @@ function _mapProduct(p) {
   };
 }
 
+function buildCatNav() {
+  const CAT_META = [
+    { keys: ['laptop','computer'],       emoji: '💻', label: 'Laptops' },
+    { keys: ['phone','mobile'],          emoji: '📱', label: 'Phones' },
+    { keys: ['tablet'],                  emoji: '📋', label: 'Tablets' },
+    { keys: ['pos','business','cashier'],emoji: '🖥️', label: 'POS Systems' },
+    { keys: ['printer'],                 emoji: '🖨️', label: 'Printers' },
+    { keys: ['scanner'],                 emoji: '📠', label: 'Scanners' },
+    { keys: ['accessor'],                emoji: '🔌', label: 'Accessories' },
+    { keys: ['network'],                 emoji: '🌐', label: 'Networking' },
+    { keys: ['audio','sound','speaker'], emoji: '🎧', label: 'Audio' },
+    { keys: ['storage','drive','disk'],  emoji: '💾', label: 'Storage' },
+  ];
+  function getMeta(cat) {
+    const lc = cat.toLowerCase();
+    const m = CAT_META.find(e => e.keys.some(k => lc.includes(k)));
+    return m || { emoji: '📦', label: cat };
+  }
+  const usedCats = [...new Set(PRODUCTS.map(p => p.cat).filter(Boolean))].sort();
+
+  const inner = document.querySelector('.cat-nav-inner');
+  if (inner) {
+    let h = `<a class="cat-nav-link" onclick="filterByCat('all')">🛍️ All</a>`;
+    usedCats.forEach(c => {
+      const {emoji, label} = getMeta(c);
+      h += `<a class="cat-nav-link" onclick="filterByCat('${c.replace(/'/g,"\\'")}'">${emoji} ${label}</a>`;
+    });
+    h += `<a class="cat-nav-link" href="#contact">📞 Contact</a>`;
+    inner.innerHTML = h;
+  }
+
+  const panel = document.querySelector('.mobile-nav-panel');
+  if (panel) {
+    let h = `<button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>`;
+    h += `<a class="mobile-nav-link" onclick="filterByCat('all');closeMobileNav()">🛍️ All Products</a>`;
+    usedCats.forEach(c => {
+      const {emoji, label} = getMeta(c);
+      h += `<a class="mobile-nav-link" onclick="filterByCat('${c.replace(/'/g,"\\'")}');closeMobileNav()">${emoji} ${label}</a>`;
+    });
+    h += `<a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>`;
+    h += `<a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>`;
+    panel.innerHTML = h;
+  }
+}
+
 function _applyStoreData(products, promos, cats) {
   PRODUCTS = products;
   PROMOS = promos;
   buildCategoryUI(cats || []);
+  buildCatNav();
   renderProducts();
   buildCategorySections();
   renderNewArrivals();
