@@ -162,24 +162,23 @@ button { cursor: pointer; font-family: inherit; border: none; }
   gap: 12px;
   flex-wrap: wrap;
 }
-.top-bar-left { display: flex; align-items: center; gap: 6px; }
+.top-bar-left, .top-bar-right {
+  display: flex; align-items: center; gap: 8px;
+}
 .top-bar-flag { font-size: .9rem; }
-.top-bar-links {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.top-bar-links a {
-  color: rgba(255,255,255,.8);
+.top-delivery-text { opacity: .8; }
+.top-social-link {
+  color: rgba(255,255,255,.82);
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: color .12s;
+  display: flex; align-items: center; gap: 4px;
+  transition: color .12s, opacity .12s;
+  white-space: nowrap;
 }
-.top-bar-links a:hover { color: #fff; }
-.top-bar-sep { opacity: .3; user-select: none; }
-@media (max-width: 600px) { .top-bar-left { display: none; } }
+.top-social-link:hover { color: #fff; opacity: 1; }
+.top-social-label { font-size: .72rem; }
+.top-bar-sep { opacity: .35; user-select: none; font-size: .85rem; }
+@media (max-width: 700px) { .top-social-label { display: none; } .top-delivery-text { display: none; } }
+@media (max-width: 440px) { .top-bar-left { display: none; } }
 
 
 /* ── Nav search ───────────────────────────────────────────────── */
@@ -1158,9 +1157,11 @@ button { cursor: pointer; font-family: inherit; border: none; }
   color: var(--fg-2);
   background: var(--bg);
   letter-spacing: .03em;
-  transition: border-color .15s, color .15s;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s, color .15s, background .15s;
 }
-.brand-chip:hover { border-color: var(--accent); color: var(--accent); }
+.brand-chip:hover, .brand-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(37,99,235,.08); }
 
 /* ── Why us ───────────────────────────────────────────────────── */
 .features-grid {
@@ -2087,8 +2088,9 @@ html.lenis, html.lenis body { height: auto; }
 .cta-banner { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 55%, #2563eb 100%); }
 
 /* ── Brand chips micro hover ─────────────────────────────────────── */
-.brand-chip { transition: border-color .2s, color .2s, transform .2s, box-shadow .2s; }
+.brand-chip { transition: border-color .2s, color .2s, transform .2s, box-shadow .2s, background .2s; }
 .brand-chip:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.brand-chip.active { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--accent); }
 
 /* ── Nav blur on scroll ──────────────────────────────────────────── */
 .nav { transition: box-shadow .3s, background .3s, backdrop-filter .3s; }
@@ -2406,18 +2408,32 @@ html.lenis, html.lenis body { height: auto; }
 <div class="top-bar">
   <div class="top-bar-inner">
     <div class="top-bar-left">
-      <span class="top-bar-flag">🇱🇧</span>
-      <span>Delivering across Lebanon</span>
-    </div>
-    <div class="top-bar-links">
-      <a id="topWaLink" href="#" style="display:none">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-        WhatsApp Chat
+      <a class="top-social-link" href="https://www.instagram.com/proo_fcell" target="_blank" rel="noopener" title="Instagram">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        <span class="top-social-label">proo_fcell</span>
       </a>
-      <span class="top-bar-sep" id="topBarSep" style="display:none">|</span>
-      <a id="topPhoneLink" href="#" style="display:none">
+      <span class="top-bar-sep">·</span>
+      <a class="top-social-link" href="https://www.facebook.com/share/1He9SXirGQ/" target="_blank" rel="noopener" title="Facebook">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        <span class="top-social-label">Pro Technology</span>
+      </a>
+      <span class="top-bar-sep">·</span>
+      <a class="top-social-link" href="https://www.tiktok.com/@procell89" target="_blank" rel="noopener" title="TikTok">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+        <span class="top-social-label">@procell89</span>
+      </a>
+    </div>
+    <div class="top-bar-right">
+      <span class="top-bar-flag">🇱🇧</span>
+      <span class="top-delivery-text">Fast delivery across Lebanon</span>
+      <span class="top-bar-sep">·</span>
+      <a id="topWaLink" class="top-social-link" href="https://wa.me/96170107139" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        +961 70 107 139
+      </a>
+      <a id="topPhoneLink" class="top-social-link" href="tel:+96170107139">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-        <span id="topPhoneNum">Call Us</span>
+        <span id="topPhoneNum">+961 70 107 139</span>
       </a>
     </div>
   </div>
@@ -2784,32 +2800,25 @@ html.lenis, html.lenis body { height: auto; }
 <!-- ── BRANDS ─────────────────────────────────────────────────── -->
 <div class="brands-section">
   <div class="brands-inner">
-    <div class="brands-label">Trusted Brands We Carry</div>
+    <div class="brands-label">Shop by Brand — Click to Filter</div>
     <div class="brands-marquee">
-      <div class="brands-track">
-        <div class="brand-chip">Epson</div>
+      <div class="brands-track" id="brandsTrack">
         <div class="brand-chip">HP</div>
         <div class="brand-chip">Dell</div>
         <div class="brand-chip">Lenovo</div>
-        <div class="brand-chip">Zebra</div>
-        <div class="brand-chip">Star Micronics</div>
-        <div class="brand-chip">Honeywell</div>
-        <div class="brand-chip">Datalogic</div>
-        <div class="brand-chip">Verifone</div>
-        <div class="brand-chip">PAX</div>
-        <div class="brand-chip">Asus</div>
-        <!-- duplicate for seamless loop -->
         <div class="brand-chip">Epson</div>
+        <div class="brand-chip">Samsung</div>
+        <div class="brand-chip">JBL</div>
+        <div class="brand-chip">Zebra</div>
+        <div class="brand-chip">Canon</div>
         <div class="brand-chip">HP</div>
         <div class="brand-chip">Dell</div>
         <div class="brand-chip">Lenovo</div>
+        <div class="brand-chip">Epson</div>
+        <div class="brand-chip">Samsung</div>
+        <div class="brand-chip">JBL</div>
         <div class="brand-chip">Zebra</div>
-        <div class="brand-chip">Star Micronics</div>
-        <div class="brand-chip">Honeywell</div>
-        <div class="brand-chip">Datalogic</div>
-        <div class="brand-chip">Verifone</div>
-        <div class="brand-chip">PAX</div>
-        <div class="brand-chip">Asus</div>
+        <div class="brand-chip">Canon</div>
       </div>
     </div>
   </div>
@@ -3509,6 +3518,7 @@ function esc(str) {
 let activeFilter = "all";
 let activeSort = "alpha-asc";
 let activePriceFilter = "all";
+let activeBrandFilter = "";
 let searchTerm = "";
 const PAGE_SIZE = 24;
 let visibleCount = PAGE_SIZE;
@@ -3552,6 +3562,7 @@ function _applyStoreData(products, promos, cats) {
   renderProducts();
   buildCategorySections();
   renderNewArrivals();
+  buildBrandsSection();
 }
 
 async function _fetchStoreData() {
@@ -3655,7 +3666,8 @@ function renderProducts(appendFrom) {
       || (activePriceFilter === "100-500" && price >= 100 && price <= 500)
       || (activePriceFilter === "500-1000" && price > 500 && price <= 1000)
       || (activePriceFilter === "over-1000" && price > 1000);
-    return matchCat && matchSearch && matchPrice && p.quantity > 0;
+    const matchBrand = !activeBrandFilter || p.name.toLowerCase().includes(activeBrandFilter.toLowerCase()) || (p.desc||"").toLowerCase().includes(activeBrandFilter.toLowerCase());
+    return matchCat && matchSearch && matchPrice && matchBrand && p.quantity > 0;
   });
 
   // Sort
@@ -4418,34 +4430,62 @@ function buildCategorySections() {
     printers: "Laser & inkjet printers & much more",
     storage: "SSDs, HDDs, USB drives & much more",
   };
-  area.innerHTML = catKeys.map(cat => {
-    const prods = catMap[cat].slice(0, 6);
-    const label = esc(catLabel(cat));
-    const sub = esc(catSubtitles[cat] || `Top ${catLabel(cat).toLowerCase()} deals`);
-    return `
-      <div class="cat-section-wrap">
-        <div class="container cat-section-inner">
-          <div class="cat-section-header">
-            <div>
-              <div class="cat-section-title">Best ${label} Deals</div>
-              <div class="cat-section-sub">${sub}</div>
-            </div>
-          </div>
-          <div class="cat-section-row">${prods.map(p => productCardHTML(p)).join("")}</div>
-          <div class="cat-section-show-all-wrap">
-            <button class="cat-section-show-all" onclick="filterByCat('${cat.replace(/'/g,"\\'")}')">Show All ${label} &rarr;</button>
+  const bestSellers = PRODUCTS.filter(p => p.quantity > 0 && p.badge && p.badge.toLowerCase().includes('best'));
+  const featured = bestSellers.length >= 2 ? bestSellers : PRODUCTS.filter(p => p.quantity > 0).slice(0, 8);
+  if (featured.length < 2) { area.innerHTML = ""; return; }
+  area.innerHTML = `
+    <div class="cat-section-wrap">
+      <div class="container cat-section-inner">
+        <div class="cat-section-header">
+          <div>
+            <div class="cat-section-title">⭐ Best Sellers</div>
+            <div class="cat-section-sub">Our most popular products — loved by customers</div>
           </div>
         </div>
-      </div>`;
-  }).join("");
+        <div class="cat-section-row">${featured.slice(0,8).map(p => productCardHTML(p)).join("")}</div>
+        <div class="cat-section-show-all-wrap">
+          <button class="cat-section-show-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Browse All Products &rarr;</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function filterByCat(cat) {
   activeFilter = cat;
+  activeBrandFilter = "";
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
   document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
+  document.querySelectorAll(".brand-chip").forEach(c => c.classList.remove("active"));
   renderProducts();
   document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+}
+
+function filterByBrand(brand) {
+  activeBrandFilter = activeBrandFilter === brand ? "" : brand;
+  activeFilter = "all";
+  visibleCount = PAGE_SIZE;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
+  document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === "all"));
+  document.querySelectorAll(".brand-chip").forEach(c => c.classList.toggle("active", c.dataset.brand === brand && activeBrandFilter === brand));
+  renderProducts();
+  document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+}
+
+const _KNOWN_BRANDS = ['Epson','HP','Dell','Lenovo','Apple','Samsung','Asus','Acer','Canon','Brother','Xerox','Zebra','Honeywell','Datalogic','Verifone','PAX','Huawei','Xiaomi','JBL','Sony','Logitech','Microsoft','Panasonic','Toshiba','Fujitsu','Kyocera','Ricoh','WD','Seagate','Kingston','SanDisk','Crucial','Corsair','Netgear','TP-Link','Cisco','D-Link','Hikvision','Dahua','Anker','Baseus','Hisense','LG','Bose','Sennheiser','Star Micronics','Jingxin'];
+
+function buildBrandsSection() {
+  const track = document.getElementById("brandsTrack");
+  if (!track || !PRODUCTS.length) return;
+  const found = new Set();
+  for (const p of PRODUCTS) {
+    for (const b of _KNOWN_BRANDS) {
+      if (p.name.toLowerCase().includes(b.toLowerCase())) found.add(b);
+    }
+  }
+  if (found.size === 0) return;
+  const chips = [...found].sort();
+  const doubled = [...chips, ...chips];
+  track.innerHTML = doubled.map(b => `<div class="brand-chip" data-brand="${esc(b)}" onclick="filterByBrand('${b.replace(/'/g,"\\'")}')"><span>${esc(b)}</span></div>`).join("");
 }
 
 // ── Order form ────────────────────────────────────────────────────
