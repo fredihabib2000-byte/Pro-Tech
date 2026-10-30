@@ -207,17 +207,222 @@ button { cursor: pointer; font-family: inherit; border: none; }
 @media (max-width: 400px) { .top-bar-left { display: none; } }
 
 
+/* ── Nav ──────────────────────────────────────────────────────── */
+.nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 6px rgba(0,0,0,.06);
+  transition: background .2s, box-shadow .2s;
+}
+.nav-scrolled {
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.13);
+}
+.nav-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding-block: 0;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+  max-width: 1260px;
+  margin-inline: auto;
+  min-height: 60px;
+}
+
+/* Logo */
+.logo {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--fg);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  text-decoration: none;
+  padding-right: 20px;
+}
+.logo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
+  color: #fff;
+  font-family: var(--display);
+  font-size: .9rem;
+  font-weight: 900;
+  letter-spacing: -.02em;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37,99,235,.4);
+}
+.logo-text-pro { color: var(--accent); font-weight: 900; }
+.logo-text-tech { color: var(--fg-2); font-weight: 600; font-size: 1.05rem; }
+@media (max-width: 480px) { .logo-text-tech { display: none; } }
+
+/* ── Dropdown category nav ───────────────────────────────── */
+.nav-cats {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.nav-cat-item {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.nav-cat-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 12px;
+  font-size: .815rem;
+  font-weight: 600;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s, background .15s;
+  text-decoration: none;
+  letter-spacing: -.01em;
+}
+.nav-cat-item:hover > .nav-cat-trigger,
+.nav-cat-trigger.cat-active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--accent-soft);
+}
+.nav-cat-chevron {
+  flex-shrink: 0;
+  transition: transform .2s;
+  opacity: .6;
+}
+.nav-cat-item:hover > .nav-cat-trigger .nav-cat-chevron {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+/* Dropdown panel */
+.nav-cat-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 280px;
+  max-width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent);
+  border-radius: 0 0 14px 14px;
+  box-shadow: 0 14px 44px rgba(0,0,0,.13), 0 2px 8px rgba(0,0,0,.06);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity .18s, transform .18s, visibility .18s;
+  z-index: 300;
+  overflow: hidden;
+}
+.nav-cat-item:hover > .nav-cat-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.nav-drop-header {
+  padding: 12px 16px 8px;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--fg-3);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+.nav-drop-product {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background .12s;
+  color: var(--fg);
+  text-decoration: none;
+}
+.nav-drop-product:hover { background: var(--surface-2); }
+.nav-drop-thumb {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  font-size: 1.1rem;
+  border: 1px solid var(--border);
+}
+.nav-drop-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.nav-drop-info { flex: 1; min-width: 0; }
+.nav-drop-name {
+  font-size: .79rem;
+  font-weight: 500;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.nav-drop-price {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 1px;
+}
+.nav-drop-viewall {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 11px 16px;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--accent);
+  border-top: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .12s;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+  text-align: center;
+}
+.nav-drop-viewall:hover { background: var(--accent-soft); }
+@media (max-width: 960px) { .nav-cats { display: none; } }
+
 /* ── Nav search ───────────────────────────────────────────────── */
 .nav-search {
-  flex: 2;
-  max-width: 520px;
   display: flex;
   align-items: center;
   background: var(--surface-2);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 99px;
-  padding: 8px 16px;
-  gap: 8px;
+  padding: 0 4px 0 14px;
+  gap: 6px;
+  min-width: 0;
+  max-width: 320px;
+  flex: 1;
+  margin: 10px 16px;
   transition: border-color .15s, box-shadow .15s;
 }
 .nav-search:focus-within {
@@ -229,183 +434,81 @@ button { cursor: pointer; font-family: inherit; border: none; }
   border: none;
   background: transparent;
   color: var(--fg);
-  font-size: .84rem;
+  font-size: .83rem;
   width: 100%;
   outline: none;
   font-family: var(--body);
+  padding: 0;
 }
 .nav-search input::placeholder { color: var(--fg-3); }
-.nav-search svg { flex-shrink: 0; color: var(--fg-3); }
+.nav-search-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+}
+.nav-search-btn:hover { opacity: .85; transform: scale(1.05); }
 @media (max-width: 720px) { .nav-search { display: none; } }
 
-/* ── Nav ──────────────────────────────────────────────────────── */
-.nav {
-  position: sticky;
-  top: env(safe-area-inset-top, 0px);
-  z-index: 100;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: background .2s, box-shadow .2s;
-}
-.nav::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, #60a5fa 60%, transparent 100%);
-  opacity: 0;
-  transition: opacity .25s;
-}
-.nav-scrolled::after { opacity: 1; }
-.nav-scrolled {
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 24px rgba(0,0,0,.18);
-}
-.nav-inner {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding-block: 13px;
-  padding-inline: 20px;
-  max-width: 1200px;
-  margin-inline: auto;
-}
-.logo {
-  font-family: var(--display);
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--fg);
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  text-decoration: none;
-  will-change: transform;
-}
-.logo-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
-  color: #fff;
-  font-family: var(--display);
-  font-size: .95rem;
-  font-weight: 900;
-  letter-spacing: -.02em;
-  flex-shrink: 0;
-  box-shadow: 0 3px 10px rgba(37,99,235,.45);
-}
-.logo-text-pro { color: var(--accent); font-weight: 900; }
-.logo-text-tech { color: var(--fg-2); font-weight: 600; font-size: 1.1rem; }
-@media (max-width: 480px) { .logo-text-tech { display: none; } }
-.nav-links {
-  display: flex;
-  gap: 2px;
-  list-style: none;
-  flex-wrap: wrap;
-}
-.nav-links a {
-  padding: 7px 13px;
-  border-radius: var(--r-sm);
-  font-size: .875rem;
-  font-weight: 500;
-  color: var(--fg-2);
-  transition: color .15s, background .15s;
-  position: relative;
-}
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  bottom: 3px; left: 13px; right: 13px;
-  height: 2px;
-  background: var(--accent);
-  border-radius: 2px;
-  transform: scaleX(0);
-  transition: transform .2s;
-}
-.nav-links a:hover { color: var(--fg); background: var(--surface-2); }
-.nav-links a:hover::after { transform: scaleX(1); }
-.nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+/* ── Nav right ─────────────────────────────────────────────── */
+.nav-right { display: flex; align-items: center; gap: 6px; padding-left: 6px; }
 .cart-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 8px 14px;
-  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
-  color: #fff;
-  border-radius: var(--r-sm);
-  font-size: .875rem;
-  font-weight: 600;
-  transition: opacity .15s, transform .1s, box-shadow .15s;
-  box-shadow: 0 2px 10px rgba(37,99,235,.35);
+  justify-content: center;
+  width: 38px; height: 38px;
+  background: none;
+  color: var(--fg-2);
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  transition: color .15s, border-color .15s, background .15s;
   position: relative;
+  flex-shrink: 0;
 }
-.cart-btn:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,.45); }
+.cart-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .cart-count {
-  background: #fff;
-  color: var(--accent);
+  position: absolute;
+  top: -4px; right: -4px;
+  background: var(--accent);
+  color: #fff;
   border-radius: 99px;
-  font-size: .68rem;
+  font-size: .62rem;
   font-weight: 700;
-  padding: 1px 6px;
-  min-width: 18px;
+  padding: 1px 5px;
+  min-width: 16px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  border: 2px solid var(--surface);
+  line-height: 1.4;
 }
 .theme-btn {
-  background: var(--surface-2);
-  border-radius: var(--r-sm);
-  padding: 8px;
-  font-size: 1rem;
+  width: 38px; height: 38px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  font-size: .95rem;
   line-height: 1;
-  transition: background .15s;
+  transition: background .15s, border-color .15s;
+  display: flex; align-items: center; justify-content: center;
 }
-.theme-btn:hover { background: var(--border); }
-@media (max-width: 720px) {
-  .nav-links { display: none; }
-}
+.theme-btn:hover { background: var(--surface-2); border-color: var(--accent); }
+.nav-links { display: none; }
 
-/* ── Category nav row ─────────────────────────────────────── */
-.cat-nav {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+/* ── Cat nav (tablet scrollable fallback, desktop hidden) ──── */
+.cat-nav { display: none; }
+.cat-nav-inner { display: flex; }
+.cat-nav-link { display: inline-flex; align-items: center; gap: 5px; padding: 10px 13px; font-size: .8rem; font-weight: 600; color: var(--fg-2); white-space: nowrap; cursor: pointer; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; text-decoration: none; }
+.cat-nav-link:hover, .cat-nav-link.cat-active { color: var(--accent); border-bottom-color: var(--accent); }
+@media (max-width: 960px) {
+  .cat-nav { display: block; background: var(--surface); border-top: 1px solid var(--border); }
+  .cat-nav-inner { overflow-x: auto; scrollbar-width: none; max-width: 1260px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left,0px)); padding-right: max(16px, env(safe-area-inset-right,0px)); }
+  .cat-nav-inner::-webkit-scrollbar { display: none; }
 }
-.cat-nav-inner {
-  display: flex;
-  align-items: center;
-  max-width: 1200px;
-  margin-inline: auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  overflow-x: auto;
-  scrollbar-width: none;
-  gap: 0;
-}
-.cat-nav-inner::-webkit-scrollbar { display: none; }
-.cat-nav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 11px 14px;
-  font-size: .81rem;
-  font-weight: 600;
-  color: var(--fg-2);
-  white-space: nowrap;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: color .15s, border-color .15s, background .15s;
-  user-select: none;
-  text-decoration: none;
-}
-.cat-nav-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
-.cat-nav-link.cat-active { color: var(--accent); border-bottom-color: var(--accent); }
 @media (max-width: 720px) { .cat-nav { display: none; } }
 
 /* ── Hero Banner ───────────────────────────────────────────────── */
@@ -2517,7 +2620,7 @@ html.lenis, html.lenis body { height: auto; }
 .mobile-nav-close { align-self: flex-end; background: var(--surface-2); border: none; border-radius: var(--r-sm); padding: 8px 10px; font-size: 1rem; cursor: pointer; margin-bottom: 12px; }
 .mobile-nav-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: .95rem; color: var(--fg); text-decoration: none; transition: background .15s; }
 .mobile-nav-link:hover { background: var(--surface-2); }
-@media (max-width: 720px) { .hamburger { display: flex; } }
+@media (max-width: 960px) { .hamburger { display: flex; } }
 
 /* ── General mobile fixes ────────────────────────────────── */
 @media (max-width: 640px) {
@@ -2601,30 +2704,40 @@ html.lenis, html.lenis body { height: auto; }
 <!-- ── NAV ────────────────────────────────────────────────────── -->
 <nav class="nav">
   <div class="nav-inner">
+    <!-- Logo -->
     <a href="#hero" class="logo">
       <span class="logo-badge">PT</span>
       <span class="logo-text-pro">Pro</span><span class="logo-text-tech">&nbsp;Technology</span>
     </a>
+
+    <!-- Desktop dropdown category nav — built by buildCatNav() -->
+    <div class="nav-cats" id="navCats" role="navigation" aria-label="Product categories"></div>
+
+    <!-- Search bar -->
     <div class="nav-search">
-      <svg width="15" height="15" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <input type="text" id="navSearchInput" placeholder="Search products, brands and more…">
+      <input type="text" id="navSearchInput" placeholder="Search products, brands and more…" autocomplete="off">
+      <button class="nav-search-btn" aria-label="Search" onclick="document.getElementById('navSearchInput').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))">
+        <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
     </div>
-    <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMobileNav()">
-      <span class="ham-line"></span>
-      <span class="ham-line"></span>
-      <span class="ham-line"></span>
-    </button>
+
+    <!-- Right icons -->
     <div class="nav-right">
       <button class="theme-btn" id="themeToggle" title="Toggle theme">☀️</button>
-      <button class="cart-btn" id="cartBtn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <button class="cart-btn" id="cartBtn" aria-label="Cart">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         <span class="cart-count" id="cartCount">0</span>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMobileNav()">
+        <span class="ham-line"></span>
+        <span class="ham-line"></span>
+        <span class="ham-line"></span>
       </button>
     </div>
   </div>
-  <!-- Category nav row — built dynamically by buildCatNav() -->
+  <!-- Scrollable category nav for tablet (960px–720px) — built by buildCatNav() -->
   <div class="cat-nav">
-    <div class="cat-nav-inner"></div>
+    <div class="cat-nav-inner" id="catNavInner"></div>
   </div>
 </nav>
 
@@ -3669,18 +3782,55 @@ function buildCatNav() {
     return m || { emoji: '📦', label: cat };
   }
   const usedCats = [...new Set(PRODUCTS.map(p => p.cat).filter(Boolean))].sort();
+  const chevron = `<svg class="nav-cat-chevron" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"/></svg>`;
 
-  const inner = document.querySelector('.cat-nav-inner');
-  if (inner) {
+  // ── Desktop: dropdown nav ──────────────────────────────────────
+  const navCats = document.getElementById('navCats');
+  if (navCats) {
+    let h = '';
+    usedCats.forEach(cat => {
+      const {emoji, label} = getMeta(cat);
+      const safecat = cat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      const topProds = PRODUCTS.filter(p => p.cat === cat && p.quantity > 0).slice(0, 5);
+      let dropRows = topProds.map(p => {
+        const imgSrc = p.imageUrl || p.image_url;
+        const thumb = imgSrc
+          ? `<img src="${esc(imgSrc)}" alt="" loading="lazy">`
+          : `<span style="font-size:1.1rem">${p.icon || '📦'}</span>`;
+        const price = p.price ? `$${Number(p.price).toFixed(2)}` : '';
+        return `<div class="nav-drop-product" onclick="filterByCat('${safecat}');document.getElementById('products').scrollIntoView({behavior:'smooth'})">
+          <div class="nav-drop-thumb">${thumb}</div>
+          <div class="nav-drop-info">
+            <div class="nav-drop-name">${esc(p.name)}</div>
+            ${price ? `<div class="nav-drop-price">${price}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+      h += `<div class="nav-cat-item">
+        <button class="nav-cat-trigger" onclick="filterByCat('${safecat}')">${emoji} ${label}${chevron}</button>
+        <div class="nav-cat-dropdown">
+          <div class="nav-drop-header">Top ${label}</div>
+          ${dropRows}
+          <button class="nav-drop-viewall" onclick="filterByCat('${safecat}')">View all ${label} →</button>
+        </div>
+      </div>`;
+    });
+    navCats.innerHTML = h;
+  }
+
+  // ── Tablet: scrollable flat row ────────────────────────────────
+  const tabletInner = document.getElementById('catNavInner');
+  if (tabletInner) {
     let h = `<a class="cat-nav-link" onclick="filterByCat('all')">🛍️ All</a>`;
     usedCats.forEach(c => {
       const {emoji, label} = getMeta(c);
       h += `<a class="cat-nav-link" onclick="filterByCat('${c.replace(/'/g,"\\'")}'">${emoji} ${label}</a>`;
     });
     h += `<a class="cat-nav-link" href="#contact">📞 Contact</a>`;
-    inner.innerHTML = h;
+    tabletInner.innerHTML = h;
   }
 
+  // ── Mobile: slide-in panel ─────────────────────────────────────
   const panel = document.querySelector('.mobile-nav-panel');
   if (panel) {
     let h = `<button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>`;
@@ -4645,6 +4795,10 @@ function filterByCat(cat) {
   document.querySelectorAll(".cat-nav-link[onclick]").forEach(a => {
     const m = (a.getAttribute("onclick") || "").match(/'([^']+)'/);
     a.classList.toggle("cat-active", m && (m[1] === cat || m[1] === activeFilter));
+  });
+  document.querySelectorAll(".nav-cat-trigger").forEach(btn => {
+    const m = (btn.getAttribute("onclick") || "").match(/'([^']+)'/);
+    btn.classList.toggle("cat-active", m && (m[1] === cat || m[1] === activeFilter));
   });
   renderProducts();
   document.getElementById("products").scrollIntoView({ behavior: "smooth" });
