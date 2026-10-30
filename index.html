@@ -508,17 +508,18 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .nav-phone-link {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   text-decoration: none;
   color: var(--fg-2);
-  font-size: .78rem;
+  font-size: .7rem;
   font-weight: 600;
   white-space: nowrap;
-  padding: 5px 10px;
+  padding: 4px 8px;
   border-radius: 20px;
   border: 1.5px solid var(--border);
   transition: color .15s, border-color .15s, background .15s;
 }
+.nav-phone-link svg { flex-shrink: 0; width: 11px; height: 11px; }
 .nav-phone-link:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 @media (max-width: 960px) { .nav-phone-link { display: none; } }
 .cart-btn {
