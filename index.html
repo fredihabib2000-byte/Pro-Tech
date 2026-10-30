@@ -142,16 +142,26 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 /* ── Top bar ──────────────────────────────────────────────────── */
 .top-bar {
-  background: #1a3a6b;
-  border-bottom: none;
-  color: rgba(255,255,255,.85);
-  font-size: .76rem;
+  background: linear-gradient(90deg, #0d1e45 0%, #122660 40%, #1a3a8a 80%, #0f2050 100%);
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  color: rgba(255,255,255,.88);
+  font-size: .74rem;
   font-weight: 500;
-  padding: 7px 20px;
+  padding: 8px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.top-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.03) 50%, transparent 100%);
+  pointer-events: none;
 }
 [data-theme="light"] .top-bar {
-  background: #2563eb;
-  color: rgba(255,255,255,.92);
+  background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #1d4ed8 100%);
+  border-bottom: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.95);
 }
 .top-bar-inner {
   max-width: 1200px;
@@ -161,25 +171,29 @@ button { cursor: pointer; font-family: inherit; border: none; }
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
-.top-bar-left { display: flex; align-items: center; gap: 6px; }
+.top-bar-left, .top-bar-right {
+  display: flex; align-items: center; gap: 10px;
+}
 .top-bar-flag { font-size: .9rem; }
-.top-bar-links {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.top-bar-links a {
-  color: rgba(255,255,255,.8);
+.top-delivery-text { opacity: .75; letter-spacing: .01em; }
+.top-social-link {
+  color: rgba(255,255,255,.78);
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: color .12s;
+  display: flex; align-items: center; gap: 4px;
+  transition: color .15s, opacity .15s;
+  white-space: nowrap;
+  padding: 2px 0;
 }
-.top-bar-links a:hover { color: #fff; }
-.top-bar-sep { opacity: .3; user-select: none; }
-@media (max-width: 600px) { .top-bar-left { display: none; } }
+.top-social-link svg { opacity: .9; flex-shrink: 0; }
+.top-social-link:hover { color: #fff; }
+.top-social-link:hover svg { opacity: 1; }
+.top-social-label { font-size: .71rem; letter-spacing: .01em; }
+.top-bar-sep { opacity: .25; user-select: none; }
+@media (max-width: 720px) { .top-social-label { display: none; } .top-delivery-text { display: none; } }
+@media (max-width: 460px) { .top-bar-left { display: none; } }
 
 
 /* ── Nav search ───────────────────────────────────────────────── */
@@ -221,12 +235,29 @@ button { cursor: pointer; font-family: inherit; border: none; }
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  transition: background .2s, box-shadow .2s;
+}
+.nav::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent) 30%, #60a5fa 60%, transparent 100%);
+  opacity: 0;
+  transition: opacity .25s;
+}
+.nav-scrolled::after { opacity: 1; }
+.nav-scrolled {
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
 }
 .nav-inner {
   display: flex;
   align-items: center;
   gap: 24px;
-  padding-block: 14px;
+  padding-block: 13px;
   padding-inline: 20px;
   max-width: 1200px;
   margin-inline: auto;
@@ -251,48 +282,60 @@ button { cursor: pointer; font-family: inherit; border: none; }
   width: 36px;
   height: 36px;
   border-radius: 9px;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
   color: #fff;
   font-family: var(--display);
   font-size: .95rem;
   font-weight: 900;
   letter-spacing: -.02em;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  box-shadow: 0 3px 10px rgba(37,99,235,.45);
 }
 .logo-text-pro { color: var(--accent); font-weight: 900; }
 .logo-text-tech { color: var(--fg-2); font-weight: 600; font-size: 1.1rem; }
-.nav-scrolled .logo-badge { background: var(--accent); }
 @media (max-width: 480px) { .logo-text-tech { display: none; } }
 .nav-links {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   list-style: none;
   flex-wrap: wrap;
 }
 .nav-links a {
-  padding: 6px 12px;
+  padding: 7px 13px;
   border-radius: var(--r-sm);
   font-size: .875rem;
   font-weight: 500;
   color: var(--fg-2);
   transition: color .15s, background .15s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 3px; left: 13px; right: 13px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  transform: scaleX(0);
+  transition: transform .2s;
 }
 .nav-links a:hover { color: var(--fg); background: var(--surface-2); }
+.nav-links a:hover::after { transform: scaleX(1); }
 .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .cart-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  background: var(--accent);
+  padding: 9px 18px;
+  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
   color: #fff;
   border-radius: var(--r-sm);
   font-size: .875rem;
   font-weight: 600;
-  transition: background .15s, transform .1s;
+  transition: opacity .15s, transform .1s, box-shadow .15s;
+  box-shadow: 0 2px 10px rgba(37,99,235,.35);
 }
-.cart-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.cart-btn:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,.45); }
 .cart-count {
   background: #fff;
   color: var(--accent);
@@ -596,120 +639,168 @@ button { cursor: pointer; font-family: inherit; border: none; }
 
 /* ── Ink & Toner promo banner ─────────────────────────────────── */
 .ink-banner {
-  background: #0a0e1a;
+  background: #f1f5fb;
   overflow: hidden;
   position: relative;
+  border-top: 1px solid #e2e8f3;
+  border-bottom: 1px solid #e2e8f3;
+}
+.ink-banner::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 340px; height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37,99,235,.07) 0%, transparent 65%);
+  pointer-events: none;
+}
+.ink-banner::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: -40px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(239,68,68,.05) 0%, transparent 70%);
+  pointer-events: none;
 }
 .ink-banner-inner {
   max-width: 1200px;
   margin-inline: auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.15fr;
   align-items: center;
-  min-height: 300px;
+  min-height: 320px;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
 }
-.ink-banner-content {
-  padding: 52px 48px 52px 32px;
+.ink-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+.ink-content {
+  padding: 48px 48px 48px 0;
   position: relative;
   z-index: 2;
 }
-.ink-banner-label {
+.ink-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.15);
+  gap: 6px;
+  background: rgba(37,99,235,.1);
+  color: var(--accent);
   border-radius: 99px;
   padding: 4px 14px;
-  font-size: .73rem;
-  font-weight: 600;
-  color: rgba(255,255,255,.7);
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  margin-bottom: 18px;
-}
-.ink-banner-title {
-  font-family: var(--display);
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.15;
-  margin-bottom: 10px;
-}
-.ink-banner-title span { color: #ef4444; }
-.ink-banner-sub {
-  font-size: .9rem;
-  color: rgba(255,255,255,.6);
-  margin-bottom: 28px;
-  line-height: 1.6;
-}
-.ink-brands {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-.ink-brand-chip {
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 8px;
-  padding: 7px 16px;
-  font-size: .82rem;
+  font-size: .72rem;
   font-weight: 700;
-  color: rgba(255,255,255,.85);
-  letter-spacing: .04em;
-  transition: background .15s, border-color .15s;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 14px;
 }
-.ink-brand-chip.canon { color: #ef4444; border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.08); }
-.ink-brand-chip:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.25); }
+.ink-headline {
+  font-family: var(--display);
+  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  font-weight: 900;
+  line-height: .98;
+  margin-bottom: 10px;
+  color: #0f172a;
+  letter-spacing: -.01em;
+}
+.ink-headline .line-accent { color: #ef4444; display: block; }
+.ink-tagline {
+  font-size: .88rem;
+  color: #64748b;
+  margin-bottom: 24px;
+  letter-spacing: .01em;
+}
+.ink-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.ink-feat {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ink-feat.quality { background: #1e293b; color: #fff; }
+.ink-feat.value   { background: #f59e0b; color: #fff; }
+.ink-feat-icon {
+  width: 34px; height: 34px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.15);
+  font-size: 1.1rem;
+}
+.ink-feat-text strong {
+  display: block;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.ink-feat-text span { font-size: .72rem; opacity: .82; }
+.ink-brand-row {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.ink-brand-pill {
+  background: #fff;
+  border: 1px solid #dde3ef;
+  border-radius: 8px;
+  padding: 5px 13px;
+  font-size: .78rem;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: .04em;
+  transition: border-color .15s, color .15s;
+}
+.ink-brand-pill:hover { border-color: var(--accent); color: var(--accent); }
 .ink-banner-cta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #ef4444;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #fff;
   font-size: .88rem;
   font-weight: 700;
   padding: 12px 26px;
   border-radius: 99px;
   text-decoration: none;
-  transition: background .15s, transform .15s;
+  transition: transform .15s, box-shadow .15s;
   cursor: pointer;
   border: none;
+  box-shadow: 0 4px 14px rgba(37,99,235,.32);
 }
-.ink-banner-cta:hover { background: #dc2626; transform: translateY(-2px); }
-.ink-banner-image {
-  position: relative;
-  height: 300px;
-  overflow: hidden;
+.ink-banner-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(37,99,235,.44); }
+.ink-note {
+  margin-top: 10px;
+  font-size: .76rem;
+  color: #94a3b8;
 }
-.ink-banner-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  opacity: .85;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ink-banner { background: #111827; border-color: #1e293b; }
+  :root:not([data-theme="light"]) .ink-headline { color: #f1f5f9; }
+  :root:not([data-theme="light"]) .ink-tagline { color: #94a3b8; }
+  :root:not([data-theme="light"]) .ink-brand-pill { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+  :root:not([data-theme="light"]) .ink-note { color: #64748b; }
+  :root:not([data-theme="light"]) .ink-eyebrow { background: rgba(37,99,235,.16); }
 }
-.ink-banner-image::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to right, #0a0e1a 0%, transparent 40%);
-  z-index: 1;
-}
-.ink-banner-image-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8rem;
-  background: linear-gradient(135deg, #1a1f35, #0d1124);
-}
+:root[data-theme="dark"] .ink-banner { background: #111827; border-color: #1e293b; }
+:root[data-theme="dark"] .ink-headline { color: #f1f5f9; }
+:root[data-theme="dark"] .ink-tagline { color: #94a3b8; }
+:root[data-theme="dark"] .ink-brand-pill { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+:root[data-theme="dark"] .ink-note { color: #64748b; }
+:root[data-theme="dark"] .ink-eyebrow { background: rgba(37,99,235,.16); }
 @media (max-width: 768px) {
   .ink-banner-inner { grid-template-columns: 1fr; }
-  .ink-banner-image { height: 200px; }
-  .ink-banner-content { padding: 36px 24px; }
+  .ink-visual { padding: 28px 24px 0; }
+  .ink-visual svg { max-height: 190px; }
+  .ink-content { padding: 20px max(16px, env(safe-area-inset-left, 0px)) 36px; }
 }
 
 /* ── Stats bar ────────────────────────────────────────────────── */
@@ -1158,9 +1249,11 @@ button { cursor: pointer; font-family: inherit; border: none; }
   color: var(--fg-2);
   background: var(--bg);
   letter-spacing: .03em;
-  transition: border-color .15s, color .15s;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color .15s, color .15s, background .15s;
 }
-.brand-chip:hover { border-color: var(--accent); color: var(--accent); }
+.brand-chip:hover, .brand-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(37,99,235,.08); }
 
 /* ── Why us ───────────────────────────────────────────────────── */
 .features-grid {
@@ -2087,8 +2180,9 @@ html.lenis, html.lenis body { height: auto; }
 .cta-banner { background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 55%, #2563eb 100%); }
 
 /* ── Brand chips micro hover ─────────────────────────────────────── */
-.brand-chip { transition: border-color .2s, color .2s, transform .2s, box-shadow .2s; }
+.brand-chip { transition: border-color .2s, color .2s, transform .2s, box-shadow .2s, background .2s; }
 .brand-chip:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.brand-chip.active { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--accent); }
 
 /* ── Nav blur on scroll ──────────────────────────────────────────── */
 .nav { transition: box-shadow .3s, background .3s, backdrop-filter .3s; }
@@ -2406,18 +2500,32 @@ html.lenis, html.lenis body { height: auto; }
 <div class="top-bar">
   <div class="top-bar-inner">
     <div class="top-bar-left">
-      <span class="top-bar-flag">🇱🇧</span>
-      <span>Delivering across Lebanon</span>
-    </div>
-    <div class="top-bar-links">
-      <a id="topWaLink" href="#" style="display:none">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
-        WhatsApp Chat
+      <a class="top-social-link" href="https://www.instagram.com/proo_fcell" target="_blank" rel="noopener" title="Instagram">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        <span class="top-social-label">proo_fcell</span>
       </a>
-      <span class="top-bar-sep" id="topBarSep" style="display:none">|</span>
-      <a id="topPhoneLink" href="#" style="display:none">
+      <span class="top-bar-sep">·</span>
+      <a class="top-social-link" href="https://www.facebook.com/share/1He9SXirGQ/" target="_blank" rel="noopener" title="Facebook">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+        <span class="top-social-label">Pro Technology</span>
+      </a>
+      <span class="top-bar-sep">·</span>
+      <a class="top-social-link" href="https://www.tiktok.com/@procell89" target="_blank" rel="noopener" title="TikTok">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
+        <span class="top-social-label">@procell89</span>
+      </a>
+    </div>
+    <div class="top-bar-right">
+      <span class="top-bar-flag">🇱🇧</span>
+      <span class="top-delivery-text">Fast delivery across Lebanon</span>
+      <span class="top-bar-sep">·</span>
+      <a id="topWaLink" class="top-social-link" href="https://wa.me/96170107139" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        +961 70 107 139
+      </a>
+      <a id="topPhoneLink" class="top-social-link" href="tel:+96170107139">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-        <span id="topPhoneNum">Call Us</span>
+        <span id="topPhoneNum">+961 70 107 139</span>
       </a>
     </div>
   </div>
@@ -2637,146 +2745,95 @@ html.lenis, html.lenis body { height: auto; }
 <!-- ── INK & TONER BANNER ──────────────────────────────────────── -->
 <div class="ink-banner">
   <div class="ink-banner-inner">
-    <div class="ink-banner-content">
-      <div class="ink-banner-label">🖨️ Printer Consumables</div>
-      <h2 class="ink-banner-title">Trusted Ink, Toner<br>&amp; <span>Drum Supplies</span></h2>
-      <p class="ink-banner-sub">Original &amp; compatible cartridges, toner kits, and drum units for all major brands. Fast delivery across Lebanon.</p>
-      <div class="ink-brands">
-        <div class="ink-brand-chip">HP</div>
-        <div class="ink-brand-chip canon">Canon</div>
-        <div class="ink-brand-chip" style="font-family:'Arial Black',sans-serif;font-size:.78rem">brother</div>
-        <div class="ink-brand-chip" style="letter-spacing:.1em">XEROX</div>
-        <div class="ink-brand-chip" style="letter-spacing:.06em">SAMSUNG</div>
-        <div class="ink-brand-chip">Epson</div>
+    <!-- Toner cartridge illustration -->
+    <div class="ink-visual">
+      <svg viewBox="0 0 360 270" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:360px" aria-hidden="true">
+        <!-- background soft circle -->
+        <ellipse cx="180" cy="245" rx="150" ry="16" fill="#00000015"/>
+        <!-- Yellow cartridge (back) -->
+        <g transform="translate(18,30) rotate(-6,100,35)">
+          <rect x="0" y="0" width="210" height="58" rx="11" fill="#fbbf24"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#f59e0b"/>
+          <rect x="0" y="11" width="210" height="11" fill="#f59e0b"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#fde68a" opacity=".55"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#d97706"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">Y</text>
+          <rect x="4" y="31" width="202" height="1.5" rx="1" fill="#fff" opacity=".25"/>
+        </g>
+        <!-- Magenta cartridge -->
+        <g transform="translate(32,75) rotate(-3,100,35)">
+          <rect x="0" y="0" width="210" height="58" rx="11" fill="#ec4899"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#db2777"/>
+          <rect x="0" y="11" width="210" height="11" fill="#db2777"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#fbcfe8" opacity=".4"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#be185d"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">M</text>
+          <rect x="4" y="31" width="202" height="1.5" rx="1" fill="#fff" opacity=".25"/>
+        </g>
+        <!-- Cyan cartridge -->
+        <g transform="translate(46,120) rotate(-1,100,35)">
+          <rect x="0" y="0" width="210" height="58" rx="11" fill="#06b6d4"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#0891b2"/>
+          <rect x="0" y="11" width="210" height="11" fill="#0891b2"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#a5f3fc" opacity=".4"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#0e7490"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">C</text>
+          <rect x="4" y="31" width="202" height="1.5" rx="1" fill="#fff" opacity=".25"/>
+        </g>
+        <!-- Black cartridge (front) -->
+        <g transform="translate(60,165)">
+          <rect x="0" y="0" width="210" height="62" rx="11" fill="#1e293b"/>
+          <rect x="0" y="0" width="210" height="22" rx="11" fill="#0f172a"/>
+          <rect x="0" y="11" width="210" height="11" fill="#0f172a"/>
+          <rect x="18" y="6" width="130" height="11" rx="4" fill="#94a3b8" opacity=".2"/>
+          <rect x="163" y="4" width="32" height="30" rx="6" fill="#020617"/>
+          <text x="179" y="23" font-family="Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" text-anchor="middle">K</text>
+          <rect x="4" y="32" width="202" height="1.5" rx="1" fill="#fff" opacity=".1"/>
+          <text x="100" y="52" font-family="Arial,sans-serif" font-size="7.5" fill="#64748b" text-anchor="middle" letter-spacing="2">TONER CARTRIDGE</text>
+        </g>
+        <!-- Decorative dots -->
+        <circle cx="18" cy="18" r="12" fill="#2563eb" opacity=".08"/>
+        <circle cx="345" cy="50" r="18" fill="#ef4444" opacity=".07"/>
+        <rect x="8" y="210" width="32" height="32" rx="7" fill="#f59e0b" opacity=".07" transform="rotate(18,24,226)"/>
+      </svg>
+    </div>
+    <!-- Content -->
+    <div class="ink-content">
+      <div class="ink-eyebrow">🖨️ Printer Consumables</div>
+      <h2 class="ink-headline">
+        PRINT MORE
+        <span class="line-accent">SPEND LESS</span>
+      </h2>
+      <p class="ink-tagline">Sharp text · Clean documents · Great value</p>
+      <div class="ink-features">
+        <div class="ink-feat quality">
+          <div class="ink-feat-icon">📄</div>
+          <div class="ink-feat-text">
+            <strong>HIGH QUALITY</strong>
+            <span>Crisp, professional prints</span>
+          </div>
+        </div>
+        <div class="ink-feat value">
+          <div class="ink-feat-icon">💰</div>
+          <div class="ink-feat-text">
+            <strong>COST-EFFECTIVE</strong>
+            <span>Best price guaranteed</span>
+          </div>
+        </div>
+      </div>
+      <div class="ink-brand-row">
+        <div class="ink-brand-pill">HP</div>
+        <div class="ink-brand-pill">Canon</div>
+        <div class="ink-brand-pill" style="letter-spacing:.1em">XEROX</div>
+        <div class="ink-brand-pill">Samsung</div>
+        <div class="ink-brand-pill">Epson</div>
+        <div class="ink-brand-pill" style="font-family:'Arial Black',sans-serif;font-size:.72rem">brother</div>
       </div>
       <button class="ink-banner-cta" onclick="setFilter('printers'); document.getElementById('products').scrollIntoView({behavior:'smooth'})">
         Shop Now
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
-    </div>
-    <div class="ink-banner-image">
-      <div class="ink-banner-image-fallback" style="font-size:0;background:linear-gradient(135deg,#0a0a12,#0d1020);position:relative;overflow:hidden">
-        <!-- Canon / Xerox laser printer SVG illustration -->
-        <svg viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;position:absolute;inset:0" aria-hidden="true">
-          <!-- ambient glow -->
-          <radialGradient id="glow1" cx="50%" cy="60%" r="50%">
-            <stop offset="0%" stop-color="#d4af37" stop-opacity=".18"/>
-            <stop offset="100%" stop-color="#d4af37" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="glow2" cx="50%" cy="60%" r="40%">
-            <stop offset="0%" stop-color="#6080ff" stop-opacity=".12"/>
-            <stop offset="100%" stop-color="#6080ff" stop-opacity="0"/>
-          </radialGradient>
-          <rect width="480" height="320" fill="url(#glow1)"/>
-          <rect width="480" height="320" fill="url(#glow2)"/>
-
-          <!-- Main printer body -->
-          <rect x="80" y="140" width="320" height="118" rx="10" fill="#1c1c24" stroke="#3a3a4a" stroke-width="1.5"/>
-          <!-- top lighter panel -->
-          <rect x="80" y="140" width="320" height="32" rx="10" fill="#242432"/>
-          <rect x="80" y="158" width="320" height="14" fill="#242432"/>
-
-          <!-- paper output tray (top) -->
-          <rect x="110" y="112" width="260" height="32" rx="6" fill="#161620" stroke="#2e2e3e" stroke-width="1.2"/>
-          <!-- paper coming out -->
-          <rect x="125" y="102" width="230" height="16" rx="3" fill="#f0f0ee" opacity=".92"/>
-          <rect x="130" y="105" width="220" height="1.5" fill="#ddd" opacity=".5"/>
-          <rect x="130" y="109" width="180" height="1" fill="#ddd" opacity=".4"/>
-          <!-- paper shadow -->
-          <rect x="125" y="116" width="230" height="4" rx="1" fill="#000" opacity=".3"/>
-
-          <!-- paper input slot (bottom) -->
-          <rect x="110" y="258" width="260" height="22" rx="5" fill="#131318" stroke="#2a2a3a" stroke-width="1"/>
-
-          <!-- front panel details -->
-          <!-- control strip -->
-          <rect x="100" y="170" width="190" height="26" rx="5" fill="#181820" stroke="#2e2e3c" stroke-width="1"/>
-          <!-- LCD display -->
-          <rect x="108" y="175" width="80" height="16" rx="3" fill="#0d1f18"/>
-          <rect x="110" y="177" width="76" height="12" rx="2" fill="#0a2a1a"/>
-          <text x="148" y="187" font-family="monospace" font-size="7" fill="#22dd88" text-anchor="middle">READY</text>
-
-          <!-- buttons -->
-          <circle cx="205" cy="183" r="6" fill="#d4af37" opacity=".9"/>
-          <circle cx="221" cy="183" r="5" fill="#333" stroke="#555" stroke-width="1"/>
-          <circle cx="235" cy="183" r="5" fill="#333" stroke="#555" stroke-width="1"/>
-          <circle cx="249" cy="183" r="5" fill="#e74c3c" opacity=".85"/>
-          <!-- power LED -->
-          <circle cx="274" cy="183" r="4" fill="#22cc66"/>
-          <circle cx="274" cy="183" r="2" fill="#aaffcc"/>
-
-          <!-- brand label area -->
-          <rect x="290" y="162" width="98" height="36" rx="4" fill="#1a1a24"/>
-          <!-- CANON logo style text -->
-          <text x="339" y="178" font-family="Arial,sans-serif" font-size="11" font-weight="700" fill="#e0e0e0" text-anchor="middle" letter-spacing="2">CANON</text>
-          <!-- model text -->
-          <text x="339" y="191" font-family="Arial,sans-serif" font-size="6.5" fill="#888" text-anchor="middle" letter-spacing="1">imageRUNNER</text>
-
-          <!-- side vent lines -->
-          <g stroke="#2a2a38" stroke-width="1" opacity=".7">
-            <line x1="86" y1="165" x2="86" y2="240"/>
-            <line x1="90" y1="165" x2="90" y2="240"/>
-            <line x1="94" y1="165" x2="94" y2="240"/>
-          </g>
-          <g stroke="#2a2a38" stroke-width="1" opacity=".7">
-            <line x1="386" y1="165" x2="386" y2="240"/>
-            <line x1="390" y1="165" x2="390" y2="240"/>
-            <line x1="394" y1="165" x2="394" y2="240"/>
-          </g>
-
-          <!-- front door seam -->
-          <line x1="100" y1="210" x2="380" y2="210" stroke="#2a2a38" stroke-width="1"/>
-
-          <!-- Toner level indicators (small bar) -->
-          <g transform="translate(105, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="14" width="6" height="14" rx="1" fill="#111111"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">K</text>
-          </g>
-          <g transform="translate(118, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="8" width="6" height="20" rx="1" fill="#0d4e8f"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">C</text>
-          </g>
-          <g transform="translate(131, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="10" width="6" height="18" rx="1" fill="#8b1a1a"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">M</text>
-          </g>
-          <g transform="translate(144, 220)">
-            <rect x="0" y="0" width="8" height="28" rx="2" fill="#000" stroke="#333" stroke-width="1"/>
-            <rect x="1" y="5" width="6" height="23" rx="1" fill="#7a6800"/>
-            <text x="4" y="35" font-family="Arial" font-size="5" fill="#666" text-anchor="middle">Y</text>
-          </g>
-
-          <!-- base / feet -->
-          <rect x="115" y="256" width="30" height="8" rx="3" fill="#111118"/>
-          <rect x="335" y="256" width="30" height="8" rx="3" fill="#111118"/>
-
-          <!-- shadow under printer -->
-          <ellipse cx="240" cy="270" rx="150" ry="12" fill="#000" opacity=".35"/>
-
-          <!-- Xerox badge (second printer / small) -->
-          <rect x="315" y="215" width="58" height="22" rx="3" fill="#1a1a24" stroke="#2a2a38" stroke-width="1"/>
-          <text x="344" y="229" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#d4af37" text-anchor="middle" letter-spacing="1.5">XEROX</text>
-
-          <!-- floating toner cartridge hint top right -->
-          <g transform="translate(370,50) rotate(-12)">
-            <rect x="0" y="0" width="64" height="22" rx="6" fill="#222230" stroke="#444460" stroke-width="1.2"/>
-            <rect x="6" y="6" width="40" height="10" rx="3" fill="#111"/>
-            <rect x="8" y="8" width="36" height="6" rx="2" fill="#0d1a30"/>
-            <circle cx="52" cy="11" r="5" fill="#1e3a5f" stroke="#4488cc" stroke-width="1"/>
-            <text x="32" y="28" font-family="Arial" font-size="6" fill="#888" text-anchor="middle">Toner Cartridge</text>
-          </g>
-
-          <!-- floating ink drop left -->
-          <g transform="translate(28,90)">
-            <path d="M18 0 C18 0 4 16 4 24 A14 14 0 0 0 32 24 C32 16 18 0 18 0Z" fill="#d4af37" opacity=".25"/>
-            <text x="18" y="50" font-family="Arial" font-size="7" fill="#d4af37" opacity=".6" text-anchor="middle">Original</text>
-            <text x="18" y="59" font-family="Arial" font-size="7" fill="#d4af37" opacity=".6" text-anchor="middle">Ink</text>
-          </g>
-        </svg>
-      </div>
+      <p class="ink-note">💬 Send us your printer model — we'll find the right cartridge</p>
     </div>
   </div>
 </div>
@@ -2784,32 +2841,25 @@ html.lenis, html.lenis body { height: auto; }
 <!-- ── BRANDS ─────────────────────────────────────────────────── -->
 <div class="brands-section">
   <div class="brands-inner">
-    <div class="brands-label">Trusted Brands We Carry</div>
+    <div class="brands-label">Shop by Brand — Click to Filter</div>
     <div class="brands-marquee">
-      <div class="brands-track">
-        <div class="brand-chip">Epson</div>
+      <div class="brands-track" id="brandsTrack">
         <div class="brand-chip">HP</div>
         <div class="brand-chip">Dell</div>
         <div class="brand-chip">Lenovo</div>
-        <div class="brand-chip">Zebra</div>
-        <div class="brand-chip">Star Micronics</div>
-        <div class="brand-chip">Honeywell</div>
-        <div class="brand-chip">Datalogic</div>
-        <div class="brand-chip">Verifone</div>
-        <div class="brand-chip">PAX</div>
-        <div class="brand-chip">Asus</div>
-        <!-- duplicate for seamless loop -->
         <div class="brand-chip">Epson</div>
+        <div class="brand-chip">Samsung</div>
+        <div class="brand-chip">JBL</div>
+        <div class="brand-chip">Zebra</div>
+        <div class="brand-chip">Canon</div>
         <div class="brand-chip">HP</div>
         <div class="brand-chip">Dell</div>
         <div class="brand-chip">Lenovo</div>
+        <div class="brand-chip">Epson</div>
+        <div class="brand-chip">Samsung</div>
+        <div class="brand-chip">JBL</div>
         <div class="brand-chip">Zebra</div>
-        <div class="brand-chip">Star Micronics</div>
-        <div class="brand-chip">Honeywell</div>
-        <div class="brand-chip">Datalogic</div>
-        <div class="brand-chip">Verifone</div>
-        <div class="brand-chip">PAX</div>
-        <div class="brand-chip">Asus</div>
+        <div class="brand-chip">Canon</div>
       </div>
     </div>
   </div>
@@ -3509,6 +3559,7 @@ function esc(str) {
 let activeFilter = "all";
 let activeSort = "alpha-asc";
 let activePriceFilter = "all";
+let activeBrandFilter = "";
 let searchTerm = "";
 const PAGE_SIZE = 24;
 let visibleCount = PAGE_SIZE;
@@ -3552,6 +3603,7 @@ function _applyStoreData(products, promos, cats) {
   renderProducts();
   buildCategorySections();
   renderNewArrivals();
+  buildBrandsSection();
 }
 
 async function _fetchStoreData() {
@@ -3655,7 +3707,8 @@ function renderProducts(appendFrom) {
       || (activePriceFilter === "100-500" && price >= 100 && price <= 500)
       || (activePriceFilter === "500-1000" && price > 500 && price <= 1000)
       || (activePriceFilter === "over-1000" && price > 1000);
-    return matchCat && matchSearch && matchPrice && p.quantity > 0;
+    const matchBrand = !activeBrandFilter || p.name.toLowerCase().includes(activeBrandFilter.toLowerCase()) || (p.desc||"").toLowerCase().includes(activeBrandFilter.toLowerCase());
+    return matchCat && matchSearch && matchPrice && matchBrand && p.quantity > 0;
   });
 
   // Sort
@@ -4418,34 +4471,62 @@ function buildCategorySections() {
     printers: "Laser & inkjet printers & much more",
     storage: "SSDs, HDDs, USB drives & much more",
   };
-  area.innerHTML = catKeys.map(cat => {
-    const prods = catMap[cat].slice(0, 6);
-    const label = esc(catLabel(cat));
-    const sub = esc(catSubtitles[cat] || `Top ${catLabel(cat).toLowerCase()} deals`);
-    return `
-      <div class="cat-section-wrap">
-        <div class="container cat-section-inner">
-          <div class="cat-section-header">
-            <div>
-              <div class="cat-section-title">Best ${label} Deals</div>
-              <div class="cat-section-sub">${sub}</div>
-            </div>
-          </div>
-          <div class="cat-section-row">${prods.map(p => productCardHTML(p)).join("")}</div>
-          <div class="cat-section-show-all-wrap">
-            <button class="cat-section-show-all" onclick="filterByCat('${cat.replace(/'/g,"\\'")}')">Show All ${label} &rarr;</button>
+  const bestSellers = PRODUCTS.filter(p => p.quantity > 0 && p.badge && p.badge.toLowerCase().includes('best'));
+  const featured = bestSellers.length >= 2 ? bestSellers : PRODUCTS.filter(p => p.quantity > 0).slice(0, 8);
+  if (featured.length < 2) { area.innerHTML = ""; return; }
+  area.innerHTML = `
+    <div class="cat-section-wrap">
+      <div class="container cat-section-inner">
+        <div class="cat-section-header">
+          <div>
+            <div class="cat-section-title">⭐ Best Sellers</div>
+            <div class="cat-section-sub">Our most popular products — loved by customers</div>
           </div>
         </div>
-      </div>`;
-  }).join("");
+        <div class="cat-section-row">${featured.slice(0,8).map(p => productCardHTML(p)).join("")}</div>
+        <div class="cat-section-show-all-wrap">
+          <button class="cat-section-show-all" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Browse All Products &rarr;</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function filterByCat(cat) {
   activeFilter = cat;
+  activeBrandFilter = "";
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === cat));
   document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === cat));
+  document.querySelectorAll(".brand-chip").forEach(c => c.classList.remove("active"));
   renderProducts();
   document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+}
+
+function filterByBrand(brand) {
+  activeBrandFilter = activeBrandFilter === brand ? "" : brand;
+  activeFilter = "all";
+  visibleCount = PAGE_SIZE;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
+  document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", c.dataset.cat === "all"));
+  document.querySelectorAll(".brand-chip").forEach(c => c.classList.toggle("active", c.dataset.brand === brand && activeBrandFilter === brand));
+  renderProducts();
+  document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+}
+
+const _KNOWN_BRANDS = ['Epson','HP','Dell','Lenovo','Apple','Samsung','Asus','Acer','Canon','Brother','Xerox','Zebra','Honeywell','Datalogic','Verifone','PAX','Huawei','Xiaomi','JBL','Sony','Logitech','Microsoft','Panasonic','Toshiba','Fujitsu','Kyocera','Ricoh','WD','Seagate','Kingston','SanDisk','Crucial','Corsair','Netgear','TP-Link','Cisco','D-Link','Hikvision','Dahua','Anker','Baseus','Hisense','LG','Bose','Sennheiser','Star Micronics','Jingxin'];
+
+function buildBrandsSection() {
+  const track = document.getElementById("brandsTrack");
+  if (!track || !PRODUCTS.length) return;
+  const found = new Set();
+  for (const p of PRODUCTS) {
+    for (const b of _KNOWN_BRANDS) {
+      if (p.name.toLowerCase().includes(b.toLowerCase())) found.add(b);
+    }
+  }
+  if (found.size === 0) return;
+  const chips = [...found].sort();
+  const doubled = [...chips, ...chips];
+  track.innerHTML = doubled.map(b => `<div class="brand-chip" data-brand="${esc(b)}" onclick="filterByBrand('${b.replace(/'/g,"\\'")}')"><span>${esc(b)}</span></div>`).join("");
 }
 
 // ── Order form ────────────────────────────────────────────────────
