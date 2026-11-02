@@ -512,6 +512,37 @@ button { cursor: pointer; font-family: inherit; border: none; }
   flex-shrink: 0;
 }
 .cart-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.header-wish-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  background: none;
+  color: var(--fg-2);
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  transition: color .15s, border-color .15s, background .15s;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.header-wish-btn:hover { color: #e53e3e; border-color: #e53e3e; background: #fff0f0; }
+.header-wish-btn svg { width: 17px; height: 17px; stroke: currentColor; fill: none; }
+.header-wish-btn.has-items svg { stroke: #e53e3e; fill: #ffd6d6; }
+.header-wish-badge {
+  position: absolute;
+  top: -4px; right: -4px;
+  background: #e53e3e;
+  color: #fff;
+  border-radius: 50%;
+  font-size: .6rem;
+  font-weight: 700;
+  min-width: 16px; height: 16px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
 .cart-count {
   position: absolute;
   top: -4px; right: -4px;
@@ -2944,6 +2975,10 @@ html.lenis, html.lenis body { height: auto; }
     <!-- Right icons -->
     <div class="nav-right">
       <button class="theme-btn" id="themeToggle" title="Toggle theme">☀️</button>
+      <button class="header-wish-btn" id="headerWishBtn" onclick="openWishlist()" aria-label="Wishlist" title="My Wishlist">
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span class="header-wish-badge" id="headerWishBadge"></span>
+      </button>
       <button class="cart-btn" id="cartBtn" aria-label="Cart">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
         <span class="cart-count" id="cartCount">0</span>
@@ -4557,6 +4592,10 @@ function updateWishlistBadge() {
   });
   const cnt = document.getElementById('wishlistCount');
   if (cnt) cnt.textContent = WISHLIST.size + (WISHLIST.size === 1 ? ' item' : ' items');
+  const hb = document.getElementById('headerWishBadge');
+  const hwb = document.getElementById('headerWishBtn');
+  if (hb) { hb.textContent = WISHLIST.size; hb.style.display = WISHLIST.size ? 'flex' : 'none'; }
+  if (hwb) hwb.classList.toggle('has-items', WISHLIST.size > 0);
 }
 
 function openWishlist() {
