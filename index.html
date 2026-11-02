@@ -5060,50 +5060,32 @@ async function submitOrder() {
   const paymentMethod = (document.querySelector("input[name='payment_method']:checked") || {}).value || "Cash on Delivery";
   const btn = document.getElementById("placeOrderBtn");
   btn.disabled = true; btn.textContent = "Placing order…";
-  try {
-    const itemsList = cart.map(i => `• ${i.name}${i.variantLabel ? ` (${i.variantLabel})` : ""} ×${i.qty}`).join("\n");
-    const orderResult = await sbFetch("/rest/v1/pt_orders", {
-      method: "POST",
-      headers: { "Prefer": "return=representation" },
-      body: JSON.stringify({
-        customer_name: name,
-        customer_phone: phone,
-        customer_address: "",
-        notes: document.getElementById("ord_notes").value.trim() || null,
-        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, ...(i.variantLabel ? { color: i.variantLabel } : {}) })),
-        total: parseFloat(grandTotal.toFixed(2)),
-        status: "pending"
-      })
-    });
-    const orderId = Array.isArray(orderResult) ? orderResult[0]?.id : orderResult?.id;
-    trackEvent('order_placed', { total: parseFloat(grandTotal.toFixed(2)), items_count: cart.length });
 
-    const ownerNum = (waNumber || "96170107139").replace(/\D/g, "");
-    const deliveryLine = fee > 0 ? `\nDelivery: $${fee.toFixed(2)}` : "";
-    // Build customer WhatsApp message
-    const customerMsg = encodeURIComponent(
-      `Hi! I placed an order from Pro Technology 🛒\n\n${itemsList}\n\nSubtotal: $${subtotal.toFixed(2)}${deliveryLine}\n💰 Total: $${grandTotal.toFixed(2)}\n📦 ${orderType}\n💳 Payment: ${paymentMethod}\n👤 Name: ${name}\n📞 Phone: ${phone}`
-    );
-    const waLink = `https://wa.me/${ownerNum}?text=${customerMsg}`;
+  const itemsList = cart.map(i => `• ${i.name}${i.variantLabel ? ` (${i.variantLabel})` : ""} ×${i.qty}`).join("\n");
+  const notes = document.getElementById("ord_notes").value.trim();
 
-    // Update success message based on order type & payment
-    const successMsg = document.getElementById("waSuccessMsg");
-    if (successMsg) {
-      if (orderType === "Pickup") {
-        successMsg.innerHTML = paymentMethod === "Wish"
-          ? `Thanks for your order! 🎉<br>Please transfer <strong>$${grandTotal.toFixed(2)}</strong> via Wish to <strong>+961 70 107 139</strong>, then come pick up your order from our store in Sin el Fil.`
-          : `Thanks for your order! 🎉<br>Your order is ready for pickup at our store in Sin el Fil. Pay cash when you arrive.`;
-      } else {
-        successMsg.innerHTML = paymentMethod === "Wish"
-          ? `Thanks for your order! 🎉<br>Please transfer <strong>$${grandTotal.toFixed(2)}</strong> via Wish to <strong>+961 70 107 139</strong> and send the screenshot on WhatsApp to confirm your order.`
-          : `Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.`;
-      }
-    }
+  // Save to DB (non-blocking — order proceeds even if this fails)
+  sbFetch("/rest/v1/pt_orders", {
+    method: "POST",
+    headers: { "Prefer": "return=minimal" },
+    body: JSON.stringify({
+      customer_name: name,
+      customer_phone: phone,
+      customer_address: "",
+      notes: notes || null,
+      items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty, ...(i.variantLabel ? { color: i.variantLabel } : {}) })),
+      total: parseFloat(grandTotal.toFixed(2)),
+      status: "pending"
+    })
+  }).catch(() => {});
+  trackEvent('order_placed', { total: parseFloat(grandTotal.toFixed(2)), items_count: cart.length });
 
-    // Notify owner on WhatsApp
-    const now = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    const notes = document.getElementById("ord_notes").value.trim();
-    const ownerMsg = encodeURIComponent(
+  const ownerNum = (waNumber || "96170107139").replace(/\D/g, "");
+  const deliveryLine = fee > 0 ? `\nDelivery: $${fee.toFixed(2)}` : "";
+
+  // Build WhatsApp message for owner
+  const now = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  const ownerMsg = encodeURIComponent(
 `*NEW ORDER - Pro Technology*
 -----------------------------
 *Customer:* ${name}
@@ -5119,18 +5101,29 @@ Subtotal: $${subtotal.toFixed(2)}${fee > 0 ? `\nDelivery: $${fee.toFixed(2)}` : 
 *Total: $${grandTotal.toFixed(2)}*${notes ? `\n*Note:* ${notes}` : ''}
 -----------------------------
 ${orderType === "Pickup" ? "Customer will pick up from store." : "Please confirm delivery location."}`
-    );
-    document.getElementById("waSuccessBtn").href = `https://wa.me/${ownerNum}?text=${ownerMsg}`;
-    cart = [];
-    updateCart();
-    closeOrderModal();
-    document.getElementById("waSuccessOverlay").classList.add("open");
-    document.body.style.overflow = "hidden";
-  } catch(e) {
-    showToast("Failed to place order. Please try again.");
-  } finally {
-    btn.disabled = false; btn.textContent = "Place Order";
+  );
+  document.getElementById("waSuccessBtn").href = `https://wa.me/${ownerNum}?text=${ownerMsg}`;
+
+  // Update success message based on order type & payment
+  const successMsg = document.getElementById("waSuccessMsg");
+  if (successMsg) {
+    if (orderType === "Pickup") {
+      successMsg.innerHTML = paymentMethod === "Wish"
+        ? `Thanks for your order! 🎉<br>Please transfer <strong>$${grandTotal.toFixed(2)}</strong> via Wish to <strong>+961 70 107 139</strong>, then come pick up your order from our store in Sin el Fil.`
+        : `Thanks for your order! 🎉<br>Your order is ready for pickup at our store in Sin el Fil. Pay cash when you arrive.`;
+    } else {
+      successMsg.innerHTML = paymentMethod === "Wish"
+        ? `Thanks for your order! 🎉<br>Please transfer <strong>$${grandTotal.toFixed(2)}</strong> via Wish to <strong>+961 70 107 139</strong> and send the screenshot on WhatsApp to confirm your order.`
+        : `Thanks for ordering from Pro Technology!<br>Please share your delivery location with us on WhatsApp so we can deliver to you.`;
+    }
   }
+
+  cart = [];
+  updateCart();
+  closeOrderModal();
+  document.getElementById("waSuccessOverlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+  btn.disabled = false; btn.textContent = "Place Order";
 }
 
 // ── Nav search syncs with products search ────────────────────────
