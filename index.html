@@ -5032,8 +5032,8 @@ function filterByBrand(brand) {
 }
 
 function filterPhoneBrand(brand) {
-  const toggled = activeBrandFilter === brand && JSON.stringify(activeBigCatSubs) === JSON.stringify(["Smartphones"]);
-  activeBigCatSubs = toggled ? [] : ["Smartphones"];
+  const toggled = activeBrandFilter === brand && !activeBigCatSubs.length;
+  activeBigCatSubs = [];
   activeBrandFilter = toggled ? "" : brand;
   activeFilter = "all";
   visibleCount = PAGE_SIZE;
