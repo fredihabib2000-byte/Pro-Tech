@@ -1526,26 +1526,53 @@ button { cursor: pointer; font-family: inherit; border: none; }
 :root[data-theme="dark"] .wish-btn { background: rgba(30,30,30,.88); }
 
 /* wishlist drawer */
-.wishlist-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; }
-.wishlist-overlay.open { display: block; }
-.wishlist-drawer {
-  position: fixed; top: 0; right: -420px; width: min(420px,100vw); height: 100%;
-  background: var(--surface); z-index: 201; display: flex; flex-direction: column;
-  transition: right .3s cubic-bezier(.4,0,.2,1); box-shadow: var(--shadow-lg);
+/* ── Wishlist full-page ──────────────────────────────────────── */
+.wishlist-page {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: var(--bg); flex-direction: column; overflow-y: auto;
 }
-.wishlist-drawer.open { right: 0; }
-.wishlist-header { display: flex; align-items: center; justify-content: space-between; padding: 20px; border-bottom: 1px solid var(--border); }
-.wishlist-header h3 { font-family: var(--display); font-size: 1.1rem; font-weight: 700; }
-.wishlist-items { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.wishlist-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 100%; color: var(--fg-3); text-align: center; padding: 40px 20px; }
-.wishlist-item { display: flex; gap: 12px; align-items: center; background: var(--surface-2); border-radius: 12px; padding: 12px; }
-.wishlist-item-img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: var(--surface); flex-shrink: 0; }
-.wishlist-item-info { flex: 1; min-width: 0; }
-.wishlist-item-name { font-weight: 600; font-size: .9rem; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wishlist-item-price { font-size: .85rem; color: var(--accent); font-weight: 700; margin-top: 2px; }
-.wishlist-item-actions { display: flex; gap: 6px; margin-top: 8px; }
-.wishlist-add-cart { font-size: .78rem; font-weight: 600; padding: 5px 10px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; }
-.wishlist-remove { font-size: .78rem; font-weight: 600; padding: 5px 10px; background: var(--surface); border: 1px solid var(--border); color: var(--fg-2); border-radius: 6px; cursor: pointer; }
+.wishlist-page.open { display: flex; }
+.wishlist-page-header {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.wishlist-page-back {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface-2); border: none; cursor: pointer; flex-shrink: 0;
+  color: var(--fg);
+}
+.wishlist-page-back svg { width: 18px; height: 18px; }
+.wishlist-page-title { font-family: var(--display); font-size: 1.1rem; font-weight: 700; flex: 1; }
+.wishlist-page-count { font-size: .82rem; color: var(--fg-3); font-weight: 500; }
+.wishlist-page-body { padding: 20px max(16px, env(safe-area-inset-left, 0px)); flex: 1; }
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+.wishlist-card {
+  background: var(--surface); border-radius: 14px; overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08); cursor: pointer;
+  transition: transform .15s, box-shadow .15s; position: relative;
+}
+.wishlist-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.wishlist-card-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--surface-2); display: block; }
+.wishlist-card-img-placeholder { width: 100%; aspect-ratio: 1; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+.wishlist-card-body { padding: 10px 12px 12px; }
+.wishlist-card-name { font-size: .85rem; font-weight: 600; color: var(--fg); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wishlist-card-price { font-size: .9rem; font-weight: 700; color: var(--accent); margin-top: 4px; }
+.wishlist-card-actions { display: flex; gap: 6px; margin-top: 8px; }
+.wishlist-card-add { flex: 1; font-size: .75rem; font-weight: 600; padding: 6px 0; background: var(--accent); color: #fff; border: none; border-radius: 7px; cursor: pointer; }
+.wishlist-card-remove { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); border: none; border-radius: 7px; cursor: pointer; color: var(--fg-3); font-size: .9rem; flex-shrink: 0; }
+.wishlist-page-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 50vh; color: var(--fg-3); text-align: center; padding: 40px 20px; }
+.wishlist-page-empty .wpe-icon { font-size: 3.5rem; }
+.wishlist-page-empty .wpe-title { font-size: 1.1rem; font-weight: 700; color: var(--fg); }
+.wishlist-page-empty .wpe-sub { font-size: .85rem; }
+.wishlist-page-empty .wpe-btn { margin-top: 8px; padding: 10px 24px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: .9rem; font-weight: 600; cursor: pointer; }
 .wish-count-badge { position: absolute; top: -4px; right: -4px; background: #e53e3e; color: #fff; font-size: .6rem; font-weight: 700; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; line-height: 1; }
 
 .cart-overlay {
@@ -3679,19 +3706,17 @@ html.lenis, html.lenis body { height: auto; }
   </div>
 </div>
 
-<!-- ── WISHLIST DRAWER ────────────────────────────────────────── -->
-<div class="wishlist-overlay" id="wishlistOverlay" onclick="closeWishlist()"></div>
-<div class="wishlist-drawer" id="wishlistDrawer">
-  <div class="wishlist-header">
-    <h3>❤️ Wishlist</h3>
-    <button class="close-btn" onclick="closeWishlist()">✕</button>
+<!-- ── WISHLIST PAGE ───────────────────────────────────────────── -->
+<div class="wishlist-page" id="wishlistPage">
+  <div class="wishlist-page-header">
+    <button class="wishlist-page-back" onclick="closeWishlist()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="wishlist-page-title">❤️ My Wishlist</span>
+    <span class="wishlist-page-count" id="wishlistCount">0 items</span>
   </div>
-  <div class="wishlist-items" id="wishlistItems">
-    <div class="wishlist-empty">
-      <span style="font-size:2.5rem">🤍</span>
-      <span>Your wishlist is empty</span>
-      <span style="font-size:.8rem">Tap the heart on any product to save it</span>
-    </div>
+  <div class="wishlist-page-body">
+    <div class="wishlist-grid" id="wishlistGrid"></div>
   </div>
 </div>
 
@@ -4519,9 +4544,10 @@ function saveWishlist() {
 function toggleWishlist(id) {
   if (WISHLIST.has(id)) { WISHLIST.delete(id); } else { WISHLIST.add(id); }
   saveWishlist();
-  // update all heart buttons for this product
   document.querySelectorAll(`#wish-${id}`).forEach(btn => btn.classList.toggle('active', WISHLIST.has(id)));
   updateWishlistBadge();
+  // refresh grid if page is open
+  if (document.getElementById('wishlistPage').classList.contains('open')) renderWishlistGrid();
 }
 
 function updateWishlistBadge() {
@@ -4529,44 +4555,49 @@ function updateWishlistBadge() {
     b.textContent = WISHLIST.size;
     b.style.display = WISHLIST.size ? 'flex' : 'none';
   });
+  const cnt = document.getElementById('wishlistCount');
+  if (cnt) cnt.textContent = WISHLIST.size + (WISHLIST.size === 1 ? ' item' : ' items');
 }
 
 function openWishlist() {
-  renderWishlistItems();
-  document.getElementById('wishlistDrawer').classList.add('open');
-  document.getElementById('wishlistOverlay').classList.add('open');
+  renderWishlistGrid();
+  document.getElementById('wishlistPage').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeWishlist() {
-  document.getElementById('wishlistDrawer').classList.remove('open');
-  document.getElementById('wishlistOverlay').classList.remove('open');
+  document.getElementById('wishlistPage').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
-function renderWishlistItems() {
-  const container = document.getElementById('wishlistItems');
+function renderWishlistGrid() {
+  const grid = document.getElementById('wishlistGrid');
+  updateWishlistBadge();
   if (!WISHLIST.size) {
-    container.innerHTML = `<div class="wishlist-empty"><span style="font-size:2.5rem">🤍</span><span>Your wishlist is empty</span><span style="font-size:.8rem">Tap the ♥ on any product to save it</span></div>`;
+    grid.innerHTML = `<div class="wishlist-page-empty" style="grid-column:1/-1">
+      <div class="wpe-icon">🤍</div>
+      <div class="wpe-title">Your wishlist is empty</div>
+      <div class="wpe-sub">Tap the ♥ on any product to save it here</div>
+      <button class="wpe-btn" onclick="closeWishlist()">Browse Products</button>
+    </div>`;
     return;
   }
   const items = [...WISHLIST].map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
-  container.innerHTML = items.map(p => `
-    <div class="wishlist-item">
-      ${p.imageUrl ? `<img class="wishlist-item-img" src="${esc(p.imageUrl)}" alt="${esc(p.name)}" onerror="this.style.display='none'">` : `<div class="wishlist-item-img" style="display:flex;align-items:center;justify-content:center;font-size:2rem">${esc(p.icon)}</div>`}
-      <div class="wishlist-item-info" style="flex:1;min-width:0">
-        <div class="wishlist-item-name">${esc(p.name)}</div>
-        <div class="wishlist-item-price">$${p.price.toLocaleString()}</div>
-        <div class="wishlist-item-actions">
-          <button class="wishlist-add-cart" onclick="addToCart(${p.id});renderWishlistItems()">🛒 Add to Cart</button>
-          <button class="wishlist-remove" onclick="toggleWishlist(${p.id});renderWishlistItems()">Remove</button>
+  grid.innerHTML = items.map(p => `
+    <div class="wishlist-card" onclick="closeWishlist();openProductDetail(${p.id})">
+      ${p.imageUrl
+        ? `<img class="wishlist-card-img" src="${esc(p.imageUrl)}" alt="${esc(p.name)}" onerror="this.outerHTML='<div class=wishlist-card-img-placeholder>${esc(p.icon)}</div>'">`
+        : `<div class="wishlist-card-img-placeholder">${esc(p.icon)}</div>`}
+      <div class="wishlist-card-body">
+        <div class="wishlist-card-name">${esc(p.name)}</div>
+        <div class="wishlist-card-price">$${p.price.toLocaleString()}</div>
+        <div class="wishlist-card-actions">
+          <button class="wishlist-card-add" onclick="event.stopPropagation();addToCart(${p.id})">🛒 Add to Cart</button>
+          <button class="wishlist-card-remove" onclick="event.stopPropagation();toggleWishlist(${p.id})" title="Remove">✕</button>
         </div>
       </div>
     </div>`).join('');
 }
-
-// wishlist btn in bottom nav / mobile menu
-document.addEventListener('click', e => {
-  if (e.target.closest('#wishlistBtn')) openWishlist();
-});
 
 // init badge on load
 document.addEventListener('DOMContentLoaded', () => updateWishlistBadge());
