@@ -2414,20 +2414,27 @@ html.lenis, html.lenis body { height: auto; }
 .brand-chip.active { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--accent); }
 
 /* ── Phone Brands Section ────────────────────────────────────────── */
-.phone-brands-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding-block: 44px 48px; }
+.phone-brands-section { background: #f0f2f5; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding-block: 44px 52px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .phone-brands-section { background: var(--surface); } }
+:root[data-theme="dark"] .phone-brands-section { background: var(--surface); }
 .phone-brands-inner { max-width: 1200px; margin-inline: auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
-.phone-brands-heading { text-align: center; margin-bottom: 32px; }
-.phone-brands-heading h2 { font-size: clamp(1.3rem, 3vw, 1.7rem); font-weight: 800; margin-bottom: 6px; text-wrap: balance; }
-.phone-brands-heading p { font-size: .9rem; color: var(--fg-3); }
-.phone-brands-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 700px; margin-inline: auto; }
-@media (max-width: 560px) { .phone-brands-grid { grid-template-columns: repeat(2, 1fr); max-width: 360px; } }
-.phone-brand-card { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 20px 20px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; transition: border-color .2s, box-shadow .2s, transform .2s; -webkit-tap-highlight-color: transparent; }
-.phone-brand-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 8px 28px rgba(37,99,235,.15); }
+.phone-brands-heading { text-align: left; margin-bottom: 28px; }
+.phone-brands-heading .pbh-tag { display: inline-block; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-3); border: 1.5px solid var(--border); border-radius: 999px; padding: 4px 14px; margin-bottom: 10px; }
+.phone-brands-heading h2 { font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 900; margin-bottom: 0; text-wrap: balance; color: var(--fg); }
+.phone-brands-heading h2 span { color: var(--accent); }
+.phone-brands-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 800px; }
+@media (max-width: 560px) { .phone-brands-grid { grid-template-columns: repeat(2, 1fr); } }
+.phone-brand-card { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 28px 16px 22px; background: #fff; border: 1px solid #e2e5ea; border-radius: 20px; box-shadow: 0 2px 10px rgba(0,0,0,.06); cursor: pointer; transition: transform .2s, box-shadow .2s, border-color .2s; -webkit-tap-highlight-color: transparent; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .phone-brand-card { background: var(--bg); border-color: var(--border); } }
+:root[data-theme="dark"] .phone-brand-card { background: var(--bg); border-color: var(--border); }
+.phone-brand-card:hover { transform: translateY(-5px); box-shadow: 0 10px 32px rgba(0,0,0,.13); border-color: var(--accent); }
 .phone-brand-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
-.phone-brand-logo { width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
-.phone-brand-logo svg { width: 100%; height: 100%; }
-.phone-brand-name { font-size: .8rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--fg-2); text-align: center; }
-@media (max-width: 720px) { .phone-brand-logo { width: 56px; height: 56px; } .phone-brand-card { padding: 20px 14px 16px; gap: 10px; } }
+.phone-brand-logo { width: 80px; height: 80px; border-radius: 18px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.phone-brand-logo svg { width: 100%; height: 100%; display: block; }
+.phone-brand-name { font-size: .85rem; font-weight: 700; color: #1a1a2e; text-align: center; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .phone-brand-name { color: var(--fg); } }
+:root[data-theme="dark"] .phone-brand-name { color: var(--fg); }
+@media (max-width: 720px) { .phone-brand-logo { width: 64px; height: 64px; border-radius: 14px; } .phone-brand-card { padding: 20px 12px 16px; gap: 12px; } }
 
 /* ── Nav blur on scroll ──────────────────────────────────────────── */
 .nav { transition: box-shadow .3s, background .3s, backdrop-filter .3s; }
@@ -2982,55 +2989,45 @@ html.lenis, html.lenis body { height: auto; }
 <div class="phone-brands-section">
   <div class="phone-brands-inner">
     <div class="phone-brands-heading">
-      <h2>📱 Shop Phones by Brand</h2>
-      <p>Tap a brand to explore our smartphone collection</p>
+      <div class="pbh-tag">Official Partners</div>
+      <h2>Shop by <span>Brand</span></h2>
     </div>
     <div class="phone-brands-grid">
-      <!-- Apple -->
+      <!-- Apple: light gray box, black apple logo -->
       <button class="phone-brand-card" data-pbrand="Apple" onclick="filterPhoneBrand('Apple')">
-        <div class="phone-brand-logo">
-          <svg viewBox="1 1 22 22" fill="none">
-            <rect x="1" y="1" width="22" height="22" rx="5" fill="#1C1C1E"/>
-            <path fill="white" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        <div class="phone-brand-logo" style="background:#f2f2f2;">
+          <svg viewBox="2 2 20 20" fill="none">
+            <path fill="#1C1C1E" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
           </svg>
         </div>
         <span class="phone-brand-name">Apple</span>
       </button>
-      <!-- Samsung -->
+      <!-- Samsung: black box, SAMSUNG white -->
       <button class="phone-brand-card" data-pbrand="Samsung" onclick="filterPhoneBrand('Samsung')">
-        <div class="phone-brand-logo">
-          <svg viewBox="0 0 220 80" fill="none">
-            <rect width="220" height="80" rx="12" fill="#1428A0"/>
-            <text x="110" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="26" fill="white" letter-spacing="2">SAMSUNG</text>
+        <div class="phone-brand-logo" style="background:#1C1C1E;">
+          <svg viewBox="0 0 100 40" fill="none">
+            <text x="50" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="18" fill="white" letter-spacing="1.5">SAMSUNG</text>
           </svg>
         </div>
         <span class="phone-brand-name">Samsung</span>
       </button>
-      <!-- Tecno -->
-      <button class="phone-brand-card" data-pbrand="Tecno" onclick="filterPhoneBrand('Tecno')">
-        <div class="phone-brand-logo">
-          <svg viewBox="0 0 200 80" fill="none">
-            <rect width="200" height="80" rx="12" fill="#0066B3"/>
-            <text x="100" y="52" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="28" fill="white" letter-spacing="3">TECNO</text>
-          </svg>
-        </div>
-        <span class="phone-brand-name">Tecno</span>
-      </button>
-      <!-- Xiaomi -->
+      <!-- Xiaomi: orange box, mi white -->
       <button class="phone-brand-card" data-pbrand="Xiaomi" onclick="filterPhoneBrand('Xiaomi')">
-        <div class="phone-brand-logo">
-          <!-- Xiaomi MI logo: rounded square with inner cutout forming "mi" shape -->
-          <svg viewBox="0 0 100 100" fill="none">
-            <rect width="100" height="100" rx="18" fill="#FF6900"/>
-            <!-- outer "M" arch -->
-            <path d="M18 72 L18 38 Q18 28 28 28 Q38 28 38 38 L38 72" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/>
-            <path d="M38 50 Q38 28 50 28 Q62 28 62 38 L62 72" stroke="white" stroke-width="7" fill="none" stroke-linecap="round"/>
-            <!-- "i" dot and stem -->
-            <circle cx="78" cy="32" r="4" fill="white"/>
-            <line x1="78" y1="43" x2="78" y2="72" stroke="white" stroke-width="7" stroke-linecap="round"/>
+        <div class="phone-brand-logo" style="background:#FF6900;">
+          <svg viewBox="0 0 100 60" fill="none">
+            <text x="50" y="46" text-anchor="middle" font-family="Arial,sans-serif" font-weight="900" font-size="42" fill="white">mi</text>
           </svg>
         </div>
         <span class="phone-brand-name">Xiaomi</span>
+      </button>
+      <!-- Tecno: blue box, TECNO white -->
+      <button class="phone-brand-card" data-pbrand="Tecno" onclick="filterPhoneBrand('Tecno')">
+        <div class="phone-brand-logo" style="background:#0A6EFF;">
+          <svg viewBox="0 0 100 40" fill="none">
+            <text x="50" y="30" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="18" fill="white" letter-spacing="2">TECNO</text>
+          </svg>
+        </div>
+        <span class="phone-brand-name">Tecno</span>
       </button>
     </div>
   </div>
