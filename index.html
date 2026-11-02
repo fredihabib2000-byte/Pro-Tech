@@ -430,31 +430,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   padding-left: 28px;
 }
 
-/* Mobile nav accordion */
-.mobile-nav-bigcat { border-bottom: 1px solid var(--border); }
-.mobile-nav-bigbtn {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  border-bottom: none !important;
-}
-.mobile-nav-bigbtn .nav-cat-chevron { transition: transform .2s; }
-.mobile-nav-bigbtn.open .nav-cat-chevron { transform: rotate(180deg); }
-.mobile-nav-subs { background: var(--surface-2); }
-.mobile-nav-sub {
-  display: block;
-  padding: 11px 36px;
-  font-size: .85rem;
-  font-weight: 500;
-  color: var(--fg-2);
-  cursor: pointer;
-  transition: color .12s, background .12s;
-  text-decoration: none;
-  border-bottom: 1px solid var(--border);
-}
-.mobile-nav-sub:last-child { border-bottom: none; }
-.mobile-nav-sub:hover { color: var(--accent); background: var(--accent-soft); }
-.mobile-nav-sub-all { font-weight: 700; color: var(--accent); padding-left: 24px; }
+/* Mobile nav accordion — see later block */
 
 @media (max-width: 960px) { .nav-cats { display: none; } }
 
@@ -2756,12 +2732,39 @@ html.lenis, html.lenis body { height: auto; }
 .hamburger.open .ham-line:nth-child(1) { transform: translateY(6px) rotate(45deg); }
 .hamburger.open .ham-line:nth-child(2) { opacity: 0; }
 .hamburger.open .ham-line:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
-.mobile-nav { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 150; }
+.mobile-nav { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.45); z-index: 150; }
 .mobile-nav.open { display: block; }
-.mobile-nav-panel { position: absolute; top: 0; right: 0; width: min(300px, 85vw); height: 100%; background: var(--surface); padding: 24px 20px; display: flex; flex-direction: column; gap: 4px; box-shadow: var(--shadow-lg); overflow-y: auto; }
-.mobile-nav-close { align-self: flex-end; background: var(--surface-2); border: none; border-radius: var(--r-sm); padding: 8px 10px; font-size: 1rem; cursor: pointer; margin-bottom: 12px; }
-.mobile-nav-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: .95rem; color: var(--fg); text-decoration: none; transition: background .15s; }
-.mobile-nav-link:hover { background: var(--surface-2); }
+.mobile-nav-panel { position: absolute; top: 0; right: 0; width: min(320px, 88vw); height: 100%; background: var(--surface); display: flex; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,.18); overflow-y: auto; padding-bottom: 24px; }
+/* header row */
+.mnp-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
+.mnp-logo { font-weight: 800; font-size: 1.05rem; color: var(--fg); letter-spacing: .02em; }
+.mobile-nav-close { background: var(--surface-2); border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; color: var(--fg); flex-shrink: 0; }
+/* search */
+.mnp-search { padding: 14px 20px 10px; }
+.mnp-search-wrap { display: flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 14px; }
+.mnp-search-wrap svg { width: 16px; height: 16px; color: var(--fg-3); flex-shrink: 0; }
+.mnp-search-input { flex: 1; border: none; background: transparent; font-size: .9rem; color: var(--fg); outline: none; }
+.mnp-search-input::placeholder { color: var(--fg-3); }
+/* sections */
+.mnp-section { padding: 10px 12px 4px; }
+.mnp-section-label { font-size: .7rem; font-weight: 700; color: var(--fg-3); text-transform: uppercase; letter-spacing: .08em; padding: 0 8px 6px; }
+/* nav links */
+.mobile-nav-link { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; font-weight: 600; font-size: .93rem; color: var(--fg); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; transition: background .12s; }
+.mobile-nav-link svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--fg-2); }
+.mobile-nav-link:hover, .mobile-nav-link.active { background: var(--accent-soft); color: var(--accent); }
+.mobile-nav-link:hover svg, .mobile-nav-link.active svg { color: var(--accent); }
+/* expandable accordion items */
+.mobile-nav-bigcat { border-radius: 10px; overflow: hidden; background: var(--surface-2); margin-bottom: 4px; }
+.mobile-nav-bigbtn { display: flex !important; align-items: center !important; justify-content: space-between !important; width: 100%; border: none !important; background: transparent; padding: 11px 14px !important; border-radius: 0 !important; }
+.mobile-nav-bigbtn .mnp-chevron { transition: transform .2s; color: var(--fg-3); flex-shrink: 0; }
+.mobile-nav-bigbtn.open .mnp-chevron { transform: rotate(180deg); }
+.mobile-nav-subs { background: var(--surface); border-top: 1px solid var(--border); }
+.mobile-nav-sub { display: flex; align-items: center; padding: 10px 14px 10px 44px; font-size: .87rem; font-weight: 500; color: var(--fg-2); cursor: pointer; transition: color .12s, background .12s; text-decoration: none; border: none; background: none; width: 100%; text-align: left; border-bottom: 1px solid var(--border); }
+.mobile-nav-sub:last-child { border-bottom: none; }
+.mobile-nav-sub:hover { color: var(--accent); background: var(--accent-soft); }
+.mobile-nav-sub-all { font-weight: 700; color: var(--accent); padding-left: 24px; }
+/* divider */
+.mnp-divider { border: none; border-top: 1px solid var(--border); margin: 8px 12px; }
 @media (max-width: 960px) { .hamburger { display: flex; } }
 
 /* ── General mobile fixes ────────────────────────────────── */
@@ -2885,8 +2888,20 @@ html.lenis, html.lenis body { height: auto; }
 
 <!-- ── MOBILE NAV ────────────────────────────────────────── -->
 <div class="mobile-nav" id="mobileNav" onclick="if(event.target===this)closeMobileNav()">
-  <!-- mobile nav panel — built dynamically by buildCatNav() -->
-  <div class="mobile-nav-panel"></div>
+  <div class="mobile-nav-panel">
+    <div class="mnp-header">
+      <span class="mnp-logo">Pro-Tech</span>
+      <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+    </div>
+    <div class="mnp-search">
+      <div class="mnp-search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="mnp-search-input" type="text" placeholder="Search products…" oninput="searchTerm=this.value.toLowerCase().trim();visibleCount=PAGE_SIZE;renderProducts()" />
+      </div>
+    </div>
+    <!-- rest built by buildCatNav() -->
+    <div class="mnp-body"></div>
+  </div>
 </div>
 
 <!-- ── HERO ───────────────────────────────────────────────────── -->
@@ -4004,25 +4019,63 @@ function buildCatNav() {
   }
 
   // ── Mobile: accordion panel ────────────────────────────────────
-  const panel = document.querySelector('.mobile-nav-panel');
-  if (panel) {
-    let h = `<button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>`;
-    h += `<a class="mobile-nav-link" onclick="filterByCat('all');closeMobileNav()">🛍️ All Products</a>`;
-    BIG_CATS.forEach(({label, emoji, subs}) => {
-      const activeSubs = subs.filter(s => usedCats.has(s));
-      if (!activeSubs.length) return;
-      const subLinks = activeSubs.map(s => {
-        const safeSub = s.replace(/'/g,"\\'");
-        return `<a class="mobile-nav-sub" onclick="filterByCat('${safeSub}');closeMobileNav()">${esc(s)}</a>`;
-      }).join('') + `<a class="mobile-nav-sub mobile-nav-sub-all" data-big="${esc(label)}" data-subs="${encodeSubs(activeSubs)}" onclick="filterByCats(this.dataset.big,this.dataset.subs.split('|'));closeMobileNav()">View all ${esc(label)} →</a>`;
-      h += `<div class="mobile-nav-bigcat">
-        <button class="mobile-nav-link mobile-nav-bigbtn" onclick="toggleMobileSub(this)">${emoji} ${esc(label)}${chevron}</button>
-        <div class="mobile-nav-subs" hidden>${subLinks}</div>
+  const body = document.querySelector('.mnp-body');
+  if (body) {
+    const ico = (path) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+    const chev = `<svg class="mnp-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+    // ── Section: Navigation
+    let h = `<div class="mnp-section">
+      <div class="mnp-section-label">Navigation</div>
+      <a class="mobile-nav-link" href="#hero" onclick="closeMobileNav()">${ico('<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>')} Home</a>
+      <button class="mobile-nav-link" onclick="filterByCat('all');closeMobileNav()">${ico('<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>')} All Products</button>
+      <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">${ico('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>')} Why Us</a>
+      <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">${ico('<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.9 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>')} Contact</a>
+    </div>`;
+
+    h += `<hr class="mnp-divider">`;
+
+    // ── Section: Shop by Brand
+    const brands = [{name:'Apple',emoji:'🍎'},{name:'Samsung',emoji:'📱'},{name:'Xiaomi',emoji:'📱'},{name:'Tecno',emoji:'📱'}];
+    const brandSubs = brands.map(b => `<button class="mobile-nav-sub" onclick="filterPhoneBrand('${b.name}');closeMobileNav()">${b.name}</button>`).join('');
+    h += `<div class="mnp-section">
+      <div class="mnp-section-label">Shop</div>
+      <div class="mobile-nav-bigcat">
+        <button class="mobile-nav-link mobile-nav-bigbtn" onclick="toggleMobileSub(this)">
+          <span style="display:flex;align-items:center;gap:12px">${ico('<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>')} <strong>Shop by Brand</strong></span>
+          ${chev}
+        </button>
+        <div class="mobile-nav-subs" hidden>${brandSubs}</div>
       </div>`;
-    });
-    h += `<a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>`;
-    h += `<a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>`;
-    panel.innerHTML = h;
+
+    // ── Shop by Category (accordion)
+    const activeCatSubs = BIG_CATS.filter(({subs}) => subs.some(s => usedCats.has(s)));
+    if (activeCatSubs.length) {
+      const catSubs = activeCatSubs.map(({label, emoji, subs}) => {
+        const activeSubs = subs.filter(s => usedCats.has(s));
+        const safeSubs = encodeSubs(activeSubs);
+        const bigEsc = esc(label);
+        return `<button class="mobile-nav-sub" data-big="${bigEsc}" data-subs="${safeSubs}" onclick="filterByCats(this.dataset.big,this.dataset.subs.split('|'));closeMobileNav()">${emoji} ${bigEsc}</button>`;
+      }).join('');
+      h += `<div class="mobile-nav-bigcat" style="margin-top:4px">
+        <button class="mobile-nav-link mobile-nav-bigbtn" onclick="toggleMobileSub(this)">
+          <span style="display:flex;align-items:center;gap:12px">${ico('<rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>')} <strong>Shop by Category</strong></span>
+          ${chev}
+        </button>
+        <div class="mobile-nav-subs" hidden>${catSubs}</div>
+      </div>`;
+    }
+    h += `</div>`;
+
+    // ── Section: Quick access
+    h += `<hr class="mnp-divider">`;
+    h += `<div class="mnp-section">
+      <div class="mnp-section-label">Quick Access</div>
+      <button class="mobile-nav-link" onclick="document.getElementById('cartBtn').click();closeMobileNav()">${ico('<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>')} Cart</button>
+      <button class="mobile-nav-link" onclick="document.getElementById('wishlistBtn')?.click();closeMobileNav()">${ico('<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>')} Wishlist</button>
+    </div>`;
+
+    body.innerHTML = h;
   }
 }
 
