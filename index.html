@@ -5040,8 +5040,13 @@ function filterPhoneBrand(brand) {
   document.querySelectorAll(".brand-chip").forEach(c => c.classList.toggle("active", c.dataset.brand === brand && !toggled));
   document.querySelectorAll(".phone-brand-card").forEach(c => c.classList.toggle("active", c.dataset.pbrand === brand && !toggled));
   renderProducts();
-  const el = document.getElementById("products");
-  if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 70; window.scrollTo({ top: y, behavior: "instant" }); }
+  requestAnimationFrame(() => {
+    const el = document.getElementById("products");
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.scrollY - 60;
+      window.scrollTo({ top: y, behavior: "auto" });
+    }
+  });
 }
 
 const _KNOWN_BRANDS = ['Epson','HP','Dell','Lenovo','Apple','Samsung','Asus','Acer','Canon','Brother','Xerox','Zebra','Honeywell','Datalogic','Verifone','PAX','Huawei','Xiaomi','JBL','Sony','Logitech','Microsoft','Panasonic','Toshiba','Fujitsu','Kyocera','Ricoh','WD','Seagate','Kingston','SanDisk','Crucial','Corsair','Netgear','TP-Link','Cisco','D-Link','Hikvision','Dahua','Anker','Baseus','Hisense','LG','Bose','Sennheiser','Star Micronics','Jingxin'];
