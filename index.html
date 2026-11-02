@@ -3002,13 +3002,10 @@ html.lenis, html.lenis body { height: auto; }
         </div>
         <span class="phone-brand-name">Apple</span>
       </button>
-      <!-- Samsung: white box, official black badge with SAMSUNG text -->
+      <!-- Samsung: official logo image -->
       <button class="phone-brand-card" data-pbrand="Samsung" onclick="filterPhoneBrand('Samsung')">
-        <div class="phone-brand-logo" style="background:#f2f2f2;">
-          <svg viewBox="0 0 80 80" fill="none">
-            <rect x="6" y="22" width="68" height="36" rx="6" fill="#1C1C1E"/>
-            <text x="40" y="45" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="12" fill="white" letter-spacing="1.5">SAMSUNG</text>
-          </svg>
+        <div class="phone-brand-logo" style="background:#f5f5f7; padding:0; overflow:hidden;">
+          <img src="/public/images/samsung-logo.png" alt="Samsung" style="width:100%;height:100%;object-fit:contain;">
         </div>
         <span class="phone-brand-name">Samsung</span>
       </button>
@@ -5043,7 +5040,8 @@ function filterPhoneBrand(brand) {
   document.querySelectorAll(".brand-chip").forEach(c => c.classList.toggle("active", c.dataset.brand === brand && !toggled));
   document.querySelectorAll(".phone-brand-card").forEach(c => c.classList.toggle("active", c.dataset.pbrand === brand && !toggled));
   renderProducts();
-  document.getElementById("products").scrollIntoView({ behavior: "smooth" });
+  const el = document.getElementById("products");
+  if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 70; window.scrollTo({ top: y, behavior: "instant" }); }
 }
 
 const _KNOWN_BRANDS = ['Epson','HP','Dell','Lenovo','Apple','Samsung','Asus','Acer','Canon','Brother','Xerox','Zebra','Honeywell','Datalogic','Verifone','PAX','Huawei','Xiaomi','JBL','Sony','Logitech','Microsoft','Panasonic','Toshiba','Fujitsu','Kyocera','Ricoh','WD','Seagate','Kingston','SanDisk','Crucial','Corsair','Netgear','TP-Link','Cisco','D-Link','Hikvision','Dahua','Anker','Baseus','Hisense','LG','Bose','Sennheiser','Star Micronics','Jingxin'];
