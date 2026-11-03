@@ -2849,7 +2849,7 @@ html.lenis, html.lenis body { height: auto; }
 .hamburger.open .ham-line:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 .mobile-nav { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.45); z-index: 150; }
 .mobile-nav.open { display: block; }
-.mobile-nav-panel { position: absolute; top: 0; right: 0; width: min(320px, 88vw); height: 100%; background: var(--surface); display: flex; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,.18); overflow-y: auto; padding-bottom: 24px; }
+.mobile-nav-panel { position: absolute; top: 0; right: 0; width: min(320px, 88vw); height: 100%; background: var(--surface); display: flex; flex-direction: column; box-shadow: -4px 0 24px rgba(0,0,0,.18); overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: max(80px, env(safe-area-inset-bottom, 24px)); }
 /* header row */
 .mnp-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1px solid var(--border); }
 .mnp-logo { font-weight: 800; font-size: 1.05rem; color: var(--fg); letter-spacing: .02em; }
@@ -3031,8 +3031,8 @@ html.lenis, html.lenis body { height: auto; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input class="mnp-search-input" type="text" placeholder="Search products…"
           oninput="searchTerm=this.value.toLowerCase().trim();visibleCount=PAGE_SIZE;renderProducts()"
-          onkeydown="if(event.key==='Enter'){closeMobileNav();setTimeout(()=>{const el=document.getElementById('products');if(el){const y=el.getBoundingClientRect().top+window.scrollY-60;window.scrollTo({top:y,behavior:'smooth'});}},200);}" />
-        <button class="mnp-search-go" onclick="closeMobileNav();setTimeout(()=>{const el=document.getElementById('products');if(el){const y=el.getBoundingClientRect().top+window.scrollY-60;window.scrollTo({top:y,behavior:'smooth'});}},200)" aria-label="Go">→</button>
+          onkeydown="if(event.key==='Enter'){searchTerm=this.value.toLowerCase().trim();visibleCount=PAGE_SIZE;renderProducts();closeMobileNav();setTimeout(()=>{const el=document.getElementById('products');if(el){const y=el.getBoundingClientRect().top+window.scrollY-60;window.scrollTo({top:y,behavior:'smooth'});}},200);}" />
+        <button class="mnp-search-go" onclick="(function(){const v=document.querySelector('.mnp-search-input').value;searchTerm=v.toLowerCase().trim();visibleCount=PAGE_SIZE;renderProducts();closeMobileNav();setTimeout(()=>{const el=document.getElementById('products');if(el){const y=el.getBoundingClientRect().top+window.scrollY-60;window.scrollTo({top:y,behavior:'smooth'});}},200);})()" aria-label="Search">→</button>
       </div>
     </div>
     <!-- rest built by buildCatNav() -->
