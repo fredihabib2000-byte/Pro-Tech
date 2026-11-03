@@ -30,9 +30,9 @@ SLOW_EMA   = 21
 TREND_EMA  = 200
 RSI_PERIOD = 14
 ATR_PERIOD = 14
-ATR_MULT   = 1.8     # tighter stop → better RR
-RR_RATIO   = 3.0     # 3:1 RR → profitable even at 35% win rate
-ATR_MIN    = 2.5     # skip dead/choppy markets below this ATR
+ATR_MULT   = 1.5     # tighter stop → quicker SL hit, less drawdown
+RR_RATIO   = 2.0     # 2:1 RR → TP is 40% closer, faster exits
+ATR_MIN    = 3.0     # skip low-volatility / dead markets
 
 SETUP_LEVEL  = 2
 SIGNAL_LEVEL = 3
@@ -44,10 +44,10 @@ PIVOT_ZONE  = 0.35   # within X × ATR of a pivot level = "at key level"
 ALERT_MIN_SCORE = 3
 
 # Spam guard: don't re-alert same direction+reason within N minutes
-SPAM_MINUTES = 90
+SPAM_MINUTES = 120
 
 # Ranging filter: EMA spread / ATR must exceed this to confirm a trend
-EMA_TREND_MIN = 0.25
+EMA_TREND_MIN = 0.30
 
 last_alert = {}   # direction → (reason_key, timestamp)
 last_brief_date = None
