@@ -756,12 +756,31 @@ function startClock(){
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
-function showToast(title,body,onClick){
+function playNotifSound(type){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const freqs=type==="order"?[523,659,784]:type==="review"?[659,784,1047]:[784,1047,1319];
+    freqs.forEach((f,i)=>{
+      const o=ctx.createOscillator();
+      const g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=f;o.type="sine";
+      const t=ctx.currentTime+i*0.18;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(0.25,t+0.04);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      o.start(t);o.stop(t+0.35);
+    });
+  }catch(e){}
+}
+
+function showToast(title,body,onClick,icon){
   const wrap=document.getElementById("toastWrap");
   if(!wrap)return;
+  const ic=icon||"🛒";
   const t=document.createElement("div");
   t.className="toast";
-  t.innerHTML=`<div class="toast-title">🛒 ${title}</div><div class="toast-body">${body}</div>`;
+  t.innerHTML=`<div class="toast-title">${ic} ${title}</div><div class="toast-body">${body}</div>`;
   t.onclick=()=>{t.classList.remove("show");setTimeout(()=>t.remove(),300);if(onClick)onClick();};
   wrap.appendChild(t);
   requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add("show")));
@@ -786,10 +805,10 @@ function requestNotifPermission(){
   }
 }
 
-function fireBrowserNotif(title,body){
+function fireBrowserNotif(title,body,page){
   if("Notification" in window&&Notification.permission==="granted"){
     const n=new Notification(title,{body,icon:"/favicon.ico"});
-    n.onclick=()=>{window.focus();n.close();goto(document.querySelector('[data-page=orders]'));};
+    n.onclick=()=>{window.focus();n.close();if(page)goto(document.querySelector('[data-page='+page+']'));};
     setTimeout(()=>n.close(),8000);
   }
 }
@@ -802,13 +821,20 @@ function startOrderRealtime(){
   }catch(e){return;}
 
   realtimeWs.onopen=()=>{
+    // subscribe to orders
     realtimeWs.send(JSON.stringify({
       topic:"realtime:public:pt_orders",
       event:"phx_join",
       payload:{config:{broadcast:{self:false},presence:{key:""},postgres_changes:[{event:"INSERT",schema:"public",table:"pt_orders"}]}},
       ref:"1"
     }));
-    // heartbeat every 25s
+    // subscribe to notifications (reviews + feedback)
+    realtimeWs.send(JSON.stringify({
+      topic:"realtime:public:pt_notifications",
+      event:"phx_join",
+      payload:{config:{broadcast:{self:false},presence:{key:""},postgres_changes:[{event:"INSERT",schema:"public",table:"pt_notifications"}]}},
+      ref:"2"
+    }));
     setInterval(()=>{if(realtimeWs&&realtimeWs.readyState===1)realtimeWs.send(JSON.stringify({topic:"phoenix",event:"heartbeat",payload:{},ref:"hb"}));},25000);
   };
 
@@ -818,25 +844,47 @@ function startOrderRealtime(){
       if(msg.event==="postgres_changes"||msg.payload?.data?.type==="INSERT"){
         const rec=msg.payload?.data?.record||msg.payload?.record;
         if(!rec)return;
-        const name=rec.customer_name||"New customer";
-        const total=rec.total?"$"+Number(rec.total).toFixed(2):"";
-        const items=Array.isArray(rec.items)?rec.items.length+" item(s)":"";
-        const bodyTxt=[items,total].filter(Boolean).join(" · ");
-        showToast("New Order from "+name, bodyTxt||"Just arrived", ()=>goto(document.querySelector('[data-page=orders]')));
-        fireBrowserNotif("ProTech — New Order 🛒","From "+name+(bodyTxt?" · "+bodyTxt:""));
-        bumpBell();
-        // refresh orders list if currently viewing it
-        if(document.getElementById("page-orders")&&!document.getElementById("page-orders").classList.contains("page-hidden")){
-          loadOrders();
+        const topic=msg.topic||"";
+
+        if(topic.includes("pt_orders")||rec.customer_name!==undefined){
+          // ORDER
+          const name=rec.customer_name||"New customer";
+          const total=rec.total?"$"+Number(rec.total).toFixed(2):"";
+          const items=Array.isArray(rec.items)?rec.items.length+" item(s)":"";
+          const bodyTxt=[items,total].filter(Boolean).join(" · ");
+          playNotifSound("order");
+          showToast("New Order from "+name, bodyTxt||"Just arrived", ()=>goto(document.querySelector('[data-page=orders]')),"🛒");
+          fireBrowserNotif("ProTech — New Order 🛒","From "+name+(bodyTxt?" · "+bodyTxt:""),"orders");
+          bumpBell();
+          const ord=document.getElementById("pendingDot");if(ord)ord.style.display="inline-block";
+          if(document.getElementById("page-orders")&&!document.getElementById("page-orders").classList.contains("page-hidden"))loadOrders();
+          loadDashboard();
+
+        }else if(rec.type==="review"){
+          // REVIEW
+          const title=rec.title||"New Review";
+          const msg2=rec.message||"";
+          playNotifSound("review");
+          showToast(title, msg2.substring(0,80), ()=>goto(document.querySelector('[data-page=reviews]')),"⭐");
+          fireBrowserNotif("ProTech — "+title,"⭐ "+msg2.substring(0,100),"reviews");
+          bumpBell();
+          const rv=document.getElementById("reviewsDot");if(rv)rv.style.display="inline-block";
+
+        }else if(rec.type==="feedback"){
+          // FEEDBACK
+          const title=rec.title||"New Feedback";
+          const msg2=rec.message||"";
+          playNotifSound("feedback");
+          showToast(title, msg2.substring(0,80), ()=>goto(document.querySelector('[data-page=messages]')),"💬");
+          fireBrowserNotif("ProTech — "+title,"💬 "+msg2.substring(0,100),"messages");
+          bumpBell();
+          const mg=document.getElementById("msgDot");if(mg)mg.style.display="inline-block";
         }
-        // refresh dashboard pending count
-        loadDashboard();
       }
     }catch(err){}
   };
 
   realtimeWs.onclose=()=>{
-    // reconnect after 5s
     setTimeout(()=>{if(localStorage.getItem("pt_admin"))startOrderRealtime();},5000);
   };
 }

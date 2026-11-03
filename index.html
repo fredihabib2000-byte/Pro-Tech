@@ -4737,15 +4737,26 @@ async function handleContact(e) {
   const btn = e.target.querySelector("button[type=submit]");
   btn.disabled = true; btn.textContent = "Sending…";
   try {
+    const fbName = document.getElementById("fb_name").value.trim();
+    const fbMsg  = document.getElementById("fb_msg").value.trim();
     await sbFetch("/rest/v1/pt_feedback", {
       method: "POST",
       body: JSON.stringify({
-        name: document.getElementById("fb_name").value.trim(),
+        name: fbName,
         phone: document.getElementById("fb_phone").value.trim(),
         email: document.getElementById("fb_email").value.trim() || null,
-        message: document.getElementById("fb_msg").value.trim()
+        message: fbMsg
       })
     });
+    sbFetch("/rest/v1/pt_notifications", {
+      method: "POST",
+      body: JSON.stringify({
+        type: "feedback",
+        title: "New Feedback from " + fbName,
+        message: fbMsg.substring(0, 200),
+        reference_id: null
+      })
+    }).catch(()=>{});
     showToast("Message sent! We'll get back to you soon.");
     e.target.reset();
   } catch(err) {
