@@ -281,6 +281,7 @@ select.status-sel:focus{border-color:var(--accent)}
         <div class="topbar-title" id="topbarTitle">Dashboard</div>
       </div>
       <div class="topbar-right">
+        <button class="notif-bell" id="testSoundBtn" title="Test notification sound" onclick="testNotifSound()" style="font-size:.75rem;padding:5px 8px;border-radius:6px">🔊</button>
         <button class="notif-bell" id="notifBell" title="New order notifications" onclick="goto(document.querySelector('[data-page=orders]'))">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="bell-badge" id="bellBadge"></span>
         </button>
@@ -853,6 +854,23 @@ function playNotifSound(type){
   if(!ctx)return;
   // Always resume first — idempotent on a running context, recovers a suspended one
   ctx.resume().then(()=>_doBeeps(ctx,type)).catch(()=>{});
+}
+
+function testNotifSound(){
+  _unlockAudio();
+  const btn=document.getElementById("testSoundBtn");
+  if(btn){btn.textContent="▶";setTimeout(()=>btn.textContent="🔊",1500);}
+  const ctx=_getAudioCtx();
+  if(!ctx){alert("Audio not supported in this browser.");return;}
+  ctx.resume().then(()=>{
+    _doBeeps(ctx,"order");
+    // Show what state the context is in
+    setTimeout(()=>{
+      if(btn)btn.title="Audio ctx: "+ctx.state+" | click to test sound";
+    },200);
+  }).catch(e=>{
+    alert("Sound blocked: "+e.message+"\nTry: Chrome → Site settings → Sound → Allow");
+  });
 }
 
 function flashScreen(color){
