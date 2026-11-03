@@ -5082,7 +5082,7 @@ function initStarPicker() {
 }
 
 function openReviewForm() {
-  document.getElementById("pmQaForm").style.display = "none";
+  const _qa = document.getElementById("pmQaForm"); if (_qa) _qa.style.display = "none";
   const f = document.getElementById("pmReviewForm");
   if (f.style.display !== "none") { f.style.display = "none"; return; }
   // Reset to step 1
