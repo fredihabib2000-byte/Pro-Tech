@@ -1937,7 +1937,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
   justify-content: center;
   padding: 12px;
   backdrop-filter: blur(4px);
-  touch-action: none;
 }
 .prod-modal-overlay.open { display: flex; }
 .prod-modal {
@@ -1985,8 +1984,9 @@ button { cursor: pointer; font-family: inherit; border: none; }
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    overscroll-behavior: contain;
   }
-  .prod-modal-info { overflow-y: visible; }
+  .prod-modal-info { overflow-y: visible; overscroll-behavior: auto; }
 }
 /* ── Gallery panel ── */
 .prod-modal-gallery {
@@ -2076,6 +2076,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .prod-modal-cat { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
 .prod-modal-name { font-family: var(--display); font-size: 1.35rem; font-weight: 700; line-height: 1.25; }
@@ -2990,7 +2991,7 @@ html.lenis, html.lenis body { height: auto; }
     <!-- Search bar -->
     <div class="nav-search">
       <input type="text" id="navSearchInput" placeholder="Search products, brands and more…" autocomplete="off">
-      <button class="nav-search-btn" aria-label="Search" onclick="document.getElementById('navSearchInput').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))">
+      <button class="nav-search-btn" aria-label="Search" onclick="const inp=document.getElementById('navSearchInput');inp.focus();if(inp.value.trim()){searchTerm=inp.value.trim().toLowerCase();visibleCount=PAGE_SIZE;renderProducts();document.getElementById('products').scrollIntoView({behavior:'smooth'});}">
         <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -4665,7 +4666,26 @@ function renderWishlistGrid() {
 }
 
 // init badge on load
-document.addEventListener('DOMContentLoaded', () => updateWishlistBadge());
+document.addEventListener('DOMContentLoaded', () => {
+  updateWishlistBadge();
+  // Prevent wheel/touchpad scroll on modal overlay from reaching the page
+  const modalEl = document.getElementById('productDetailModal');
+  if (modalEl) {
+    modalEl.addEventListener('wheel', e => {
+      const info = modalEl.querySelector('.prod-modal-info');
+      const body = modalEl.querySelector('.prod-modal-body');
+      const target = [info, body].find(el => el && el.contains(e.target));
+      if (target) {
+        const atTop = target.scrollTop === 0 && e.deltaY < 0;
+        const atBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 1 && e.deltaY > 0;
+        if (!atTop && !atBottom) e.stopPropagation();
+        else e.preventDefault();
+      } else {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  }
+});
 
 // ── Cart drawer ───────────────────────────────────────────────────
 const cartDrawer = document.getElementById("cartDrawer");
