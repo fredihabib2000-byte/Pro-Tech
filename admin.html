@@ -210,6 +210,7 @@ select.status-sel:focus{border-color:var(--accent)}
   .topbar{padding:0 16px}
   th:nth-child(n+4),td:nth-child(n+4){display:none}
 }
+@keyframes adminFlash{0%{opacity:.35}100%{opacity:0}}
 </style>
 </head>
 <body>
@@ -660,6 +661,7 @@ async function doLogin(){
     if(!data?.session){errEl.textContent="Sign in failed. Please try again.";return}
     document.getElementById("loginPage").style.display="none";
     document.getElementById("shell").classList.add("show");
+    _getAudioCtx(); // unlock audio context on login click (user gesture)
     init();
   }catch(e){
     errEl.textContent="Network error: "+e.message;
@@ -756,22 +758,58 @@ function startClock(){
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
+let _audioCtx=null;
+function _getAudioCtx(){
+  if(!_audioCtx){
+    try{ _audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  if(_audioCtx&&_audioCtx.state==="suspended"){
+    _audioCtx.resume().catch(()=>{});
+  }
+  return _audioCtx;
+}
+// Unlock audio on any user interaction
+["click","touchstart","keydown"].forEach(ev=>{
+  document.addEventListener(ev,function unlock(){
+    _getAudioCtx();
+    document.removeEventListener(ev,unlock);
+  },{once:true,passive:true});
+});
+
+function _beep(ctx,freq,startT,dur,vol){
+  const o=ctx.createOscillator();
+  const g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);
+  o.frequency.value=freq;o.type="sine";
+  g.gain.setValueAtTime(0,startT);
+  g.gain.linearRampToValueAtTime(vol,startT+0.03);
+  g.gain.exponentialRampToValueAtTime(0.001,startT+dur);
+  o.start(startT);o.stop(startT+dur);
+}
+
 function playNotifSound(type){
+  const ctx=_getAudioCtx();
+  if(!ctx)return;
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const freqs=type==="order"?[523,659,784]:type==="review"?[659,784,1047]:[784,1047,1319];
-    freqs.forEach((f,i)=>{
-      const o=ctx.createOscillator();
-      const g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);
-      o.frequency.value=f;o.type="sine";
-      const t=ctx.currentTime+i*0.18;
-      g.gain.setValueAtTime(0,t);
-      g.gain.linearRampToValueAtTime(0.25,t+0.04);
-      g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
-      o.start(t);o.stop(t+0.35);
-    });
+    const t=ctx.currentTime;
+    if(type==="order"){
+      // Loud urgent alarm — 3 beeps, played twice
+      [0,0.22,0.44, 0.75,0.97,1.19].forEach((off,i)=>{
+        _beep(ctx,i%3===0?880:i%3===1?1046:1318,t+off,0.18,0.7);
+      });
+    }else if(type==="review"){
+      [523,659,784].forEach((f,i)=>_beep(ctx,f,t+i*0.18,0.32,0.5));
+    }else{
+      [784,1047].forEach((f,i)=>_beep(ctx,f,t+i*0.22,0.32,0.45));
+    }
   }catch(e){}
+}
+
+function flashScreen(color){
+  const d=document.createElement("div");
+  d.style.cssText="position:fixed;inset:0;z-index:99999;pointer-events:none;background:"+color+";opacity:.35;animation:adminFlash .6s ease-out forwards";
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(),700);
 }
 
 function showToast(title,body,onClick,icon){
@@ -853,6 +891,7 @@ function startOrderRealtime(){
           const items=Array.isArray(rec.items)?rec.items.length+" item(s)":"";
           const bodyTxt=[items,total].filter(Boolean).join(" · ");
           playNotifSound("order");
+          flashScreen("#22c55e");
           showToast("New Order from "+name, bodyTxt||"Just arrived", ()=>goto(document.querySelector('[data-page=orders]')),"🛒");
           fireBrowserNotif("ProTech — New Order 🛒","From "+name+(bodyTxt?" · "+bodyTxt:""),"orders");
           bumpBell();
@@ -865,6 +904,7 @@ function startOrderRealtime(){
           const title=rec.title||"New Review";
           const msg2=rec.message||"";
           playNotifSound("review");
+          flashScreen("#f59e0b");
           showToast(title, msg2.substring(0,80), ()=>goto(document.querySelector('[data-page=reviews]')),"⭐");
           fireBrowserNotif("ProTech — "+title,"⭐ "+msg2.substring(0,100),"reviews");
           bumpBell();
@@ -875,6 +915,7 @@ function startOrderRealtime(){
           const title=rec.title||"New Feedback";
           const msg2=rec.message||"";
           playNotifSound("feedback");
+          flashScreen("#3b82f6");
           showToast(title, msg2.substring(0,80), ()=>goto(document.querySelector('[data-page=messages]')),"💬");
           fireBrowserNotif("ProTech — "+title,"💬 "+msg2.substring(0,100),"messages");
           bumpBell();
