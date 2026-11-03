@@ -443,12 +443,13 @@ button { cursor: pointer; font-family: inherit; border: none; }
   border-radius: 99px;
   padding: 0 4px 0 14px;
   gap: 6px;
-  min-width: 0;
-  max-width: 260px;
-  flex: 1 1 180px;
-  margin: 10px 12px;
+  width: 220px;
+  flex-shrink: 0;
+  margin: 10px 8px;
   transition: border-color .15s, box-shadow .15s;
 }
+@media (max-width: 1100px) { .nav-search { width: 170px; } }
+@media (max-width: 960px) { .nav-search { width: 200px; } }
 .nav-search:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
@@ -480,7 +481,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 @media (max-width: 720px) { .nav-search { display: none; } }
 
 /* ── Nav right ─────────────────────────────────────────────── */
-.nav-right { display: flex; align-items: center; gap: 6px; padding-left: 6px; }
+.nav-right { display: flex; align-items: center; gap: 6px; padding-left: 6px; margin-left: auto; }
 .nav-phone-link {
   display: flex;
   align-items: center;
@@ -2988,16 +2989,16 @@ html.lenis, html.lenis body { height: auto; }
     <!-- Desktop dropdown category nav — built by buildCatNav() -->
     <div class="nav-cats" id="navCats" role="navigation" aria-label="Product categories"></div>
 
-    <!-- Search bar -->
-    <div class="nav-search">
-      <input type="text" id="navSearchInput" placeholder="Search products, brands and more…" autocomplete="off">
-      <button class="nav-search-btn" aria-label="Search" onclick="const inp=document.getElementById('navSearchInput');inp.focus();if(inp.value.trim()){searchTerm=inp.value.trim().toLowerCase();visibleCount=PAGE_SIZE;renderProducts();document.getElementById('products').scrollIntoView({behavior:'smooth'});}">
-        <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
-    </div>
-
     <!-- Right icons -->
     <div class="nav-right">
+      <!-- Search bar -->
+      <div class="nav-search">
+        <input type="text" id="navSearchInput" placeholder="Search products…" autocomplete="off"
+          onkeydown="if(event.key==='Enter'){searchTerm=this.value.toLowerCase().trim();visibleCount=PAGE_SIZE;renderProducts();document.getElementById('products').scrollIntoView({behavior:'smooth'});}">
+        <button class="nav-search-btn" aria-label="Search" onclick="const inp=document.getElementById('navSearchInput');inp.focus();if(inp.value.trim()){searchTerm=inp.value.trim().toLowerCase();visibleCount=PAGE_SIZE;renderProducts();document.getElementById('products').scrollIntoView({behavior:'smooth'});}">
+          <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+      </div>
       <button class="theme-btn" id="themeToggle" title="Toggle theme">☀️</button>
       <button class="header-wish-btn" id="headerWishBtn" onclick="openWishlist()" aria-label="Wishlist" title="My Wishlist">
         <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
