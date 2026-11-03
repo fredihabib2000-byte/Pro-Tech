@@ -126,7 +126,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   margin-inline: auto;
   padding-inline: 20px;
 }
-.section { padding-block: 96px; }
+.section { padding-block: 96px; content-visibility: auto; contain-intrinsic-size: auto 600px; }
 .section-title {
   font-family: var(--display);
   font-size: clamp(1.6rem, 3vw, 2.2rem);
@@ -3335,10 +3335,6 @@ html.lenis, html.lenis body { height: auto; }
         <div class="ink-brand-pill">Epson</div>
         <div class="ink-brand-pill" style="font-family:'Arial Black',sans-serif;font-size:.72rem">brother</div>
       </div>
-      <button class="ink-banner-cta" onclick="setFilter('printers'); document.getElementById('products').scrollIntoView({behavior:'smooth'})">
-        Shop Now
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
       <p class="ink-note">💬 Send us your printer model — we'll find the right cartridge</p>
     </div>
   </div>
@@ -3380,8 +3376,8 @@ html.lenis, html.lenis body { height: auto; }
     <div class="features-grid">
       <div class="feature-card reveal rd1">
         <div class="feature-icon-wrap fw-amber">🚀</div>
-        <div class="feature-title">Same-Day Shipping</div>
-        <div class="feature-desc">Orders placed before 2 PM ship the same business day. Get your equipment fast.</div>
+        <div class="feature-title">Within 24 Hours Shipping</div>
+        <div class="feature-desc">Orders are shipped within 24 hours of confirmation. Get your equipment fast.</div>
       </div>
       <div class="feature-card reveal rd2">
         <div class="feature-icon-wrap fw-blue">🛠️</div>
@@ -3418,7 +3414,6 @@ html.lenis, html.lenis body { height: auto; }
         <h2>Ready to Upgrade Your Business Tech?</h2>
         <p>Get a free consultation with our specialists. We'll build you the perfect tech stack for your store or restaurant.</p>
       </div>
-      <a href="#contact" class="btn-white" style="position:relative;z-index:1">Get Free Quote</a>
     </div>
   </div>
 </section>
@@ -4102,17 +4097,18 @@ function renderNewArrivals() {
 }
 
 // ── Load products from Supabase ───────────────────────────────────
-const _CACHE_KEY = 'pt_store_cache_v3';
-const _CACHE_TTL = 4 * 60 * 1000; // 4 minutes
+const _CACHE_KEY = 'pt_store_cache_v4';
+const _CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 function _mapProduct(p) {
   return {
     id: p.id, name: p.name, cat: p.category, price: parseFloat(p.price),
     oldPrice: p.old_price ? parseFloat(p.old_price) : null,
     icon: p.icon || "📦", badge: p.badge, desc: p.description || "",
-    quantity: p.quantity, imageUrl: p.image_url || null, specs: p.specs || "",
-    extraImages: Array.isArray(p.extra_images) ? p.extra_images : [],
-    variants: Array.isArray(p.variants) ? p.variants : []
+    quantity: p.quantity, imageUrl: p.image_url || null,
+    specs: p.specs !== undefined ? (p.specs || "") : null,  // null = not yet fetched
+    extraImages: p.extra_images !== undefined ? (Array.isArray(p.extra_images) ? p.extra_images : []) : null,
+    variants: p.variants !== undefined ? (Array.isArray(p.variants) ? p.variants : []) : null
   };
 }
 
@@ -4240,7 +4236,7 @@ function _applyStoreData(products, promos, cats) {
 
 async function _fetchStoreData() {
   const [products, promos, cats] = await Promise.all([
-    sbFetch("/rest/v1/pt_products?is_active=eq.true&order=category.asc,name.asc&select=id,name,category,price,old_price,icon,badge,description,quantity,image_url,specs,extra_images,variants"),
+    sbFetch("/rest/v1/pt_products?is_active=eq.true&order=category.asc,name.asc&select=id,name,category,price,old_price,icon,badge,description,quantity,image_url"),
     sbFetch("/rest/v1/pt_promotions?is_active=eq.true&select=*"),
     sbFetch("/rest/v1/pt_categories?select=name,image_url&order=name.asc")
   ]);
@@ -4303,7 +4299,7 @@ function productCardHTML(p) {
       <div class="product-card" onclick="openProductDetail(${p.id})">
         <div class="shimmer-layer" aria-hidden="true"></div>
         <div class="product-img">
-          ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='');this.parentElement.querySelector('.img-fallback')&&(this.parentElement.querySelector('.img-fallback').style.display='flex')">` : ``}<span class="img-fallback" style="display:${p.imageUrl?'none':'flex'};align-items:center;justify-content:center;width:100%;height:100%">${esc(p.icon)}</span>
+          ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='');this.parentElement.querySelector('.img-fallback')&&(this.parentElement.querySelector('.img-fallback').style.display='flex')">` : ``}<span class="img-fallback" style="display:${p.imageUrl?'none':'flex'};align-items:center;justify-content:center;width:100%;height:100%">${esc(p.icon)}</span>
           ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${esc(p.badge)}</div>` : ""}
           ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
           <button class="wish-btn ${WISHLIST.has(p.id)?'active':''}" id="wish-${p.id}" onclick="event.stopPropagation();toggleWishlist(${p.id})" aria-label="Wishlist">
@@ -4879,15 +4875,46 @@ let waNumber = "";
 let _pmCurrentImages = [];
 let _pmCurrentIdx = 0;
 
+function _renderModalDetails(p) {
+  // Gallery
+  _pmCurrentImages = [p.imageUrl, ...(p.extraImages || [])].filter(Boolean);
+  _pmCurrentIdx = 0;
+  pmShowImage(0);
+  const thumbsEl = document.getElementById("pmThumbs");
+  if (_pmCurrentImages.length > 1) {
+    thumbsEl.innerHTML = _pmCurrentImages.map((url, i) =>
+      `<button type="button" class="prod-modal-thumb${i===0?" active":""}" onclick="pmShowImage(${i})"><img src="${url}" alt="" loading="lazy" draggable="false"></button>`
+    ).join("");
+    thumbsEl.style.display = "flex";
+  } else { thumbsEl.innerHTML = ""; thumbsEl.style.display = "none"; }
+
+  // Specs
+  const specsEl = document.getElementById("pmSpecs");
+  if (p.specs) {
+    specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${esc(s)}</li>`).join("");
+    specsEl.style.display = "";
+  } else { specsEl.innerHTML = ""; specsEl.style.display = "none"; }
+
+  // Variants
+  const varRow = document.getElementById("pmVariantsRow");
+  const swatchesEl = document.getElementById("pmSwatches");
+  const colorLabel = document.getElementById("pmSelectedColorLabel");
+  _pmCurrentVariant = null;
+  if (p.variants && p.variants.length) {
+    swatchesEl.innerHTML = p.variants.map((v, i) =>
+      `<button class="pm-swatch${i===0?' active':''}" style="background:${esc(v.color||'#ccc')}" title="${esc(v.label||v.color||'')}" onclick="pmSelectVariant(${i})" data-vi="${i}"></button>`
+    ).join("");
+    colorLabel.textContent = p.variants[0]?.label ? ": " + p.variants[0].label : "";
+    _pmCurrentVariant = p.variants[0] || null;
+    if(varRow) varRow.style.display = "";
+  } else { if(varRow) varRow.style.display = "none"; if(swatchesEl) swatchesEl.innerHTML = ""; if(colorLabel) colorLabel.textContent = ""; }
+}
+
 function openProductDetail(id) {
   const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
   trackEvent('product_view', { id: p.id, name: p.name });
   currentModalProduct = p;
-
-  // Build image list: main image + extras
-  _pmCurrentImages = [p.imageUrl, ...(p.extraImages || [])].filter(Boolean);
-  _pmCurrentIdx = 0;
 
   document.getElementById("pmTitle").textContent = p.name;
   document.getElementById("pmCat").textContent = catLabel(p.cat);
@@ -4898,40 +4925,22 @@ function openProductDetail(id) {
   else { oldEl.style.display = "none"; }
   document.getElementById("pmDesc").textContent = p.desc || "";
 
-  const specsEl = document.getElementById("pmSpecs");
-  if (p.specs) {
-    specsEl.innerHTML = p.specs.split(/\n|\\n/).filter(Boolean).map(s => `<li>${esc(s)}</li>`).join("");
-    specsEl.style.display = "";
-  } else { specsEl.innerHTML = ""; specsEl.style.display = "none"; }
-
-  // Color variants
-  _pmCurrentVariant = null;
-  const varRow = document.getElementById("pmVariantsRow");
-  const swatchesEl = document.getElementById("pmSwatches");
-  const colorLabel = document.getElementById("pmSelectedColorLabel");
-  if (p.variants && p.variants.length) {
-    swatchesEl.innerHTML = p.variants.map((v, i) =>
-      `<button class="pm-swatch" style="background:${esc(v.color)}" title="${esc(v.label || v.color)}" onclick="pmSelectVariant(${i})"></button>`
-    ).join("");
-    colorLabel.textContent = "";
-    varRow.style.display = "";
+  // If specs/variants/extra images not yet loaded, fetch them now
+  if (p.specs === null) {
+    document.getElementById("pmSpecs").style.display = "none";
+    const varRow = document.getElementById("pmVariantsRow"); if(varRow) varRow.style.display = "none";
+    _pmCurrentImages = [p.imageUrl].filter(Boolean); _pmCurrentIdx = 0; pmShowImage(0);
+    const thumbsEl2 = document.getElementById("pmThumbs"); if(thumbsEl2){thumbsEl2.innerHTML="";thumbsEl2.style.display="none";}
+    sbFetch(`/rest/v1/pt_products?id=eq.${encodeURIComponent(id)}&select=specs,extra_images,variants`)
+      .then(rows => {
+        if (!rows || !rows[0]) return;
+        p.specs = rows[0].specs || "";
+        p.extraImages = Array.isArray(rows[0].extra_images) ? rows[0].extra_images : [];
+        p.variants = Array.isArray(rows[0].variants) ? rows[0].variants : [];
+        if (currentModalProduct?.id === id) _renderModalDetails(p);
+      }).catch(() => {});
   } else {
-    varRow.style.display = "none";
-    swatchesEl.innerHTML = "";
-    colorLabel.textContent = "";
-  }
-
-  // Populate gallery
-  pmShowImage(0);
-  const thumbsEl = document.getElementById("pmThumbs");
-  if (_pmCurrentImages.length > 1) {
-    thumbsEl.innerHTML = _pmCurrentImages.map((url, i) =>
-      `<button type="button" class="prod-modal-thumb${i===0?" active":""}" onclick="pmShowImage(${i})"><img src="${url}" alt="" loading="lazy" draggable="false"></button>`
-    ).join("");
-    thumbsEl.style.display = "flex";
-  } else {
-    thumbsEl.innerHTML = "";
-    thumbsEl.style.display = "none";
+    _renderModalDetails(p);
   }
 
   const waBtn = document.getElementById("pmWaBtn");
