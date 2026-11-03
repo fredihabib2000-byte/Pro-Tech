@@ -812,13 +812,14 @@ function flashScreen(color){
   setTimeout(()=>d.remove(),700);
 }
 
+function _esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#x27;");}
 function showToast(title,body,onClick,icon){
   const wrap=document.getElementById("toastWrap");
   if(!wrap)return;
   const ic=icon||"🛒";
   const t=document.createElement("div");
   t.className="toast";
-  t.innerHTML=`<div class="toast-title">${ic} ${title}</div><div class="toast-body">${body}</div>`;
+  t.innerHTML=`<div class="toast-title">${ic} ${_esc(title)}</div><div class="toast-body">${_esc(body)}</div>`;
   t.onclick=()=>{t.classList.remove("show");setTimeout(()=>t.remove(),300);if(onClick)onClick();};
   wrap.appendChild(t);
   requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add("show")));

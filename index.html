@@ -4772,7 +4772,7 @@ async function loadStoreSettings() {
     rows.forEach(r => s[r.key] = r.value);
     if (s.email) {
       const emailEl = document.getElementById("contact-email");
-      emailEl.innerHTML = `<a href="mailto:${s.email}" style="color:inherit;text-decoration:underline">${s.email}</a>`;
+      emailEl.innerHTML = `<a href="mailto:${esc(s.email)}" style="color:inherit;text-decoration:underline">${esc(s.email)}</a>`;
     }
     if (s.phone)     document.getElementById("contact-phone").textContent   = s.phone;
     if (s.address)   document.getElementById("contact-address").textContent = s.address;
@@ -4798,7 +4798,8 @@ async function loadStoreSettings() {
     const contactRow = document.getElementById("contact-social-row");
     const footerRow  = document.getElementById("footer-socials");
     if (socialLinks.length) {
-      const btns = socialLinks.map(l => `<a href="${l.url}" target="_blank" rel="noopener" class="social-btn ${l.cls}">${l.icon} ${l.label}</a>`).join("");
+      const safeUrl = u => (u && /^https?:\/\//.test(u)) ? esc(u) : "#";
+      const btns = socialLinks.map(l => `<a href="${safeUrl(l.url)}" target="_blank" rel="noopener noreferrer" class="social-btn ${l.cls}">${l.icon} ${esc(l.label)}</a>`).join("");
       contactRow.innerHTML = btns; contactRow.style.display = "flex";
       footerRow.innerHTML  = btns; footerRow.style.display  = "flex";
     }
