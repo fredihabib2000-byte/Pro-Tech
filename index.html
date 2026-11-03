@@ -5309,15 +5309,15 @@ function filterByBrand(brand) {
 }
 
 function filterPhoneBrand(brand) {
-  const toggled = activeBrandFilter === brand && !activeBigCatSubs.length;
+  const isActive = activeBrandFilter === brand;
   activeBigCatSubs = [];
-  activeBrandFilter = toggled ? "" : brand;
   activeFilter = "all";
+  activeBrandFilter = isActive ? "" : brand;
   visibleCount = PAGE_SIZE;
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
   document.querySelectorAll(".category-card").forEach(c => c.classList.toggle("active", false));
-  document.querySelectorAll(".brand-chip").forEach(c => c.classList.toggle("active", c.dataset.brand === brand && !toggled));
-  document.querySelectorAll(".phone-brand-card").forEach(c => c.classList.toggle("active", c.dataset.pbrand === brand && !toggled));
+  document.querySelectorAll(".brand-chip").forEach(c => c.classList.toggle("active", c.dataset.brand === brand && !isActive));
+  document.querySelectorAll(".phone-brand-card").forEach(c => c.classList.toggle("active", c.dataset.pbrand === brand && !isActive));
   renderProducts();
   requestAnimationFrame(() => {
     const el = document.getElementById("products");
