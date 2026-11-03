@@ -777,7 +777,15 @@ let _audioUnlocked=false;
 
 function _getAudioCtx(){
   if(!_audioCtx){
-    try{ _audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+    try{
+      _audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+      // Auto-resume whenever the context gets suspended (e.g. tab backgrounded)
+      _audioCtx.onstatechange=()=>{
+        if(_audioCtx.state==="suspended"&&_audioUnlocked){
+          _audioCtx.resume().catch(()=>{});
+        }
+      };
+    }catch(e){}
   }
   return _audioCtx;
 }
@@ -801,14 +809,19 @@ function _unlockAudio(){
   document.addEventListener(ev,function unlock(){ _unlockAudio(); document.removeEventListener(ev,unlock); },{once:true,passive:true});
 });
 
-// Keep AudioContext alive — ping every 20s so browser doesn't suspend it
+// Keep AudioContext alive — ping every 5s so browser doesn't suspend it
 setInterval(()=>{
-  if(_audioCtx&&_audioCtx.state==="running"){
-    const o=_audioCtx.createOscillator();const g=_audioCtx.createGain();
-    o.connect(g);g.connect(_audioCtx.destination);g.gain.value=0;
-    o.start();o.stop(_audioCtx.currentTime+0.001);
-  }
-},20000);
+  if(!_audioCtx)return;
+  try{
+    if(_audioCtx.state==="suspended"&&_audioUnlocked){
+      _audioCtx.resume().catch(()=>{});
+    }else if(_audioCtx.state==="running"){
+      const o=_audioCtx.createOscillator();const g=_audioCtx.createGain();
+      o.connect(g);g.connect(_audioCtx.destination);g.gain.value=0;
+      o.start();o.stop(_audioCtx.currentTime+0.05);
+    }
+  }catch(e){}
+},5000);
 
 function _beep(ctx,freq,startT,dur,vol){
   const o=ctx.createOscillator();
@@ -838,11 +851,8 @@ function _doBeeps(ctx,type){
 function playNotifSound(type){
   const ctx=_getAudioCtx();
   if(!ctx)return;
-  if(ctx.state==="suspended"){
-    ctx.resume().then(()=>_doBeeps(ctx,type)).catch(()=>{});
-  }else{
-    _doBeeps(ctx,type);
-  }
+  // Always resume first — idempotent on a running context, recovers a suspended one
+  ctx.resume().then(()=>_doBeeps(ctx,type)).catch(()=>{});
 }
 
 function flashScreen(color){
