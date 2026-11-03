@@ -2158,7 +2158,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .pm-rev-btn:hover { opacity: .85; }
 .pm-rev-btn-outline { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); }
 .pm-rev-btn-outline:hover { background: var(--accent); color: #fff; opacity: 1; }
-.pm-review-form, .pm-qa-form { background: var(--surface-2); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
+.pm-review-form { background: var(--surface-2); border-radius: 10px; padding: 14px; margin-bottom: 12px; border: 1px solid var(--border); }
 .pm-form-title { font-size: .8rem; font-weight: 700; color: var(--fg); margin-bottom: 10px; }
 .pm-form-input { display: block; width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); font-size: .82rem; margin-bottom: 8px; font-family: inherit; outline: none; transition: border-color .15s; }
 .pm-form-input:focus { border-color: var(--accent); }
@@ -2180,13 +2180,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .pm-review-rating { color: #f5a623; font-size: .85rem; }
 .pm-review-text { font-size: .8rem; color: var(--fg-2); line-height: 1.5; margin-top: 2px; }
 .pm-review-date { font-size: .7rem; color: var(--fg-3); margin-top: 4px; }
-.pm-qa-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--fg-3); margin: 12px 0 8px; }
-.pm-qa-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
-.pm-qa-q { font-size: .8rem; font-weight: 600; color: var(--fg); margin-bottom: 2px; }
-.pm-qa-q::before { content: "Q: "; color: var(--accent); }
-.pm-qa-a { font-size: .8rem; color: var(--fg-2); padding: 5px 10px; border-left: 2px solid var(--accent); margin-top: 6px; }
-.pm-qa-a::before { content: "A: "; font-weight: 600; color: var(--accent); }
-.pm-qa-meta { font-size: .7rem; color: var(--fg-3); margin-top: 4px; }
 .pm-reviews-empty { font-size: .78rem; color: var(--fg-3); text-align: center; padding: 10px 0; font-style: italic; }
 .pm-rev-success { background: #d1fae5; color: #065f46; border-radius: 8px; padding: 10px 14px; font-size: .82rem; font-weight: 600; margin-bottom: 10px; text-align: center; }
 [data-theme="light"] .pm-rev-success { background: #d1fae5; color: #065f46; }
@@ -3838,7 +3831,6 @@ html.lenis, html.lenis body { height: auto; }
         <div class="pm-reviews-section" id="pmReviewsSection">
           <div class="pm-reviews-actions">
             <button class="pm-rev-btn" onclick="openReviewForm()">✏️ Write a Review</button>
-            <button class="pm-rev-btn pm-rev-btn-outline" onclick="toggleQuestionForm()">❓ Ask a Question</button>
           </div>
           <!-- Review form — Step 1: Star rating -->
           <div class="pm-review-form" id="pmReviewForm" style="display:none">
@@ -3867,18 +3859,6 @@ html.lenis, html.lenis body { height: auto; }
               </div>
             </div>
           </div>
-          <!-- Q&A form -->
-          <div class="pm-qa-form" id="pmQaForm" style="display:none">
-            <div class="pm-form-title">Ask a Question</div>
-            <input class="pm-form-input" id="pmQaName" type="text" placeholder="Display name">
-            <input class="pm-form-input" id="pmQaEmail" type="email" placeholder="Email (optional)">
-            <textarea class="pm-form-input pm-form-textarea" id="pmQaText" placeholder="Your question..."></textarea>
-            <div class="pm-form-actions">
-              <button class="pm-form-cancel" onclick="toggleQuestionForm()">Cancel</button>
-              <button class="pm-form-submit" onclick="submitQuestion()">Submit Question</button>
-            </div>
-          </div>
-          <div class="pm-qa-list" id="pmQaList"></div>
         </div>
       </div>
     </div>
@@ -5102,31 +5082,7 @@ function revBack() {
   document.querySelectorAll(".pm-star-big").forEach(s => s.classList.remove("active","hov"));
 }
 
-function toggleQuestionForm() {
-  const f = document.getElementById("pmQaForm");
-  const isOpen = f.style.display !== "none";
-  document.getElementById("pmReviewForm").style.display = "none";
-  f.style.display = isOpen ? "none" : "";
-}
-
 async function loadProductReviews(productId) { /* reviews shown in admin only */ }
-
-async function loadProductQuestions(productId) {
-  const listEl = document.getElementById("pmQaList");
-  if (!listEl) return;
-  listEl.innerHTML = "";
-  try {
-    const rows = await sbFetch(`/rest/v1/pt_product_questions?product_id=eq.${productId}&order=created_at.desc&select=*`);
-    if (!rows || rows.length === 0) return;
-    listEl.innerHTML = `<div class="pm-qa-title">Customer Q&A</div>` +
-      rows.map(r => `
-        <div class="pm-qa-card">
-          <div class="pm-qa-q">${esc(r.question)}</div>
-          ${r.answer ? `<div class="pm-qa-a">${esc(r.answer)}</div>` : ""}
-          <div class="pm-qa-meta">${esc(r.display_name || "Customer")} · ${new Date(r.created_at).toLocaleDateString()}</div>
-        </div>`).join("");
-  } catch(e) {}
-}
 
 async function submitReview() {
   const name = document.getElementById("pmRevName").value.trim();
@@ -5142,6 +5098,11 @@ async function submitReview() {
       method: "POST",
       body: JSON.stringify({ product_id: currentModalProduct.id, reviewer_name: name, rating: _reviewRating, review_text: text, review_title: title || null })
     });
+    sbFetch("/rest/v1/pt_notifications", {
+      method: "POST",
+      headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify({ type: "review", title: "New Review", message: `${name} left a ${_reviewRating}★ review for "${currentModalProduct.name || currentModalProduct.title || "a product"}"`, reference_id: currentModalProduct.id })
+    }).catch(() => {});
     document.getElementById("pmRevName").value = "";
     document.getElementById("pmRevText").value = "";
     document.getElementById("pmRevTitle").value = "";
@@ -5164,31 +5125,6 @@ function showRevSuccess() {
   setTimeout(() => toast.remove(), 4000);
 }
 
-async function submitQuestion() {
-  const name = document.getElementById("pmQaName").value.trim();
-  const email = document.getElementById("pmQaEmail").value.trim();
-  const q = document.getElementById("pmQaText").value.trim();
-  if (!name) { alert("Please enter your display name."); return; }
-  if (!q) { alert("Please enter your question."); return; }
-  if (!currentModalProduct) return;
-  const btn = document.querySelector("#pmQaForm .pm-form-submit");
-  btn.disabled = true; btn.textContent = "Submitting…";
-  try {
-    await sbFetch("/rest/v1/pt_product_questions", {
-      method: "POST",
-      body: JSON.stringify({ product_id: currentModalProduct.id, display_name: name, email: email || null, question: q })
-    });
-    document.getElementById("pmQaName").value = "";
-    document.getElementById("pmQaEmail").value = "";
-    document.getElementById("pmQaText").value = "";
-    toggleQuestionForm();
-    loadProductQuestions(currentModalProduct.id);
-  } catch(e) {
-    alert("Failed to submit. Please try again.");
-  } finally {
-    btn.disabled = false; btn.textContent = "Submit Question";
-  }
-}
 
 // ── Category deal sections ────────────────────────────────────────
 function hcatCardHTML(p, cat) {
@@ -5522,6 +5458,11 @@ async function submitOrder() {
       total: parseFloat(grandTotal.toFixed(2)),
       status: "pending"
     })
+  }).catch(() => {});
+  sbFetch("/rest/v1/pt_notifications", {
+    method: "POST",
+    headers: { "Prefer": "return=minimal" },
+    body: JSON.stringify({ type: "order", title: "New Order", message: `${name} (${phone}) placed a ${orderType} order — $${grandTotal.toFixed(2)} via ${paymentMethod}` })
   }).catch(() => {});
   trackEvent('order_placed', { total: parseFloat(grandTotal.toFixed(2)), items_count: cart.length });
 
