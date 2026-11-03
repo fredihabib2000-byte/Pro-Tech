@@ -3855,6 +3855,8 @@ html.lenis, html.lenis body { height: auto; }
               <input class="pm-form-input" id="pmRevTitle" type="text" placeholder="Give your review a title">
               <div class="pm-form-title" style="margin-top:4px">Your Name</div>
               <input class="pm-form-input" id="pmRevName" type="text" placeholder="Display name">
+              <div class="pm-form-title" style="margin-top:4px">Phone Number <span style="color:var(--fg-3);font-size:.75rem;font-weight:400">(optional)</span></div>
+              <input class="pm-form-input" id="pmRevPhone" type="tel" placeholder="e.g. +961 71 000 000">
               <div class="pm-privacy-note">We'll only contact you about your review if necessary. By submitting, you agree to our terms and conditions.</div>
               <div class="pm-form-actions">
                 <button class="pm-form-cancel" onclick="revBack()">← Back</button>
@@ -5124,6 +5126,7 @@ async function loadProductReviews(productId) { /* reviews shown in admin only */
 
 async function submitReview() {
   const name = document.getElementById("pmRevName").value.trim();
+  const phone = document.getElementById("pmRevPhone").value.trim();
   const text = document.getElementById("pmRevText").value.trim();
   const title = document.getElementById("pmRevTitle").value.trim();
   if (!text) { alert("Please write a review."); return; }
@@ -5134,14 +5137,16 @@ async function submitReview() {
   try {
     await sbFetch("/rest/v1/pt_product_reviews", {
       method: "POST",
-      body: JSON.stringify({ product_id: currentModalProduct.id, reviewer_name: name, rating: _reviewRating, review_text: text, review_title: title || null })
+      body: JSON.stringify({ product_id: currentModalProduct.id, reviewer_name: name, reviewer_phone: phone || null, rating: _reviewRating, review_text: text, review_title: title || null })
     });
+    const phoneInfo = phone ? ` · 📞 ${phone}` : "";
     sbFetch("/rest/v1/pt_notifications", {
       method: "POST",
       headers: { "Prefer": "return=minimal" },
-      body: JSON.stringify({ type: "review", title: "New Review", message: `${name} left a ${_reviewRating}★ review for "${currentModalProduct.name || currentModalProduct.title || "a product"}"`, reference_id: currentModalProduct.id })
+      body: JSON.stringify({ type: "review", title: "New Review", message: `${name}${phoneInfo} left a ${_reviewRating}★ review for "${currentModalProduct.name || currentModalProduct.title || "a product"}"`, reference_id: currentModalProduct.id })
     }).catch(() => {});
     document.getElementById("pmRevName").value = "";
+    document.getElementById("pmRevPhone").value = "";
     document.getElementById("pmRevText").value = "";
     document.getElementById("pmRevTitle").value = "";
     _reviewRating = 0;
