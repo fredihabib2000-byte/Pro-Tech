@@ -803,8 +803,8 @@ button { cursor: pointer; font-family: inherit; border: none; }
 .hero-prod-card.shuffling img,
 .hero-prod-card.shuffling .hero-prod-label {
   opacity: 0;
-  transform: scale(.75) translateY(8px);
-  transition: opacity .28s ease, transform .28s ease;
+  transform: scale(.78) translateY(6px);
+  transition: opacity .16s ease, transform .16s ease;
 }
 .hero-prod-label {
   font-size: .66rem;
@@ -5693,7 +5693,7 @@ loadStoreSettings();
   (function () {
     const CDN = 'https://cdn.shopify.com/s/files/1/0860/5270/0433/files/';
     const SB  = 'https://cgmqovyttrjecrbynooo.supabase.co/storage/v1/object/public/pt-images/products/';
-    const POOL = [
+    const FALLBACK = [
       { src: CDN + 'LS_JBL_GRIP_BLACK_HERO__0026_x3_c81b13dd-b7c9-43f0-adbd-213adfaa1a9a.png?v=1790613718',   label: 'JBL Grip' },
       { src: CDN + 'LS_JBL_CHARGE_6_BLACK_HERO_071_x1_777157ff-f7f1-465d-8d0a-2375ad6703a1.png?v=1790613714', label: 'JBL Charge 6' },
       { src: CDN + 'JBL_GO_4_HERO_BLUE_48170_x6_0f150b2a-ee44-4c51-8cd8-b7ba47393b3e.png?v=1790693254',       label: 'JBL Go 4' },
@@ -5705,34 +5705,58 @@ loadStoreSettings();
       { src: CDN + 'IMG_7635.png?v=1779710989',       label: 'Porodo EchoBox' },
     ];
 
+    function buildPool() {
+      // Use live products if available, else fallback
+      if (typeof PRODUCTS !== 'undefined' && PRODUCTS.length > 4) {
+        const withImg = PRODUCTS.filter(function(p){ return p.imageUrl; });
+        // Fisher-Yates shuffle then take up to 40
+        for (var i = withImg.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = withImg[i]; withImg[i] = withImg[j]; withImg[j] = tmp;
+        }
+        return withImg.slice(0, 40).map(function(p){ return { src: p.imageUrl, label: p.name }; });
+      }
+      return FALLBACK;
+    }
+
     const heroCards = Array.from(document.querySelectorAll('.hero-prod-card'));
     if (!heroCards.length) return;
-    const shown = [0, 1, 2, 3];   // pool index currently displayed per slot
-    let lastSlot = -1;
 
-    setInterval(function () {
-      let slot;
-      do { slot = Math.floor(Math.random() * heroCards.length); }
-      while (slot === lastSlot);
-      lastSlot = slot;
+    var POOL = FALLBACK;
+    var shown = [0, 1, 2, 3];
+    var lastSlot = -1;
 
-      const used = new Set(shown);
-      const avail = POOL.map(function (_, i) { return i; }).filter(function (i) { return !used.has(i); });
+    // Refresh pool once products load (they load async)
+    setTimeout(function(){ POOL = buildPool(); }, 3000);
+
+    function swapSlot(slot) {
+      var used = new Set(shown);
+      var avail = [];
+      for (var i = 0; i < POOL.length; i++) { if (!used.has(i)) avail.push(i); }
+      if (!avail.length) { shown = [0,1,2,3]; avail = [4,5,6,7].filter(function(i){return i<POOL.length;}); }
       if (!avail.length) return;
-      const next = avail[Math.floor(Math.random() * avail.length)];
-
-      const card = heroCards[slot];
+      var next = avail[Math.floor(Math.random() * avail.length)];
+      var card = heroCards[slot];
       card.classList.add('shuffling');
       setTimeout(function () {
-        const p = POOL[next];
-        const img = card.querySelector('img');
+        var p = POOL[next];
+        var img = card.querySelector('img');
         img.src = p.src;
         img.alt = p.label;
         card.querySelector('.hero-prod-label').textContent = p.label;
         shown[slot] = next;
         card.classList.remove('shuffling');
-      }, 300);
-    }, 2000);
+      }, 180);
+    }
+
+    setInterval(function () {
+      // Pick a slot different from the last one
+      var slot;
+      do { slot = Math.floor(Math.random() * heroCards.length); }
+      while (slot === lastSlot && heroCards.length > 1);
+      lastSlot = slot;
+      swapSlot(slot);
+    }, 1100);
   }());
 
   const st = (trigger, start) => ({ trigger, start: start || 'top bottom', once: true });
