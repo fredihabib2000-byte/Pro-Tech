@@ -41,13 +41,22 @@ STRONG_LEVEL = 4
 PIVOT_ZONE  = 0.35   # within X × ATR of a pivot level = "at key level"
 
 # Minimum score to actually send an alert (Setup=2 is detected but NOT sent)
-ALERT_MIN_SCORE = 3
+ALERT_MIN_SCORE = 4     # Strong signals only (was 3)
 
 # Spam guard: don't re-alert same direction+reason within N minutes
 SPAM_MINUTES = 120
 
 # Ranging filter: EMA spread / ATR must exceed this to confirm a trend
 EMA_TREND_MIN = 0.30
+
+# Pullback filter: price must be within X × ATR of slow EMA (no chasing)
+PULLBACK_ATR_MAX = 1.2
+
+# RSI entry zone: only enter when RSI is in this range (avoid extremes)
+RSI_BUY_MIN  = 40
+RSI_BUY_MAX  = 65
+RSI_SELL_MIN = 35
+RSI_SELL_MAX = 60
 
 last_alert = {}   # direction → (reason_key, timestamp)
 last_brief_date = None
@@ -595,6 +604,24 @@ def run():
                      (d == "SELL" and htf_1h in ("DOWN", "NEUTRAL"))
             if not htf_ok:
                 log.info("1H disagrees (%s vs %s) — suppressed", d, htf_1h)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # Pullback filter: price must be close to slow EMA (no chasing)
+            price_dist = abs(closes[-1] - es_last) / atr_val if atr_val else 999
+            if price_dist > PULLBACK_ATR_MAX:
+                log.info("Price too far from EMA21 (%.2f ATR) — waiting for pullback", price_dist)
+                time.sleep(CHECK_EVERY)
+                continue
+
+            # RSI entry zone: avoid overbought/oversold entries
+            rsi_val = sig.get("rsi", 50)
+            if d == "BUY"  and not (RSI_BUY_MIN  <= rsi_val <= RSI_BUY_MAX):
+                log.info("RSI %.1f outside BUY zone [%d-%d] — skipping", rsi_val, RSI_BUY_MIN, RSI_BUY_MAX)
+                time.sleep(CHECK_EVERY)
+                continue
+            if d == "SELL" and not (RSI_SELL_MIN <= rsi_val <= RSI_SELL_MAX):
+                log.info("RSI %.1f outside SELL zone [%d-%d] — skipping", rsi_val, RSI_SELL_MIN, RSI_SELL_MAX)
                 time.sleep(CHECK_EVERY)
                 continue
 
