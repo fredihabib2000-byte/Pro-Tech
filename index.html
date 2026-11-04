@@ -3891,7 +3891,8 @@ html.lenis, html.lenis body { height: auto; }
       </div>
       <div>
         <label>Phone / WhatsApp *</label>
-        <input type="tel" id="ord_phone" placeholder="+961 70 000 000">
+        <input type="tel" id="ord_phone" placeholder="71 925 840" maxlength="11" inputmode="numeric"
+          oninput="this.value=this.value.replace(/[^\d\s]/g,'').replace(/^(\d{2})(\d{0,3})(\d{0,3}).*/,'$1 $2 $3').trimEnd()">
       </div>
       <div>
         <label>Order Type *</label>
@@ -5479,8 +5480,17 @@ function toggleFaq(btn) {
 
 async function submitOrder() {
   const name  = document.getElementById("ord_name").value.trim();
-  const phone = document.getElementById("ord_phone").value.trim();
-  if (!name || !phone) { showToast("Please fill in your name and phone number."); return; }
+  const rawPhone = document.getElementById("ord_phone").value.trim();
+  const digits = rawPhone.replace(/\D/g, "");
+  const validLB = /^(03|04|05|06|07|08|09|70|71|76|78|79|81)\d{6}$/.test(digits);
+  if (!name) { showToast("Please enter your full name."); return; }
+  if (!rawPhone) { showToast("Please enter your phone number."); return; }
+  if (digits.length !== 8 || !validLB) {
+    showToast("Please enter a valid Lebanese number (e.g. 71 925 840).");
+    document.getElementById("ord_phone").focus();
+    return;
+  }
+  const phone = digits.slice(0,2) + " " + digits.slice(2,5) + " " + digits.slice(5);
   const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0);
   const orderType = (document.querySelector("input[name='order_type']:checked") || {}).value || "Delivery";
   const fee = orderType === "Pickup" ? 0 : DELIVERY_FEE;
