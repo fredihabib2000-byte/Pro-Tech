@@ -937,7 +937,7 @@ async function _enablePushAndNotif(btn){
       body: JSON.stringify({ endpoint: subJSON.endpoint, keys: subJSON.keys, device_label: navigator.userAgent.slice(0,120) })
     });
 
-    if(r.ok || r.status===204 || r.status===201){
+    if(r.ok || r.status===204 || r.status===201 || r.status===409){
       setText("✅ Push enabled!");
       console.log("[Push] Subscribed and saved.");
       setTimeout(()=>{ if(banner) banner.style.display="none"; }, 1500);
