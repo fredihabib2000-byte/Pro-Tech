@@ -5482,11 +5482,10 @@ async function submitOrder() {
   const name  = document.getElementById("ord_name").value.trim();
   const rawPhone = document.getElementById("ord_phone").value.trim();
   const digits = rawPhone.replace(/\D/g, "");
-  const validLB = /^(03|04|05|06|07|08|09|70|71|76|78|79|81)\d{6}$/.test(digits);
   if (!name) { showToast("Please enter your full name."); return; }
   if (!rawPhone) { showToast("Please enter your phone number."); return; }
-  if (digits.length !== 8 || !validLB) {
-    showToast("Please enter a valid Lebanese number (e.g. 71 925 840).");
+  if (digits.length !== 8) {
+    showToast("Phone number must be exactly 8 digits (e.g. 71 925 840).");
     document.getElementById("ord_phone").focus();
     return;
   }
