@@ -267,8 +267,8 @@ select.status-sel:focus{border-color:var(--accent)}
   <div class="content">
     <!-- Notification permission banner -->
     <div id="notifBanner" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:#1e293b;border-bottom:1px solid #334155;padding:10px 20px;font-size:.84rem;color:#cbd5e1;flex-wrap:wrap">
-      <span>🔔 Enable browser notifications to get order, review &amp; feedback alerts on this device (laptop or phone).</span>
-      <button onclick="Notification.requestPermission().then(_updateNotifBanner)" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Enable Now</button>
+      <span>🔔 Enable notifications &amp; push alerts to get new order sounds even when this tab is closed.</span>
+      <button onclick="_enablePushAndNotif(this)" style="background:var(--accent);color:#000;border:none;border-radius:6px;padding:6px 14px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Enable Now</button>
     </div>
     <!-- Sound unlock banner -->
     <div id="soundBanner" style="display:none;align-items:center;justify-content:space-between;gap:12px;background:#172033;border-bottom:1px solid #334155;padding:10px 20px;font-size:.84rem;color:#cbd5e1;flex-wrap:wrap">
@@ -761,12 +761,12 @@ function init(){
   startClock();
   loadDashboard();
   loadSettings();
-  requestNotifPermission();
   _updateNotifBanner();
   startOrderRealtime();
   _pollNewOrders();
   setInterval(_pollNewOrders,60000);
-  _registerPushSW();
+  // Auto-subscribe if already granted (returning user)
+  if(Notification.permission==="granted") _registerPushSW();
 }
 
 function startClock(){
@@ -885,11 +885,17 @@ function resetBell(){
 
 function requestNotifPermission(){
   if(!("Notification" in window))return;
-  if(Notification.permission==="default"){
-    Notification.requestPermission().then(_updateNotifBanner);
-  } else {
+  _updateNotifBanner();
+}
+
+async function _enablePushAndNotif(btn){
+  if(btn){ btn.disabled=true; btn.textContent="Setting up…"; }
+  try {
+    const perm = await Notification.requestPermission();
     _updateNotifBanner();
-  }
+    if(perm==="granted") await _registerPushSW();
+  } catch(e){ console.warn(e); }
+  if(btn){ btn.disabled=false; }
 }
 
 // ── Web Push Service Worker ───────────────────────────────────────
@@ -945,12 +951,22 @@ async function _registerPushSW(){
 function _updateNotifBanner(){
   const banner=document.getElementById("notifBanner");
   if(!banner)return;
-  if(!("Notification" in window)||Notification.permission==="granted"){
-    banner.style.display="none";
-  } else if(Notification.permission==="denied"){
+  if(!("Notification" in window)){banner.style.display="none";return;}
+  if(Notification.permission==="denied"){
     banner.style.display="flex";
-    banner.innerHTML='<span>🔕 Notifications blocked in browser settings — enable them to get order/review alerts on this device.</span>';
-    banner.querySelector("button")&&banner.querySelector("button").remove();
+    banner.innerHTML='<span>🔕 Notifications blocked — go to browser settings and allow notifications for this site, then refresh.</span>';
+  } else if(Notification.permission==="granted"){
+    // Check if push subscription exists; hide banner if yes
+    if("serviceWorker" in navigator){
+      navigator.serviceWorker.getRegistration("/").then(reg=>{
+        if(!reg){banner.style.display="flex";return;}
+        reg.pushManager.getSubscription().then(sub=>{
+          banner.style.display=sub?"none":"flex";
+        });
+      });
+    } else {
+      banner.style.display="none";
+    }
   } else {
     banner.style.display="flex";
   }
