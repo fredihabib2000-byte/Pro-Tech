@@ -764,6 +764,8 @@ function init(){
   requestNotifPermission();
   _updateNotifBanner();
   startOrderRealtime();
+  _pollNewOrders();
+  setInterval(_pollNewOrders,60000);
 }
 
 function startClock(){
@@ -988,6 +990,55 @@ function startOrderRealtime(){
   realtimeWs.onclose=()=>{
     setTimeout(()=>{if(localStorage.getItem("pt_admin"))startOrderRealtime();},5000);
   };
+
+  realtimeWs.onmessage=(prev=>{
+    // Wrap to deduplicate via _seenOrderIds
+    return function(e){
+      try{
+        const msg=JSON.parse(e.data);
+        const rec=msg.payload?.data?.record||msg.payload?.record;
+        if(rec?.id)_seenOrderIds.add(String(rec.id));
+      }catch(e){}
+      prev.call(this,e);
+    };
+  })(realtimeWs.onmessage);
+}
+
+// ── ORDER POLLING BACKUP ───────────────────────────────────────
+// Runs every 60 s as a safety net when WebSocket is unreliable
+// (Chrome throttles WS in background tabs; this guarantees delivery).
+const _seenOrderIds=new Set();
+let _lastPollTime=null;
+let _pollInit=false;
+
+async function _pollNewOrders(){
+  const session=localStorage.getItem("pt_admin");
+  if(!session)return;
+  try{
+    const since=_lastPollTime?`&created_at=gt.${encodeURIComponent(_lastPollTime)}`:'&order=created_at.desc&limit=5';
+    const r=await fetch(`${SB_URL}/rest/v1/pt_orders?select=id,created_at,customer_name,total,items${since}&order=created_at.asc`,{
+      headers:{apikey:SB_ANON,Authorization:'Bearer '+SB_ANON}
+    });
+    if(!r.ok)return;
+    const rows=await r.json();
+    if(!Array.isArray(rows)||!rows.length)return;
+    _lastPollTime=rows[rows.length-1].created_at;
+    if(!_pollInit){_pollInit=true;return;} // first call just sets baseline
+    rows.forEach(rec=>{
+      if(_seenOrderIds.has(String(rec.id)))return; // already handled by WebSocket
+      _seenOrderIds.add(String(rec.id));
+      const name=rec.customer_name||"New customer";
+      const total=rec.total?"$"+Number(rec.total).toFixed(2):"";
+      const items=Array.isArray(rec.items)?rec.items.length+" item(s)":"";
+      const bodyTxt=[items,total].filter(Boolean).join(" · ");
+      playNotifSound("order");
+      flashScreen("#22c55e");
+      showToast("New Order from "+name,bodyTxt||"Just arrived",()=>goto(document.querySelector('[data-page=orders]')),"🛒");
+      fireBrowserNotif("ProTech — New Order 🛒","From "+name+(bodyTxt?" · "+bodyTxt:""),"orders");
+      bumpBell();
+      loadDashboard();
+    });
+  }catch(e){}
 }
 
 // reset bell when user opens Orders page
