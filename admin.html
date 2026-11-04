@@ -773,38 +773,9 @@ function startClock(){
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
-let _actx=null;
-let _keepOsc=null;
-
-function _getCtx(){
-  if(!_actx){
-    try{_actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-  }
-  return _actx;
-}
-
-function _startKeepAlive(){
-  if(_keepOsc)return;
-  const ctx=_getCtx();
-  if(!ctx)return;
-  // Sub-audible 20Hz oscillator at near-zero volume prevents Chrome from
-  // auto-suspending the AudioContext when the tab goes to the background.
-  try{
-    const osc=ctx.createOscillator();
-    const g=ctx.createGain();
-    g.gain.value=0.001;
-    osc.frequency.value=20;
-    osc.connect(g);g.connect(ctx.destination);
-    osc.start();
-    _keepOsc=osc;
-  }catch(e){}
-  // Auto-resume if Chrome still manages to suspend it
-  ctx.onstatechange=()=>{if(ctx.state==='suspended')ctx.resume().catch(()=>{});};
-  // Resume when tab becomes visible again
-  document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='visible'&&ctx.state==='suspended')ctx.resume().catch(()=>{});
-  });
-}
+let _hasGesture=false;
+let _pendingSound=null;
+let _pendingExpiry=0;
 
 function _beep(ctx,freq,start,dur,vol){
   try{
@@ -819,25 +790,48 @@ function _beep(ctx,freq,start,dur,vol){
   }catch(e){}
 }
 
-function playNotifSound(type){
-  const ctx=_getCtx();
-  if(!ctx)return;
-  ctx.resume().then(()=>{
-    const t=ctx.currentTime;
-    if(type==='order'){
-      _beep(ctx,880,t,0.15,0.6);_beep(ctx,1046,t+0.2,0.15,0.6);_beep(ctx,1318,t+0.4,0.15,0.6);
-      _beep(ctx,880,t+0.7,0.15,0.6);_beep(ctx,1046,t+0.9,0.15,0.6);_beep(ctx,1318,t+1.1,0.15,0.6);
-    }else if(type==='review'){
-      _beep(ctx,523,t,0.25,0.4);_beep(ctx,659,t+0.15,0.25,0.4);_beep(ctx,784,t+0.3,0.25,0.4);
-    }else{
-      _beep(ctx,784,t,0.25,0.35);_beep(ctx,1047,t+0.2,0.25,0.35);
-    }
-  }).catch(()=>{});
+function _doPlay(type){
+  if(!_hasGesture)return;
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const play=()=>{
+      const t=ctx.currentTime;
+      if(type==='order'){
+        _beep(ctx,880,t,0.15,0.6);_beep(ctx,1046,t+0.2,0.15,0.6);_beep(ctx,1318,t+0.4,0.15,0.6);
+        _beep(ctx,880,t+0.7,0.15,0.6);_beep(ctx,1046,t+0.9,0.15,0.6);_beep(ctx,1318,t+1.1,0.15,0.6);
+      }else if(type==='review'){
+        _beep(ctx,523,t,0.25,0.4);_beep(ctx,659,t+0.15,0.25,0.4);_beep(ctx,784,t+0.3,0.25,0.4);
+      }else{
+        _beep(ctx,784,t,0.25,0.35);_beep(ctx,1047,t+0.2,0.25,0.35);
+      }
+      setTimeout(()=>ctx.close().catch(()=>{}),3000);
+    };
+    if(ctx.state==='running'){play();}
+    else{ctx.resume().then(play).catch(()=>{});}
+  }catch(e){}
 }
 
+function playNotifSound(type){
+  if(!_hasGesture)return;
+  // Queue so visibilitychange can replay if tab was in the background
+  _pendingSound=type;
+  _pendingExpiry=Date.now()+60000;
+  _doPlay(type);
+}
+
+// When user switches back to this tab, play any queued notification sound.
+// visibilitychange to 'visible' makes the page active — a fresh AudioContext
+// created here starts in 'running' state so the sound plays immediately.
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&_pendingSound&&Date.now()<_pendingExpiry){
+    const s=_pendingSound;
+    _pendingSound=null;
+    setTimeout(()=>_doPlay(s),80);
+  }
+});
+
 function _unlockAudio(){
-  const ctx=_getCtx();
-  if(ctx)ctx.resume().then(()=>_startKeepAlive()).catch(()=>{});
+  _hasGesture=true;
   const sb=document.getElementById("soundBanner");
   if(sb)sb.style.display="none";
 }
@@ -850,7 +844,7 @@ function testNotifSound(){
   _unlockAudio();
   const btn=document.getElementById("testSoundBtn");
   if(btn){btn.textContent="▶";setTimeout(()=>btn.textContent="🔊",1500);}
-  playNotifSound("order");
+  _doPlay("order");
 }
 
 function flashScreen(color){
