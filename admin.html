@@ -889,13 +889,69 @@ function requestNotifPermission(){
 }
 
 async function _enablePushAndNotif(btn){
-  if(btn){ btn.disabled=true; btn.textContent="Setting up…"; }
+  const banner = document.getElementById("notifBanner");
+  const setText = t => { if(btn) btn.textContent = t; };
+  if(btn){ btn.disabled = true; }
+  setText("Requesting permission…");
   try {
+    if(!("Notification" in window)){ setText("Not supported"); return; }
+
     const perm = await Notification.requestPermission();
-    _updateNotifBanner();
-    if(perm==="granted") await _registerPushSW();
-  } catch(e){ console.warn(e); }
-  if(btn){ btn.disabled=false; }
+    if(perm === "denied"){ setText("Blocked — allow in browser settings"); _updateNotifBanner(); return; }
+    if(perm !== "granted"){ setText("Enable Now"); if(btn) btn.disabled=false; return; }
+
+    setText("Registering…");
+    if(!("serviceWorker" in navigator) || !("PushManager" in window)){
+      setText("Push not supported"); _updateNotifBanner(); return;
+    }
+
+    // Register SW with timeout
+    const reg = await Promise.race([
+      navigator.serviceWorker.register("/sw.js"),
+      new Promise((_,rej) => setTimeout(()=>rej(new Error("SW timeout")),8000))
+    ]);
+    setText("Activating…");
+    await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((_,rej) => setTimeout(()=>rej(new Error("SW ready timeout")),8000))
+    ]);
+
+    setText("Subscribing…");
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: _b64ToUint8(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    setText("Saving…");
+    const subJSON = sub.toJSON();
+    const r = await fetch(SB_URL + "/rest/v1/pt_push_subscriptions", {
+      method: "POST",
+      headers: {
+        apikey: SB_ANON, Authorization: "Bearer " + SB_ANON,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify({ endpoint: subJSON.endpoint, keys: subJSON.keys, device_label: navigator.userAgent.slice(0,120) })
+    });
+
+    if(r.ok || r.status===204 || r.status===201){
+      setText("✅ Push enabled!");
+      console.log("[Push] Subscribed and saved.");
+      setTimeout(()=>{ if(banner) banner.style.display="none"; }, 1500);
+    } else {
+      const txt = await r.text();
+      console.error("[Push] Save failed:", r.status, txt);
+      setText("Save failed — try again");
+      if(btn) btn.disabled = false;
+    }
+  } catch(e){
+    console.error("[Push] Error:", e);
+    setText("Error: " + (e.message||e));
+    if(btn) btn.disabled = false;
+  }
 }
 
 // ── Web Push Service Worker ───────────────────────────────────────
@@ -910,42 +966,23 @@ function _b64ToUint8(base64){
 async function _registerPushSW(){
   if(!("serviceWorker" in navigator) || !("PushManager" in window)) return;
   try {
-    const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    const reg = await navigator.serviceWorker.register("/sw.js");
     await navigator.serviceWorker.ready;
-
-    // Ask notification permission first
-    const perm = await Notification.requestPermission();
-    if(perm !== "granted") return;
-
-    // Check if already subscribed
     let sub = await reg.pushManager.getSubscription();
     if(!sub){
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: _b64ToUint8(VAPID_PUBLIC_KEY)
       });
+      const subJSON = sub.toJSON();
+      await fetch(SB_URL + "/rest/v1/pt_push_subscriptions", {
+        method: "POST",
+        headers: { apikey: SB_ANON, Authorization: "Bearer " + SB_ANON, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify({ endpoint: subJSON.endpoint, keys: subJSON.keys, device_label: navigator.userAgent.slice(0,120) })
+      });
     }
-
-    // Save subscription to Supabase (upsert by endpoint)
-    const subJSON = sub.toJSON();
-    await fetch(SB_URL + "/rest/v1/pt_push_subscriptions", {
-      method: "POST",
-      headers: {
-        apikey: SB_ANON,
-        Authorization: "Bearer " + SB_ANON,
-        "Content-Type": "application/json",
-        Prefer: "resolution=merge-duplicates"
-      },
-      body: JSON.stringify({
-        endpoint: subJSON.endpoint,
-        keys: subJSON.keys,
-        device_label: navigator.userAgent.slice(0, 120)
-      })
-    });
-    console.log("[Push] Subscribed and saved.");
-  } catch(e){
-    console.warn("[Push] Setup failed:", e);
-  }
+    console.log("[Push] Auto-subscribed.");
+  } catch(e){ console.warn("[Push] Auto-setup:", e.message); }
 }
 
 function _updateNotifBanner(){
