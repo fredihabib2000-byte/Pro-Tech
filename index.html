@@ -4085,10 +4085,13 @@ let visibleCount = PAGE_SIZE;
 function renderNewArrivals() {
   const grid = document.getElementById("newArrivalsGrid");
   if (!grid) return;
-  const items = [...PRODUCTS]
+  // Pick the newest product (highest id) from each category
+  const byCategory = {};
+  [...PRODUCTS]
     .filter(p => p.quantity > 0)
     .sort((a, b) => b.id - a.id)
-    .slice(0, 8);
+    .forEach(p => { if (p.cat && !byCategory[p.cat]) byCategory[p.cat] = p; });
+  const items = Object.values(byCategory).sort((a, b) => b.id - a.id);
   if (!items.length) { grid.innerHTML = ""; return; }
   grid.innerHTML = items.map(productCardHTML).join("");
   if (typeof gsap !== "undefined") {
