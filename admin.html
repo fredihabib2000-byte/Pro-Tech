@@ -963,15 +963,45 @@ function _b64ToUint8(base64){
   return Uint8Array.from(b, c => c.charCodeAt(0));
 }
 
-// Listen for messages from service worker (play sound when push arrives in background)
+// Listen for messages from service worker (play sound when push arrives, tab open/background)
 if("serviceWorker" in navigator){
   navigator.serviceWorker.addEventListener("message", e => {
     if(e.data?.type === "PLAY_ORDER_SOUND"){
-      _hasGesture = true; // push implies prior user interaction
+      _hasGesture = true;
       playNotifSound("order");
     }
   });
 }
+
+// Play sound if notification was clicked (SW adds ?sound=1 to URL)
+if(location.search.includes("sound=1")){
+  history.replaceState(null,"",location.pathname);
+  window.addEventListener("load",()=>{ _hasGesture=true; setTimeout(()=>playNotifSound("order"),600); });
+}
+
+// Check IndexedDB for push signal (plays sound when page was closed at push time)
+(function(){
+  try{
+    const req=indexedDB.open("pt_push",1);
+    req.onsuccess=e=>{
+      try{
+        const db=e.target.result;
+        if(!db.objectStoreNames.contains("signals"))return;
+        const tx=db.transaction("signals","readwrite");
+        const store=tx.objectStore("signals");
+        const g=store.get("playSound");
+        g.onsuccess=()=>{
+          const ts=g.result;
+          if(ts&&Date.now()-ts<120000){
+            store.delete("playSound");
+            _hasGesture=true;
+            setTimeout(()=>playNotifSound("order"),800);
+          }
+        };
+      }catch(_){}
+    };
+  }catch(_){}
+})();
 
 async function _registerPushSW(){
   if(!("serviceWorker" in navigator) || !("PushManager" in window)) return;
