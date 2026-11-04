@@ -963,6 +963,16 @@ function _b64ToUint8(base64){
   return Uint8Array.from(b, c => c.charCodeAt(0));
 }
 
+// Listen for messages from service worker (play sound when push arrives in background)
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.addEventListener("message", e => {
+    if(e.data?.type === "PLAY_ORDER_SOUND"){
+      _hasGesture = true; // push implies prior user interaction
+      playNotifSound("order");
+    }
+  });
+}
+
 async function _registerPushSW(){
   if(!("serviceWorker" in navigator) || !("PushManager" in window)) return;
   try {

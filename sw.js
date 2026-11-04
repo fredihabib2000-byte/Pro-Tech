@@ -16,7 +16,13 @@ self.addEventListener('push', event => {
     data: { url: '/admin.html' }
   };
 
-  event.waitUntil(self.registration.showNotification(title, opts));
+  event.waitUntil(
+    self.registration.showNotification(title, opts).then(() =>
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+        list.forEach(c => c.postMessage({ type: 'PLAY_ORDER_SOUND', data }));
+      })
+    )
+  );
 });
 
 self.addEventListener('notificationclick', event => {
