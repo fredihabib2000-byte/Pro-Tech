@@ -3892,7 +3892,7 @@ html.lenis, html.lenis body { height: auto; }
       <div>
         <label>Phone / WhatsApp *</label>
         <input type="tel" id="ord_phone" placeholder="71 123 456" maxlength="11" inputmode="numeric"
-          oninput="this.value=this.value.replace(/[^\d\s]/g,'').replace(/^(\d{2})(\d{0,3})(\d{0,3}).*/,'$1 $2 $3').trimEnd()">
+          oninput="const d=this.value.replace(/\D/g,'').slice(0,8);this.value=d.length>5?d.slice(0,2)+' '+d.slice(2,5)+' '+d.slice(5):d.length>2?d.slice(0,2)+' '+d.slice(2):d">
       </div>
       <div>
         <label>Order Type *</label>
