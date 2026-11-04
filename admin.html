@@ -766,6 +766,7 @@ function init(){
   startOrderRealtime();
   _pollNewOrders();
   setInterval(_pollNewOrders,60000);
+  _registerPushSW();
 }
 
 function startClock(){
@@ -888,6 +889,56 @@ function requestNotifPermission(){
     Notification.requestPermission().then(_updateNotifBanner);
   } else {
     _updateNotifBanner();
+  }
+}
+
+// ── Web Push Service Worker ───────────────────────────────────────
+const VAPID_PUBLIC_KEY = "BH2W2POOlxiCVrS-UCZVsyhvS2xhWsOKnlQomfroB-X_w4YE-3E6y4_V7904BvQKXlUBWmA8xCAsVFwdiyfBMDk";
+
+function _b64ToUint8(base64){
+  const pad = "=".repeat((4 - base64.length % 4) % 4);
+  const b = atob((base64 + pad).replace(/-/g,"+").replace(/_/g,"/"));
+  return Uint8Array.from(b, c => c.charCodeAt(0));
+}
+
+async function _registerPushSW(){
+  if(!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    await navigator.serviceWorker.ready;
+
+    // Ask notification permission first
+    const perm = await Notification.requestPermission();
+    if(perm !== "granted") return;
+
+    // Check if already subscribed
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: _b64ToUint8(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    // Save subscription to Supabase (upsert by endpoint)
+    const subJSON = sub.toJSON();
+    await fetch(SB_URL + "/rest/v1/pt_push_subscriptions", {
+      method: "POST",
+      headers: {
+        apikey: SB_ANON,
+        Authorization: "Bearer " + SB_ANON,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates"
+      },
+      body: JSON.stringify({
+        endpoint: subJSON.endpoint,
+        keys: subJSON.keys,
+        device_label: navigator.userAgent.slice(0, 120)
+      })
+    });
+    console.log("[Push] Subscribed and saved.");
+  } catch(e){
+    console.warn("[Push] Setup failed:", e);
   }
 }
 
