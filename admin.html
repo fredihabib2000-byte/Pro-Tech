@@ -773,78 +773,54 @@ function startClock(){
 }
 
 // ── NOTIFICATIONS ─────────────────────────────────────────────
-let _audioEls={};
-let _audioUnlocked=false;
+let _actx=null;
 
-function _buildWav(notes){
-  const sr=22050;
-  const totalDur=notes.reduce((m,{start,dur})=>Math.max(m,start+dur+0.1),0.2);
-  const numSamples=Math.ceil(sr*totalDur);
-  const buf=new ArrayBuffer(44+numSamples*2);
-  const v=new DataView(buf);
-  const ws=(off,s)=>{for(let i=0;i<s.length;i++)v.setUint8(off+i,s.charCodeAt(i));};
-  ws(0,'RIFF');v.setUint32(4,36+numSamples*2,true);
-  ws(8,'WAVE');ws(12,'fmt ');
-  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
-  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);
-  v.setUint16(32,2,true);v.setUint16(34,16,true);
-  ws(36,'data');v.setUint32(40,numSamples*2,true);
-  for(let i=0;i<numSamples;i++){
-    const t=i/sr;let s=0;
-    for(let j=0;j<notes.length;j++){
-      const nt=t-notes[j].start;
-      if(nt>=0&&nt<notes[j].dur){
-        const env=Math.min(1,nt/0.03)*Math.min(1,(notes[j].dur-nt)/0.03);
-        s+=Math.sin(2*Math.PI*notes[j].freq*nt)*notes[j].vol*env;
-      }
-    }
-    v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,s))*32767),true);
+function _getCtx(){
+  if(!_actx){
+    try{_actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
   }
-  // Convert buffer to base64 in chunks (avoids stack overflow on large arrays)
-  const bytes=new Uint8Array(buf);let bin='';
-  for(let i=0;i<bytes.length;i+=8192)
-    bin+=String.fromCharCode.apply(null,bytes.subarray(i,Math.min(i+8192,bytes.length)));
-  return new Audio('data:audio/wav;base64,'+btoa(bin));
+  return _actx;
 }
 
-function _buildAllSounds(){
-  if(_audioEls.order)return;
+function _beep(ctx,freq,start,dur,vol){
   try{
-    _audioEls.order=_buildWav([
-      {start:0,freq:880,dur:0.18,vol:0.7},{start:0.22,freq:1046,dur:0.18,vol:0.7},
-      {start:0.44,freq:1318,dur:0.18,vol:0.7},{start:0.75,freq:880,dur:0.18,vol:0.7},
-      {start:0.97,freq:1046,dur:0.18,vol:0.7},{start:1.19,freq:1318,dur:0.18,vol:0.7}
-    ]);
-    _audioEls.review=_buildWav([
-      {start:0,freq:523,dur:0.32,vol:0.5},{start:0.18,freq:659,dur:0.32,vol:0.5},
-      {start:0.36,freq:784,dur:0.32,vol:0.5}
-    ]);
-    _audioEls.feedback=_buildWav([
-      {start:0,freq:784,dur:0.32,vol:0.45},{start:0.22,freq:1047,dur:0.32,vol:0.45}
-    ]);
+    const osc=ctx.createOscillator();
+    const g=ctx.createGain();
+    osc.connect(g);g.connect(ctx.destination);
+    osc.frequency.value=freq;
+    g.gain.setValueAtTime(0,start);
+    g.gain.linearRampToValueAtTime(vol,start+0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001,start+dur);
+    osc.start(start);osc.stop(start+dur+0.05);
   }catch(e){}
 }
 
+function playNotifSound(type){
+  const ctx=_getCtx();
+  if(!ctx)return;
+  ctx.resume().then(()=>{
+    const t=ctx.currentTime;
+    if(type==='order'){
+      _beep(ctx,880,t,0.15,0.6);_beep(ctx,1046,t+0.2,0.15,0.6);_beep(ctx,1318,t+0.4,0.15,0.6);
+      _beep(ctx,880,t+0.7,0.15,0.6);_beep(ctx,1046,t+0.9,0.15,0.6);_beep(ctx,1318,t+1.1,0.15,0.6);
+    }else if(type==='review'){
+      _beep(ctx,523,t,0.25,0.4);_beep(ctx,659,t+0.15,0.25,0.4);_beep(ctx,784,t+0.3,0.25,0.4);
+    }else{
+      _beep(ctx,784,t,0.25,0.35);_beep(ctx,1047,t+0.2,0.25,0.35);
+    }
+  }).catch(()=>{});
+}
+
 function _unlockAudio(){
-  _buildAllSounds();
-  _audioUnlocked=true;
+  const ctx=_getCtx();
+  if(ctx)ctx.resume().catch(()=>{});
   const sb=document.getElementById("soundBanner");
   if(sb)sb.style.display="none";
 }
 
-// Unlock on any interaction — Chrome allows el.play() after any user gesture
 ["click","touchstart","keydown"].forEach(ev=>{
-  document.addEventListener(ev,function unlock(){ _unlockAudio(); document.removeEventListener(ev,unlock); },{once:true,passive:true});
+  document.addEventListener(ev,function unlock(){_unlockAudio();document.removeEventListener(ev,unlock);},{once:true,passive:true});
 });
-
-function playNotifSound(type){
-  if(!_audioEls.order)_buildAllSounds();
-  const el=_audioEls[type]||_audioEls.order;
-  if(!el)return;
-  el.currentTime=0;
-  el.volume=1;
-  el.play().catch(()=>{});
-}
 
 function testNotifSound(){
   _unlockAudio();
