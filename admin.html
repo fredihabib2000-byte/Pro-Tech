@@ -17,23 +17,25 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
 :root {
-  --bg:#0d1117; --surface:#161b22; --surface-2:#21262d; --surface-3:#2d333b;
-  --border:rgba(255,255,255,.08); --fg:#e6edf3; --fg-2:#8b949e; --fg-3:#484f58;
-  --accent:#2563eb; --accent-dim:rgba(37,99,235,.14); --accent-hover:#1d4ed8;
-  --green:#22c55e; --green-dim:rgba(34,197,94,.12);
-  --yellow:#f59e0b; --yellow-dim:rgba(245,158,11,.12);
-  --red:#ef4444; --red-dim:rgba(239,68,68,.12);
-  --purple:#a855f7; --purple-dim:rgba(168,85,247,.12);
+  --bg:#f0f2f8; --surface:#ffffff; --surface-2:#f4f5fa; --surface-3:#e8eaf2;
+  --border:rgba(0,0,0,.08); --fg:#111827; --fg-2:#6b7280; --fg-3:#9ca3af;
+  --accent:#2563eb; --accent-dim:rgba(37,99,235,.10); --accent-hover:#1d4ed8;
+  --green:#16a34a; --green-dim:rgba(22,163,74,.10);
+  --yellow:#d97706; --yellow-dim:rgba(217,119,6,.10);
+  --red:#dc2626; --red-dim:rgba(220,38,38,.10);
+  --purple:#7c3aed; --purple-dim:rgba(124,58,237,.10);
   --r:10px; --r-sm:7px;
   --sidebar:244px;
+  --shadow-sm:0 1px 4px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.09),0 1px 4px rgba(0,0,0,.05);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--fg);font-family:'Manrope',system-ui,sans-serif;min-height:100vh;font-size:14px}
 input,textarea,select,button{font-family:inherit;font-size:14px}
 
 /* ── LOGIN ───────────────────────────── */
-.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:var(--bg)}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:linear-gradient(135deg,#eff3ff 0%,#f0f2f8 100%)}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center;box-shadow:var(--shadow-md)}
 .login-logo{width:58px;height:58px;background:var(--accent);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:1.25rem;font-weight:800;color:#fff;letter-spacing:-1px}
 .login-card h1{font-size:1.4rem;font-weight:800;margin-bottom:4px}
 .login-card p{color:var(--fg-2);font-size:.85rem;margin-bottom:32px}
@@ -48,7 +50,7 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 .shell.show{display:flex}
 
 /* SIDEBAR */
-.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .25s}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;transition:transform .25s}
 .sb-brand{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .sb-brand-mark{width:36px;height:36px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:.9rem;flex-shrink:0;letter-spacing:-1px}
 .sb-brand .name{font-size:.9rem;font-weight:700;color:var(--fg);line-height:1.3}
@@ -69,14 +71,14 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 
 /* CONTENT */
 .content{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow-sm);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .topbar-title{font-size:.95rem;font-weight:700}
 .topbar-right{display:flex;align-items:center;gap:16px;color:var(--fg-2);font-size:.82rem}
 .notif-bell{position:relative;background:none;border:none;cursor:pointer;color:var(--fg-2);font-size:1.1rem;padding:6px;line-height:1;border-radius:8px;transition:background .12s,color .15s}
 .notif-bell:hover{background:var(--surface-2);color:var(--fg)}
 .notif-bell .bell-badge{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;border-radius:99px;font-size:.6rem;font-weight:700;min-width:16px;height:16px;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1}
 #toastWrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
-.toast{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:280px;max-width:340px;pointer-events:all;transform:translateX(120%);transition:transform .3s cubic-bezier(.16,1,.3,1);cursor:pointer}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.14);min-width:280px;max-width:340px;pointer-events:all;transform:translateX(120%);transition:transform .3s cubic-bezier(.16,1,.3,1);cursor:pointer}
 .toast.show{transform:translateX(0)}
 .toast-title{font-weight:700;font-size:.88rem;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .toast-body{font-size:.8rem;color:var(--fg-2)}
@@ -86,13 +88,14 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 /* STAT CARDS */
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-bottom:28px}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 20px;position:relative;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;cursor:default}
-.stat:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.35)}
-.stat.blue:hover{border-color:rgba(37,99,235,.4);box-shadow:0 16px 40px rgba(37,99,235,.12)}
-.stat.green:hover{border-color:rgba(34,197,94,.4);box-shadow:0 16px 40px rgba(34,197,94,.12)}
-.stat.yellow:hover{border-color:rgba(245,158,11,.4);box-shadow:0 16px 40px rgba(245,158,11,.12)}
-.stat.red:hover{border-color:rgba(239,68,68,.4);box-shadow:0 16px 40px rgba(239,68,68,.12)}
-.stat.purple:hover{border-color:rgba(168,85,247,.4);box-shadow:0 16px 40px rgba(168,85,247,.12)}
-.stat-glow{position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;filter:blur(28px);opacity:.12;pointer-events:none}
+.stat{box-shadow:var(--shadow-sm)}
+.stat:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.12)}
+.stat.blue:hover{border-color:rgba(37,99,235,.35);box-shadow:0 12px 32px rgba(37,99,235,.15)}
+.stat.green:hover{border-color:rgba(22,163,74,.35);box-shadow:0 12px 32px rgba(22,163,74,.15)}
+.stat.yellow:hover{border-color:rgba(217,119,6,.35);box-shadow:0 12px 32px rgba(217,119,6,.15)}
+.stat.red:hover{border-color:rgba(220,38,38,.35);box-shadow:0 12px 32px rgba(220,38,38,.15)}
+.stat.purple:hover{border-color:rgba(124,58,237,.35);box-shadow:0 12px 32px rgba(124,58,237,.15)}
+.stat-glow{position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;filter:blur(28px);opacity:.18;pointer-events:none}
 .stat.blue .stat-glow{background:var(--accent)}.stat.green .stat-glow{background:var(--green)}.stat.yellow .stat-glow{background:var(--yellow)}.stat.red .stat-glow{background:var(--red)}.stat.purple .stat-glow{background:var(--purple)}
 .stat .icon2{width:42px;height:42px;border-radius:11px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .stat .icon2 svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
@@ -113,7 +116,7 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 /* 7-DAY CHART */
 .chart-section{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
 @media(max-width:700px){.chart-section{grid-template-columns:1fr}}
-.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
 .chart-card-title{font-size:.7rem;font-weight:700;color:var(--fg-2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
 .chart-card-val{font-size:1.8rem;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:16px}
 .chart-card-val span{font-size:.85rem;font-weight:500;color:var(--fg-3);margin-left:4px}
@@ -134,7 +137,7 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 .stat.blue .sub-dot{background:var(--accent)}.stat.green .sub-dot{background:var(--green)}.stat.yellow .sub-dot{background:var(--yellow)}.stat.red .sub-dot{background:var(--red)}.stat.purple .sub-dot{background:var(--purple)}
 
 /* TABLE */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm)}
 .card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .card-title{font-size:.93rem;font-weight:700}
 .card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -142,7 +145,7 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 table{width:100%;border-collapse:collapse}
 th{background:var(--surface-2);padding:10px 16px;text-align:left;font-size:.69rem;color:var(--fg-2);text-transform:uppercase;letter-spacing:.08em;font-weight:700;white-space:nowrap}
 td{padding:12px 16px;border-top:1px solid var(--border);vertical-align:middle;font-size:.87rem}
-tr:hover td{background:rgba(255,255,255,.018)}
+tr:hover td{background:rgba(37,99,235,.028)}
 .empty-state{text-align:center;padding:52px;color:var(--fg-2)}
 .loading-state{text-align:center;padding:52px;color:var(--fg-2)}
 
@@ -167,14 +170,14 @@ tr:hover td{background:rgba(255,255,255,.018)}
 .btn-primary{background:var(--accent);color:#fff}
 .btn-primary:hover{background:var(--accent-hover);opacity:1}
 .btn-ghost{background:none;border:1.5px solid var(--border);color:var(--fg-2)}
-.btn-ghost:hover{color:var(--fg);border-color:rgba(255,255,255,.2);opacity:1}
+.btn-ghost:hover{color:var(--fg);border-color:rgba(0,0,0,.18);background:var(--surface-2);opacity:1}
 .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.2)}
 .btn-sm{padding:5px 11px;font-size:.78rem}
 
 /* FILTER TABS */
 .filter-tabs{display:flex;gap:3px;background:var(--surface-2);border-radius:var(--r-sm);padding:3px}
 .ftab{background:none;border:none;border-radius:5px;padding:5px 12px;color:var(--fg-2);cursor:pointer;font-size:.79rem;font-weight:500;transition:background .12s,color .12s}
-.ftab.active{background:var(--surface);color:var(--fg);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.ftab.active{background:var(--surface);color:var(--fg);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 
 /* STATUS SELECT */
 select.status-sel{background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--fg);padding:5px 10px;cursor:pointer;outline:none}
@@ -188,7 +191,7 @@ select.status-sel:focus{border-color:var(--accent)}
 .stock-wrap:focus-within .stock-save{display:block}
 
 /* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px}
+.modal-bg{position:fixed;inset:0;background:rgba(17,24,39,.45);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px}
 .modal-bg.open{display:flex}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeUp .2s ease both}
 @keyframes fadeUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -222,6 +225,11 @@ select.status-sel:focus{border-color:var(--accent)}
 /* SEARCH */
 .search-input{background:var(--surface-2);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:7px 13px;color:var(--fg);outline:none;width:200px;transition:border .15s}
 .search-input:focus{border-color:var(--accent)}
+
+/* ANALYTICS stat cards */
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow-sm)}
+.stat-val{font-size:2rem;font-weight:800;letter-spacing:-.04em;color:var(--accent);line-height:1;margin-bottom:4px}
+.stat-lbl{font-size:.7rem;font-weight:700;color:var(--fg-2);text-transform:uppercase;letter-spacing:.09em}
 
 /* NOTIFICATION dot on sidebar */
 .sb-notif{width:7px;height:7px;background:var(--red);border-radius:50%;margin-left:auto;flex-shrink:0}
@@ -469,7 +477,7 @@ select.status-sel:focus{border-color:var(--accent)}
     <!-- ANALYTICS -->
     <div class="page page-hidden" id="page-analytics">
       <div class="stats" id="analyticsStats"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:16px">
         <div class="card">
           <div class="card-header"><span class="card-title">Top Products Viewed</span></div>
           <div id="topViewed" style="padding:16px"><div class="loading-state">Loading…</div></div>
@@ -2407,10 +2415,17 @@ async function loadAnalytics(){
     const refStr=Object.entries(refMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} (${v})`).join(" · ")||"—";
 
     if(statsEl) statsEl.innerHTML=`
-      <div class="stat-card"><div class="stat-val">${uniqToday}</div><div class="stat-lbl">Visitors Today</div><div style="font-size:.72rem;color:var(--fg-3);margin-top:4px">📱${mobileToday} 💻${desktopToday}</div></div>
-      <div class="stat-card"><div class="stat-val">${uniqWeek}</div><div class="stat-lbl">Visitors This Week</div></div>
-      <div class="stat-card"><div class="stat-val">${uniqTotal}</div><div class="stat-lbl">Total Visitors</div></div>
-      <div class="stat-card"><div class="stat-val">${ordersToday}</div><div class="stat-lbl">Orders Today</div><div style="font-size:.72rem;color:var(--fg-3);margin-top:4px">From: ${refStr}</div></div>`;
+      <div class="stat blue"><div class="stat-glow"></div><div class="icon2"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="lbl">Visitors Today</div><div class="val" data-num="${uniqToday}" data-prefix="" data-suffix="">0</div><div class="sub"><span class="sub-dot"></span>📱${mobileToday} mobile · 💻${desktopToday} desktop</div></div>
+      <div class="stat purple"><div class="stat-glow"></div><div class="icon2"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="lbl">Visitors This Week</div><div class="val" data-num="${uniqWeek}" data-prefix="" data-suffix="">0</div><div class="sub"><span class="sub-dot"></span>Last 7 days</div></div>
+      <div class="stat green"><div class="stat-glow"></div><div class="icon2"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="lbl">Total Visitors</div><div class="val" data-num="${uniqTotal}" data-prefix="" data-suffix="">0</div><div class="sub"><span class="sub-dot"></span>All time unique sessions</div></div>
+      <div class="stat yellow"><div class="stat-glow"></div><div class="icon2"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div><div class="lbl">Orders Today</div><div class="val" data-num="${ordersToday}" data-prefix="" data-suffix="">0</div><div class="sub"><span class="sub-dot"></span>${refStr?`Sources: ${refStr}`:"No orders today yet"}</div></div>`;
+    // animate analytics counters
+    document.querySelectorAll("#analyticsStats .val[data-num]").forEach(el=>{
+      const target=+el.dataset.num,pre=el.dataset.prefix||"",suf=el.dataset.suffix||"";
+      const t0=performance.now(),dur=Math.min(900,300+target*4);
+      function tick(now){const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);el.textContent=pre+Math.floor(e*target)+suf;if(p<1)requestAnimationFrame(tick);}
+      requestAnimationFrame(tick);
+    });
 
     // Top products viewed
     const pvMap={};
