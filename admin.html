@@ -84,23 +84,31 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 .page-hidden{display:none}
 
 /* STAT CARDS */
-.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
-.stat{background:var(--surface);border:1px solid var(--border);border-left:3px solid transparent;border-radius:var(--r);padding:20px 18px;position:relative;overflow:hidden}
-.stat.blue{border-left-color:var(--accent)}
-.stat.green{border-left-color:var(--green)}
-.stat.yellow{border-left-color:var(--yellow)}
-.stat.red{border-left-color:var(--red)}
-.stat.purple{border-left-color:var(--purple)}
-.stat .icon2{width:28px;height:28px;margin-bottom:10px;opacity:.7;display:flex;align-items:center;justify-content:center}
-.stat .icon2 svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.75}
-.stat.blue .icon2{color:var(--accent)}.stat.green .icon2{color:var(--green)}.stat.yellow .icon2{color:var(--yellow)}.stat.red .icon2{color:var(--red)}.stat.purple .icon2{color:var(--purple)}
-.stat .lbl{font-size:.7rem;color:var(--fg-2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:700}
-.stat .val{font-size:1.85rem;font-weight:800;letter-spacing:-.03em}
-.stat.blue .val{color:var(--accent)}
-.stat.green .val{color:var(--green)}
-.stat.yellow .val{color:var(--yellow)}
-.stat.red .val{color:var(--red)}
-.stat.purple .val{color:var(--purple)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-bottom:28px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 20px;position:relative;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;cursor:default}
+.stat:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.35)}
+.stat.blue:hover{border-color:rgba(37,99,235,.4);box-shadow:0 16px 40px rgba(37,99,235,.12)}
+.stat.green:hover{border-color:rgba(34,197,94,.4);box-shadow:0 16px 40px rgba(34,197,94,.12)}
+.stat.yellow:hover{border-color:rgba(245,158,11,.4);box-shadow:0 16px 40px rgba(245,158,11,.12)}
+.stat.red:hover{border-color:rgba(239,68,68,.4);box-shadow:0 16px 40px rgba(239,68,68,.12)}
+.stat.purple:hover{border-color:rgba(168,85,247,.4);box-shadow:0 16px 40px rgba(168,85,247,.12)}
+.stat-glow{position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;filter:blur(28px);opacity:.12;pointer-events:none}
+.stat.blue .stat-glow{background:var(--accent)}.stat.green .stat-glow{background:var(--green)}.stat.yellow .stat-glow{background:var(--yellow)}.stat.red .stat-glow{background:var(--red)}.stat.purple .stat-glow{background:var(--purple)}
+.stat .icon2{width:42px;height:42px;border-radius:11px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat .icon2 svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+.stat.blue .icon2{background:var(--accent-dim);color:var(--accent)}.stat.green .icon2{background:var(--green-dim);color:var(--green)}.stat.yellow .icon2{background:var(--yellow-dim);color:var(--yellow)}.stat.red .icon2{background:var(--red-dim);color:var(--red)}.stat.purple .icon2{background:var(--purple-dim);color:var(--purple)}
+.stat .lbl{font-size:.68rem;color:var(--fg-2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px;font-weight:700}
+.stat .val{font-size:2.1rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+.stat.blue .val{color:var(--accent)}.stat.green .val{color:var(--green)}.stat.yellow .val{color:var(--yellow)}.stat.red .val{color:var(--red)}.stat.purple .val{color:var(--purple)}
+.stat .sub{font-size:.72rem;color:var(--fg-3);margin-top:5px}
+@keyframes statIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stat{animation:statIn .35s ease both}
+.stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}.stat:nth-child(5){animation-delay:.25s}.stat:nth-child(6){animation-delay:.3s}
+/* DASH HEADER */
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.dash-greeting{font-size:1.3rem;font-weight:800;letter-spacing:-.02em}
+.dash-greeting span{color:var(--accent)}
+.dash-quick{display:flex;gap:8px;flex-wrap:wrap}
 
 /* TABLE */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
@@ -292,6 +300,16 @@ select.status-sel:focus{border-color:var(--accent)}
 
     <!-- DASHBOARD -->
     <div class="page" id="page-dashboard">
+      <div class="dash-header">
+        <div>
+          <div class="dash-greeting" id="dashGreeting">Good morning, <span>Pro Technology</span> 👋</div>
+          <div style="font-size:.8rem;color:var(--fg-3);margin-top:3px" id="dashSubtitle">Here's what's happening today</div>
+        </div>
+        <div class="dash-quick">
+          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.14-7.5"/></svg>Refresh</button>
+          <button class="btn btn-primary btn-sm" onclick="goto(document.querySelector('[data-page=orders]'))"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>View Orders</button>
+        </div>
+      </div>
       <div class="stats" id="dashStats"></div>
       <div class="card">
         <div class="card-header">
@@ -1292,14 +1310,39 @@ async function loadDashboard(){
     document.getElementById("lowStockDot").style.display=lowStock?"flex":"none";
     document.getElementById("lowStockDot").textContent=lowStock;
 
-    document.getElementById("dashStats").innerHTML=`
-      <div class="stat blue"><div class="icon2"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div><div class="lbl">Total Orders</div><div class="val">${o.length}</div></div>
-      <div class="stat yellow"><div class="icon2"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="lbl">Pending</div><div class="val">${pending}</div></div>
-      <div class="stat green"><div class="icon2"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="lbl">Revenue</div><div class="val">$${revenue.toFixed(0)}</div></div>
-      <div class="stat purple"><div class="icon2"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div class="lbl">Products</div><div class="val">${p.length}</div></div>
-      ${lowStock?`<div class="stat red"><div class="icon2"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="lbl">Low Stock</div><div class="val">${lowStock}</div></div>`:""}
-      ${unread?`<div class="stat red"><div class="icon2"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="lbl">Unread Msgs</div><div class="val">${unread}</div></div>`:""}
-    `;
+    // greeting
+    const hr=new Date().getHours();
+    const greet=hr<12?"Good morning":hr<17?"Good afternoon":"Good evening";
+    const dg=document.getElementById("dashGreeting");
+    if(dg)dg.innerHTML=`${greet}, <span>Pro Technology</span> 👋`;
+    const ds=document.getElementById("dashSubtitle");
+    if(ds){const today=o.filter(x=>{const d=new Date(x.created_at);const n=new Date();return d.getDate()===n.getDate()&&d.getMonth()===n.getMonth()});ds.textContent=today.length?`${today.length} new order${today.length>1?"s":""} today — keep it up!`:"No orders yet today — share the store link!"}
+
+    function statCard(cls,iconSvg,lbl,val,prefix,suffix,sub){
+      return `<div class="stat ${cls}"><div class="stat-glow"></div><div class="icon2"><svg viewBox="0 0 24 24">${iconSvg}</svg></div><div class="lbl">${lbl}</div><div class="val" data-num="${val}" data-prefix="${prefix||''}" data-suffix="${suffix||''}">${prefix||''}0${suffix||''}</div>${sub?`<div class="sub">${sub}</div>`:''}</div>`;
+    }
+    const delivered=o.filter(x=>x.status==="delivered").length;
+    document.getElementById("dashStats").innerHTML=
+      statCard("blue",'<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>',"Total Orders",o.length,"","",`${delivered} delivered`)+
+      statCard("yellow",'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',"Pending",pending,"","",pending?"Needs attention":"")+
+      statCard("green",'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',"Revenue",Math.floor(revenue),"$","",`from ${o.filter(x=>x.status!=="cancelled").length} orders`)+
+      statCard("purple",'<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>',"Products",p.length,"","",`${p.filter(x=>x.is_active).length} active`)+
+      (lowStock?statCard("red",'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',"Low Stock",lowStock,"","","Restock needed"):"")+
+      (unread?statCard("red",'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',"Messages",unread,"","","Unread"):"");
+
+    // animated counters
+    document.querySelectorAll("#dashStats .val[data-num]").forEach(el=>{
+      const target=+el.dataset.num,pre=el.dataset.prefix,suf=el.dataset.suffix;
+      const t0=performance.now();
+      const dur=Math.min(900,300+target*4);
+      function tick(now){
+        const p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3);
+        el.textContent=pre+Math.floor(e*target)+suf;
+        if(p<1)requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+
     renderOrdersTable(o.slice(0,8),"recentOrdersWrap",true);
   }catch(e){console.error("loadDashboard error:",e);document.getElementById("dashStats").innerHTML=`<div style="color:var(--red);padding:12px">Failed to load dashboard: ${e.message}</div>`}
 }
