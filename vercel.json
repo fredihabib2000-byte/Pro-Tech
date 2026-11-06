@@ -32,10 +32,10 @@
         { "key": "X-Frame-Options",           "value": "DENY" },
         { "key": "X-XSS-Protection",          "value": "1; mode=block" },
         { "key": "Referrer-Policy",           "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy",        "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Permissions-Policy",        "value": "camera=(), microphone=()" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.shopify.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://cgmqovyttrjecrbynooo.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://fcm.googleapis.com https://*.push.services.mozilla.com; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.shopify.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://cgmqovyttrjecrbynooo.supabase.co https://www.google-analytics.com https://region1.google-analytics.com https://fcm.googleapis.com https://*.push.services.mozilla.com https://ipwho.is https://nominatim.openstreetmap.org; frame-ancestors 'none'"
         },
         {
           "key": "Strict-Transport-Security",
