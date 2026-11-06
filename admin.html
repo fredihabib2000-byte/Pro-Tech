@@ -1319,12 +1319,11 @@ async function loadDashboard(){
       sb("/rest/v1/pt_orders?select=*&order=created_at.desc"),
       sb("/rest/v1/pt_products?select=id,quantity,is_active"),
       sb("/rest/v1/pt_feedback?select=is_read"),
-      sb("/rest/v1/pt_product_reviews?select=rating,is_approved")
+      sb("/rest/v1/pt_product_reviews?select=rating")
     ]);
     const o=orders||[],p=products||[],m=msgs||[],rv=revs||[];
-    const approvedRevs=rv.filter(x=>x.is_approved);
-    const avgRating=approvedRevs.length?Math.round((approvedRevs.reduce((s,x)=>s+(x.rating||0),0)/approvedRevs.length)*10)/10:0;
-    const reviews_data=approvedRevs.length?{lbl:"Avg Rating",count:approvedRevs.length,sub:`★ ${avgRating} avg · ${approvedRevs.length} review${approvedRevs.length>1?"s":""}`}:null;
+    const avgRating=rv.length?Math.round((rv.reduce((s,x)=>s+(x.rating||0),0)/rv.length)*10)/10:0;
+    const reviews_data=rv.length?{lbl:"Avg Rating",count:rv.length,sub:`★ ${avgRating} avg · ${rv.length} review${rv.length>1?"s":""}`}:null;
     const revenue=o.filter(x=>x.status!=="cancelled").reduce((s,x)=>s+num(x.total),0);
     const pending=o.filter(x=>x.status==="pending").length;
     const lowStock=p.filter(x=>x.is_active&&(x.quantity||0)<5).length;
