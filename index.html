@@ -4367,6 +4367,7 @@ function openProductDetail(id) {
   document.getElementById("productDetailModal").classList.add("open");
   document.body.style.overflow = "hidden";
   document.documentElement.style.overflow = "hidden";
+  if (window._lenis) window._lenis.stop();
 }
 
 function pmShowImage(idx) {
@@ -4450,6 +4451,7 @@ function closeProductDetail() {
   closeLightbox();
   document.body.style.overflow = "";
   document.documentElement.style.overflow = "";
+  if (window._lenis) window._lenis.start();
   _bnPriceOverride = null;
 }
 
@@ -5106,13 +5108,14 @@ loadBlackNovember();
     // Native scroll on touch: fast, no overhead
     document.documentElement.style.scrollBehavior = 'smooth';
   }
-  const lenis = isTouchDevice ? null : new Lenis({
+  window._lenis = isTouchDevice ? null : new Lenis({
     duration: 0.85,
     easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: true,
     touchMultiplier: 0,
     wheelMultiplier: 0.9,
   });
+  const lenis = window._lenis;
   if (lenis) {
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add(time => lenis.raf(time * 1000));
