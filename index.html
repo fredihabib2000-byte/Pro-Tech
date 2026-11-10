@@ -4988,7 +4988,7 @@ function renderBnGrid(prods) {
     const bnPrice = p.black_november_price;
     const origPrice = p.price;
     const disc = (bnPrice && origPrice && origPrice > bnPrice) ? Math.round(100 - (bnPrice / origPrice) * 100) : null;
-    return `<div class="bn-card">
+    return `<div class="bn-card" onclick="openProductDetail(${p.id})">
       <div class="bn-card-img">${img}${disc ? `<span class="bn-disc-badge">-${disc}%</span>` : ''}</div>
       <div class="bn-card-body">
         <p class="bn-card-name">${esc(p.name)}</p>
@@ -4996,7 +4996,7 @@ function renderBnGrid(prods) {
           ${bnPrice ? `<span class="bn-price-new">$${Number(bnPrice).toFixed(2)}</span>` : ''}
           ${origPrice && bnPrice ? `<span class="bn-price-old">$${Number(origPrice).toFixed(2)}</span>` : (origPrice ? `<span class="bn-price-new">$${Number(origPrice).toFixed(2)}</span>` : '')}
         </div>
-        <button class="bn-enquire-btn" id="bn-addbtn-${p.id}" onclick="addToCartBN(${p.id},${bnPrice || origPrice || 0})">Add to Cart</button>
+        <button class="bn-enquire-btn" id="bn-addbtn-${p.id}" onclick="event.stopPropagation();addToCartBN(${p.id},${bnPrice || origPrice || 0})">Add to Cart</button>
       </div>
     </div>`;
   }).join('');
