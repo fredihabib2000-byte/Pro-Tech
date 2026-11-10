@@ -2536,12 +2536,12 @@ html.lenis, html.lenis body { height: auto; }
 .bn-empty{grid-column:1/-1;text-align:center;padding:3rem;color:#555}
 
 /* ── Feedback floating button & modal ───────────────────── */
-.feed-fab{position:fixed;bottom:88px;right:20px;z-index:900;background:var(--accent);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:.78rem;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.3);transition:transform .15s,background .15s;font-family:inherit;white-space:nowrap;letter-spacing:.01em}
+.feed-fab{position:fixed;bottom:calc(84px + 52px + 14px);right:20px;z-index:900;background:var(--accent);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:.78rem;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.3);transition:transform .15s,background .15s;font-family:inherit;white-space:nowrap;letter-spacing:.01em}
 .feed-fab:hover{transform:translateY(-2px);background:var(--accent-hover)}
-.feed-modal-bg{position:fixed;inset:0;z-index:1900;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:flex-end;padding:16px 24px 100px;opacity:0;pointer-events:none;transition:opacity .2s}
-.feed-modal-bg.show{opacity:1;pointer-events:all}
-.feed-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.4);transform:translateY(16px);transition:transform .2s}
-.feed-modal-bg.show .feed-modal{transform:translateY(0)}
+.feed-modal-bg{position:fixed;inset:0;z-index:1900;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.feed-modal-bg.open{opacity:1;pointer-events:all}
+.feed-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:0 12px 48px rgba(0,0,0,.45);transform:translateY(20px);transition:transform .25s;box-sizing:border-box}
+.feed-modal-bg.open .feed-modal{transform:translateY(0)}
 .feed-modal-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
 .feed-modal-top h3{font-size:.95rem;font-weight:800}
 .feed-modal-top button{background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:1.1rem;line-height:1;padding:0 2px}
@@ -3324,20 +3324,21 @@ html.lenis, html.lenis body { height: auto; }
 
 <!-- ── FEEDBACK FAB ───────────────────────────────────────────── -->
 <button class="feed-fab" id="feedFab" onclick="openFeedModal()" aria-label="Share your feedback">Share your feedback</button>
-<div class="feed-modal-bg" id="feedModalBg" onclick="closeFeedModal()"></div>
-<div class="feed-modal" id="feedModal" role="dialog" aria-modal="true" aria-label="Feedback">
-  <div class="feed-modal-top">
-    <strong>Share your feedback</strong>
-    <button onclick="closeFeedModal()" aria-label="Close" style="background:none;border:none;cursor:pointer;font-size:1.3rem;line-height:1;color:var(--text-muted)">×</button>
-  </div>
-  <input type="text" id="feed_name" placeholder="Your name (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
-  <input type="email" id="feed_email" placeholder="Email (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
-  <input type="tel" id="feed_phone" placeholder="Phone (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
-  <textarea id="feed_msg" rows="4" placeholder="Tell us what you think…" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;resize:vertical;margin-bottom:.6rem"></textarea>
-  <div id="feedStatus" style="font-size:.85rem;min-height:1.2rem;margin-bottom:.4rem"></div>
-  <div class="feed-actions">
-    <button class="feed-cancel" onclick="closeFeedModal()">Cancel</button>
-    <button class="feed-submit" id="feedSubmitBtn" onclick="submitFeedback()">Submit</button>
+<div class="feed-modal-bg" id="feedModalBg" onclick="closeFeedModal()">
+  <div class="feed-modal" id="feedModal" role="dialog" aria-modal="true" aria-label="Feedback" onclick="event.stopPropagation()">
+    <div class="feed-modal-top">
+      <strong>Share your feedback</strong>
+      <button onclick="closeFeedModal()" aria-label="Close" style="background:none;border:none;cursor:pointer;font-size:1.3rem;line-height:1;color:var(--text-muted)">×</button>
+    </div>
+    <input type="text" id="feed_name" placeholder="Your name (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
+    <input type="email" id="feed_email" placeholder="Email (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
+    <input type="tel" id="feed_phone" placeholder="Phone (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
+    <textarea id="feed_msg" rows="4" placeholder="Tell us what you think…" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;resize:vertical;margin-bottom:.6rem"></textarea>
+    <div id="feedStatus" style="font-size:.85rem;min-height:1.2rem;margin-bottom:.4rem"></div>
+    <div class="feed-actions">
+      <button class="feed-cancel" onclick="closeFeedModal()">Cancel</button>
+      <button class="feed-submit" id="feedSubmitBtn" onclick="submitFeedback()">Submit</button>
+    </div>
   </div>
 </div>
 
@@ -5007,12 +5008,10 @@ function startBnCountdown(endDate) {
 
 // ── Feedback modal ────────────────────────────────────────────────
 function openFeedModal() {
-  document.getElementById('feedModal').classList.add('open');
   document.getElementById('feedModalBg').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeFeedModal() {
-  document.getElementById('feedModal').classList.remove('open');
   document.getElementById('feedModalBg').classList.remove('open');
   document.body.style.overflow = '';
 }
