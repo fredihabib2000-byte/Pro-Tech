@@ -1639,6 +1639,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   justify-content: center;
   padding: 12px;
   backdrop-filter: blur(4px);
+  overscroll-behavior: none;
 }
 .prod-modal-overlay.open { display: flex; }
 .prod-modal {
@@ -1649,6 +1650,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   max-width: 980px;
   max-height: 94vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   box-shadow: 0 24px 60px rgba(0,0,0,.8);
   display: flex;
   flex-direction: column;
@@ -4364,6 +4366,7 @@ function openProductDetail(id) {
 
   document.getElementById("productDetailModal").classList.add("open");
   document.body.style.overflow = "hidden";
+  document.documentElement.style.overflow = "hidden";
 }
 
 function pmShowImage(idx) {
@@ -4446,6 +4449,7 @@ function closeProductDetail() {
   document.getElementById("productDetailModal").classList.remove("open");
   closeLightbox();
   document.body.style.overflow = "";
+  document.documentElement.style.overflow = "";
   _bnPriceOverride = null;
 }
 
