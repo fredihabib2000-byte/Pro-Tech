@@ -2504,6 +2504,58 @@ html.lenis, html.lenis body { height: auto; }
   .slide h2 { font-size: 1.5rem; }
   .section-title { font-size: 1.4rem; }
 }
+
+/* ── Black November section ──────────────────────────────── */
+.bn-section{padding-block:72px}
+.bn-header{text-align:center;margin-bottom:36px}
+.bn-label{display:inline-flex;align-items:center;gap:6px;background:#1a1a1a;border:1px solid #333;color:#ff4500;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:5px 14px;border-radius:99px;margin-bottom:16px}
+.bn-title{font-family:var(--display);font-size:clamp(1.8rem,5vw,2.8rem);font-weight:800;color:#fff;line-height:1.1;margin-bottom:8px}
+.bn-title em{font-style:normal;color:#ff4500}
+.bn-sub{color:#888;font-size:.9rem;margin-bottom:24px}
+.bn-countdown{display:inline-flex;gap:0;justify-content:center;margin-bottom:4px;border:1px solid #2a2a2a;border-radius:12px;overflow:hidden}
+.bn-cd-unit{display:flex;flex-direction:column;align-items:center;padding:12px 18px;background:#111;min-width:66px}
+.bn-cd-sep{font-size:1.4rem;color:#ff4500;font-weight:800;align-self:center;padding:0 4px;background:#111}
+.bn-cd-num{font-family:var(--display);font-size:1.6rem;font-weight:800;color:#fff;line-height:1}
+.bn-cd-label{font-size:.6rem;color:#555;text-transform:uppercase;letter-spacing:.1em;margin-top:4px}
+.bn-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+@media(max-width:1100px){.bn-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){.bn-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+.bn-card{background:#111;border:1px solid #222;border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .2s,transform .2s}
+.bn-card:hover{border-color:#ff4500;transform:translateY(-3px);box-shadow:0 8px 24px rgba(255,69,0,.15)}
+.bn-card-img{aspect-ratio:1;background:#1a1a1a;position:relative;overflow:hidden}
+.bn-card-img img{width:100%;height:100%;object-fit:contain;padding:12px;transition:transform .3s}
+.bn-card:hover .bn-card-img img{transform:scale(1.04)}
+.bn-disc-badge{position:absolute;top:10px;left:10px;background:#ff4500;color:#fff;font-size:.68rem;font-weight:800;padding:4px 9px;border-radius:5px}
+.bn-card-body{padding:14px}
+.bn-card-name{font-size:.85rem;font-weight:600;color:#e8e8e8;margin-bottom:8px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bn-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
+.bn-price-new{font-size:1.1rem;font-weight:800;color:#ff4500}
+.bn-price-old{font-size:.8rem;color:#555;text-decoration:line-through}
+.bn-enquire-btn{width:100%;background:#ff4500;color:#fff;border:none;border-radius:8px;padding:10px;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .15s;font-family:inherit}
+.bn-enquire-btn:hover{background:#cc3700}
+.bn-empty{grid-column:1/-1;text-align:center;padding:3rem;color:#555}
+
+/* ── Feedback floating button & modal ───────────────────── */
+.feed-fab{position:fixed;bottom:88px;right:24px;z-index:900;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:11px 18px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;box-shadow:0 4px 20px rgba(0,0,0,.35);transition:transform .15s,background .15s;font-family:inherit}
+.feed-fab:hover{transform:translateY(-2px);background:var(--accent-hover)}
+.feed-modal-bg{position:fixed;inset:0;z-index:1900;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:flex-end;padding:16px 24px 100px;opacity:0;pointer-events:none;transition:opacity .2s}
+.feed-modal-bg.show{opacity:1;pointer-events:all}
+.feed-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;width:100%;max-width:360px;box-shadow:0 8px 40px rgba(0,0,0,.4);transform:translateY(16px);transition:transform .2s}
+.feed-modal-bg.show .feed-modal{transform:translateY(0)}
+.feed-modal-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+.feed-modal-top h3{font-size:.95rem;font-weight:800}
+.feed-modal-top button{background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:1.1rem;line-height:1;padding:0 2px}
+.feed-modal p{color:var(--fg-2);font-size:.8rem;margin-bottom:14px}
+.feed-modal input,.feed-modal textarea{width:100%;background:var(--surface-2);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--fg);font-size:.85rem;outline:none;margin-bottom:9px;font-family:inherit;transition:border-color .15s;resize:vertical}
+.feed-modal input:focus,.feed-modal textarea:focus{border-color:var(--accent)}
+.feed-modal textarea{min-height:72px}
+.feed-actions{display:flex;gap:8px}
+.feed-actions button{flex:1;padding:10px;border-radius:8px;font-size:.85rem;font-weight:700;border:none;cursor:pointer;font-family:inherit}
+.feed-cancel{background:var(--surface-2);color:var(--fg-2)}
+.feed-submit{background:var(--accent);color:#fff}
+.feed-submit:hover{background:var(--accent-hover)}
+.feed-submit:disabled{opacity:.6;cursor:default}
+#feedStatus{text-align:center;min-height:18px;font-size:.8rem;margin-top:8px}
 </style>
 </head>
 <body>
@@ -2632,6 +2684,30 @@ html.lenis, html.lenis body { height: auto; }
         <img src="https://cdn.shopify.com/s/files/1/0860/5270/0433/files/JBL_FLIP_7_HERO_BLACK_060_x2_e7f37380-bbbd-4c1f-90a9-d1baa7124a07.png?v=1790613721" alt="JBL Flip 7" loading="lazy">
       </div>
       <div class="hero-prod-label">JBL Flip 7</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BLACK NOVEMBER ───────────────────────────────────────────── -->
+<section class="bn-section reveal" id="black-november" style="display:none">
+  <div class="container">
+    <div class="bn-header">
+      <div>
+        <span class="bn-label">LIMITED TIME</span>
+        <h2 class="bn-title">⚫ Black November</h2>
+      </div>
+      <div class="bn-countdown" id="bnCountdown">
+        <div class="bn-cd-unit"><span class="bn-cd-num" id="bnDays">00</span><span class="bn-cd-label">Days</span></div>
+        <span class="bn-cd-sep">:</span>
+        <div class="bn-cd-unit"><span class="bn-cd-num" id="bnHours">00</span><span class="bn-cd-label">Hrs</span></div>
+        <span class="bn-cd-sep">:</span>
+        <div class="bn-cd-unit"><span class="bn-cd-num" id="bnMins">00</span><span class="bn-cd-label">Min</span></div>
+        <span class="bn-cd-sep">:</span>
+        <div class="bn-cd-unit"><span class="bn-cd-num" id="bnSecs">00</span><span class="bn-cd-label">Sec</span></div>
+      </div>
+    </div>
+    <div class="bn-grid" id="bnGrid">
+      <p class="bn-empty">Loading deals…</p>
     </div>
   </div>
 </section>
@@ -3243,6 +3319,27 @@ html.lenis, html.lenis body { height: auto; }
       <button class="close-btn" onclick="closeLegal()">✕</button>
     </div>
     <div class="legal-body" id="legalBody"></div>
+  </div>
+</div>
+
+<!-- ── FEEDBACK FAB ───────────────────────────────────────────── -->
+<button class="feed-fab" id="feedFab" onclick="openFeedModal()" aria-label="Give Feedback" title="Share your feedback">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+<div class="feed-modal-bg" id="feedModalBg" onclick="closeFeedModal()"></div>
+<div class="feed-modal" id="feedModal" role="dialog" aria-modal="true" aria-label="Feedback">
+  <div class="feed-modal-top">
+    <strong>Share your feedback</strong>
+    <button onclick="closeFeedModal()" aria-label="Close" style="background:none;border:none;cursor:pointer;font-size:1.3rem;line-height:1;color:var(--text-muted)">×</button>
+  </div>
+  <input type="text" id="feed_name" placeholder="Your name (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
+  <input type="email" id="feed_email" placeholder="Email (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
+  <input type="tel" id="feed_phone" placeholder="Phone (optional)" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;margin-bottom:.6rem">
+  <textarea id="feed_msg" rows="4" placeholder="Tell us what you think…" style="width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:.93rem;box-sizing:border-box;resize:vertical;margin-bottom:.6rem"></textarea>
+  <div id="feedStatus" style="font-size:.85rem;min-height:1.2rem;margin-bottom:.4rem"></div>
+  <div class="feed-actions">
+    <button class="feed-cancel" onclick="closeFeedModal()">Cancel</button>
+    <button class="feed-submit" id="feedSubmitBtn" onclick="submitFeedback()">Submit</button>
   </div>
 </div>
 
@@ -4848,9 +4945,112 @@ document.getElementById('searchInput').addEventListener('input', e => {
   obs.observe(statsBar);
 })();
 
+// ── Black November ────────────────────────────────────────────────
+let bnTimer = null;
+async function loadBlackNovember() {
+  try {
+    const cfg = await sbFetch('/rest/v1/pt_black_november_config?id=eq.1&select=*');
+    if (!cfg || !cfg.length || !cfg[0].is_active) return;
+    const c = cfg[0];
+    const end = c.end_date ? new Date(c.end_date) : null;
+    if (end && end < new Date()) return;
+
+    const prods = await sbFetch('/rest/v1/pt_products?is_black_november=eq.true&select=*');
+    if (!prods || !prods.length) return;
+
+    document.getElementById('black-november').style.display = '';
+    renderBnGrid(prods);
+    if (end) startBnCountdown(end);
+  } catch(e) { /* silent */ }
+}
+
+function renderBnGrid(prods) {
+  const grid = document.getElementById('bnGrid');
+  if (!prods.length) { grid.innerHTML = '<p class="bn-empty">No deals right now — check back soon!</p>'; return; }
+  grid.innerHTML = prods.map(p => {
+    const img = p.image_url ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">` : `<div style="display:flex;align-items:center;justify-content:center;height:100%;opacity:.3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>`;
+    const bnPrice = p.black_november_price;
+    const origPrice = p.price;
+    const disc = (bnPrice && origPrice && origPrice > bnPrice) ? Math.round(100 - (bnPrice / origPrice) * 100) : null;
+    return `<div class="bn-card">
+      <div class="bn-card-img">${img}${disc ? `<span class="bn-disc-badge">-${disc}%</span>` : ''}</div>
+      <div class="bn-card-body">
+        <p class="bn-card-name">${esc(p.name)}</p>
+        <div class="bn-price-row">
+          ${bnPrice ? `<span class="bn-price-new">$${Number(bnPrice).toFixed(2)}</span>` : ''}
+          ${origPrice && bnPrice ? `<span class="bn-price-old">$${Number(origPrice).toFixed(2)}</span>` : (origPrice ? `<span class="bn-price-new">$${Number(origPrice).toFixed(2)}</span>` : '')}
+        </div>
+        <button class="bn-enquire-btn" onclick="openEnquiry(${p.id})">Enquire Now</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function startBnCountdown(endDate) {
+  function tick() {
+    const diff = endDate - new Date();
+    if (diff <= 0) {
+      ['bnDays','bnHours','bnMins','bnSecs'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent='00'; });
+      clearInterval(bnTimer);
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const pad = n => String(n).padStart(2,'0');
+    const setEl = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+    setEl('bnDays', pad(d)); setEl('bnHours', pad(h)); setEl('bnMins', pad(m)); setEl('bnSecs', pad(s));
+  }
+  tick();
+  bnTimer = setInterval(tick, 1000);
+}
+
+// ── Feedback modal ────────────────────────────────────────────────
+function openFeedModal() {
+  document.getElementById('feedModal').classList.add('open');
+  document.getElementById('feedModalBg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFeedModal() {
+  document.getElementById('feedModal').classList.remove('open');
+  document.getElementById('feedModalBg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+async function submitFeedback() {
+  const btn = document.getElementById('feedSubmitBtn');
+  const status = document.getElementById('feedStatus');
+  const msg = document.getElementById('feed_msg').value.trim();
+  if (!msg) { status.style.color='#e74c3c'; status.textContent='Please write your feedback before submitting.'; return; }
+  btn.disabled = true; btn.textContent = 'Sending…'; status.textContent = '';
+  try {
+    const body = {
+      name: document.getElementById('feed_name').value.trim() || null,
+      email: document.getElementById('feed_email').value.trim() || null,
+      phone: document.getElementById('feed_phone').value.trim() || null,
+      message: msg,
+      is_read: false
+    };
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/pt_feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('Failed');
+    status.style.color = '#27ae60'; status.textContent = 'Thank you for your feedback!';
+    ['feed_name','feed_email','feed_phone','feed_msg'].forEach(id => { document.getElementById(id).value = ''; });
+    setTimeout(closeFeedModal, 1800);
+  } catch(e) {
+    status.style.color = '#e74c3c'; status.textContent = 'Something went wrong. Please try again.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Submit';
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────
 loadProducts();
 loadStoreSettings();
+loadBlackNovember();
 
 // ══ LENIS + GSAP ══════════════════════════════════════════════════
 (function() {

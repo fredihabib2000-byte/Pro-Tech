@@ -252,6 +252,8 @@ select.status-sel:focus{border-color:var(--accent)}
       <button class="sb-item" data-page="reports" onclick="goto(this)"><span class="icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Reports</button>
       <button class="sb-item" data-page="inventory" onclick="goto(this)"><span class="icon"><svg viewBox="0 0 24 24"><path d="M5 8h14M5 8a2 2 0 1 0 0-4h14a2 2 0 1 0 0 4M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8m-9 4h4"/></svg></span> Inventory <span class="badge-dot" id="lowStockDot" style="display:none"></span></button>
       <button class="sb-item" data-page="reviews" onclick="goto(this)"><span class="icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span> Reviews <span class="badge-dot" id="reviewsDot" style="display:none"></span></button>
+      <button class="sb-item" data-page="black-november" onclick="goto(this)"><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span> Black November</button>
+      <button class="sb-item" data-page="feedback" onclick="goto(this)"><span class="icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Feedback <span class="badge-dot" id="feedbackDot" style="display:none"></span></button>
       <div class="sb-section">Other</div>
       <button class="sb-item" data-page="analytics" onclick="goto(this)"><span class="icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span> Analytics</button>
       <button class="sb-item" data-page="messages" onclick="goto(this)"><span class="icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Messages <span class="badge-dot" id="msgDot" style="display:none"></span></button>
@@ -521,6 +523,47 @@ select.status-sel:focus{border-color:var(--accent)}
           </div>
         </div>
         <div class="tbl-wrap" id="reviewsWrap"><div class="loading-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- BLACK NOVEMBER -->
+    <div class="page page-hidden" id="page-black-november">
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header"><span class="card-title">Black November Configuration</span></div>
+        <div style="padding:1.25rem;display:flex;flex-wrap:wrap;gap:1.25rem;align-items:flex-end">
+          <div>
+            <label style="font-size:.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px">Status</label>
+            <button class="toggle" id="bnActiveToggle" onclick="toggleBnActive()">Loading…</button>
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px">Start Date</label>
+            <input type="datetime-local" id="bnStartDate" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:8px;font-size:.88rem">
+          </div>
+          <div>
+            <label style="font-size:.8rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px">End Date</label>
+            <input type="datetime-local" id="bnEndDate" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:8px;font-size:.88rem">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveBnConfig()">Save Config</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Products in Black November</span><span class="badge" id="bnCount" style="background:#f59e0b22;color:#b45309">0 items</span></div>
+        <div class="tbl-wrap" id="bnProdsWrap"><div class="loading-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="page page-hidden" id="page-feedback">
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:10px">
+          <span class="card-title">Customer Feedback</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="ftab active" data-f="all" onclick="filterFeedback(this)">All</button>
+            <button class="ftab" data-f="unread" onclick="filterFeedback(this)">Unread</button>
+            <button class="ftab" data-f="read" onclick="filterFeedback(this)">Read</button>
+          </div>
+        </div>
+        <div class="tbl-wrap" id="feedbackWrap"><div class="loading-state">Loading…</div></div>
       </div>
     </div>
 
@@ -852,7 +895,7 @@ function goto(el){
 function toggleSidebar(){document.getElementById("sidebar").classList.toggle("mob-open")}
 
 // ── NAVIGATION ───────────────────────────────────────────
-const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",reviews:"Reviews",analytics:"Analytics",messages:"Messages",settings:"Settings"};
+const PAGES={dashboard:"Dashboard",orders:"Orders",products:"Products",categories:"Categories",clients:"Clients",reports:"Reports",inventory:"Inventory",reviews:"Reviews","black-november":"Black November",feedback:"Feedback",analytics:"Analytics",messages:"Messages",settings:"Settings"};
 function goto(el){
   document.querySelectorAll(".sb-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
@@ -868,6 +911,8 @@ function goto(el){
   if(p==="reports")loadReports();
   if(p==="inventory")loadInventory();
   if(p==="reviews")loadReviews();
+  if(p==="black-november")loadBlackNovember();
+  if(p==="feedback")loadFeedback();
   if(p==="analytics")loadAnalytics();
   if(p==="messages")loadMessages();
 }
@@ -2325,6 +2370,194 @@ function exportReportsPDF(){
     doc.autoTable({startY:y+4,head:[["#","Name","Phone","Orders","Spent ($)"]],body:clients.map((c,i)=>[i+1,c.name,c.phone,c.orders,"$"+c.spent.toFixed(2)]),...pdfTheme,columnStyles:{3:{halign:"right"},4:{halign:"right"}}});
   }
   dlPDF(doc,`ProTech_Reports_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+// ── BLACK NOVEMBER ───────────────────────────────────────────────
+let _bnCfg = null;
+let _bnAllProds = [];
+let _feedbackFilter = 'all';
+let _allFeedback = [];
+
+async function loadBlackNovember() {
+  const wrap = document.getElementById('bnProdsWrap');
+  wrap.innerHTML = '<div class="loading-state">Loading…</div>';
+  try {
+    const [cfg, prods] = await Promise.all([
+      sb('/rest/v1/pt_black_november_config?id=eq.1&select=*'),
+      sb('/rest/v1/pt_products?select=id,name,price,image_url,is_black_november,black_november_price&order=name.asc')
+    ]);
+    _bnCfg = cfg && cfg.length ? cfg[0] : { id:1, is_active:false, start_date:null, end_date:null };
+    _bnAllProds = prods || [];
+
+    const tog = document.getElementById('bnActiveToggle');
+    tog.textContent = _bnCfg.is_active ? 'Active' : 'Inactive';
+    tog.className = 'toggle ' + (_bnCfg.is_active ? 'on' : 'off');
+
+    const toLocal = iso => iso ? iso.replace('Z','').slice(0,16) : '';
+    document.getElementById('bnStartDate').value = toLocal(_bnCfg.start_date);
+    document.getElementById('bnEndDate').value = toLocal(_bnCfg.end_date);
+
+    renderBnProds();
+  } catch(e) { wrap.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`; }
+}
+
+function renderBnProds() {
+  const wrap = document.getElementById('bnProdsWrap');
+  const bnItems = _bnAllProds.filter(p => p.is_black_november);
+  const others = _bnAllProds.filter(p => !p.is_black_november);
+  document.getElementById('bnCount').textContent = bnItems.length + ' items';
+
+  const row = p => `<tr>
+    <td><div style="display:flex;align-items:center;gap:10px">
+      ${p.image_url ? `<img src="${p.image_url}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px">` : `<div style="width:36px;height:36px;background:var(--surface-3);border-radius:6px"></div>`}
+      <span>${p.name}</span>
+    </div></td>
+    <td>$${p.price ? Number(p.price).toFixed(2) : '—'}</td>
+    <td>
+      ${p.is_black_november
+        ? `<div style="display:flex;align-items:center;gap:6px">
+            <span style="color:#059669;font-weight:600">$</span>
+            <input type="number" step="0.01" min="0" value="${p.black_november_price||''}" id="bnp_${p.id}" style="width:90px;padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-size:.88rem" placeholder="Sale price">
+            <button class="btn btn-primary btn-sm" style="padding:.3rem .7rem" onclick="saveBnPrice(${p.id})">Save</button>
+          </div>`
+        : `<span style="color:var(--text-muted);font-size:.82rem">—</span>`}
+    </td>
+    <td>
+      <label class="toggle ${p.is_black_november?'on':'off'}" id="bntog_${p.id}" onclick="toggleBnProduct(${p.id})" style="cursor:pointer">${p.is_black_november?'In BN':'Add'}</label>
+    </td>
+  </tr>`;
+
+  wrap.innerHTML = `<table class="tbl"><thead><tr><th>Product</th><th>Original Price</th><th>BN Price</th><th>Status</th></tr></thead>
+    <tbody>
+      ${bnItems.length ? bnItems.map(row).join('') : ''}
+      ${others.map(row).join('')}
+    </tbody></table>`;
+}
+
+function toggleBnActive() {
+  if (!_bnCfg) return;
+  _bnCfg.is_active = !_bnCfg.is_active;
+  const tog = document.getElementById('bnActiveToggle');
+  tog.textContent = _bnCfg.is_active ? 'Active' : 'Inactive';
+  tog.className = 'toggle ' + (_bnCfg.is_active ? 'on' : 'off');
+}
+
+async function saveBnConfig() {
+  const start = document.getElementById('bnStartDate').value;
+  const end = document.getElementById('bnEndDate').value;
+  try {
+    await sb('/rest/v1/pt_black_november_config?id=eq.1', {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({
+        is_active: _bnCfg.is_active,
+        start_date: start ? new Date(start).toISOString() : null,
+        end_date: end ? new Date(end).toISOString() : null,
+        updated_at: new Date().toISOString()
+      })
+    });
+    showToast('Config saved','Black November settings updated',null,'✅');
+  } catch(e) { showToast('Error','Could not save config: '+e.message,null,'❌'); }
+}
+
+async function toggleBnProduct(id) {
+  const prod = _bnAllProds.find(p=>p.id===id);
+  if (!prod) return;
+  const newVal = !prod.is_black_november;
+  try {
+    await sb('/rest/v1/pt_products?id=eq.'+id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ is_black_november: newVal })
+    });
+    prod.is_black_november = newVal;
+    renderBnProds();
+    showToast(newVal?'Added to BN':'Removed from BN', prod.name, null, newVal?'⭐':'🗑️');
+  } catch(e) { showToast('Error','Could not update product',null,'❌'); }
+}
+
+async function saveBnPrice(id) {
+  const inp = document.getElementById('bnp_'+id);
+  if (!inp) return;
+  const price = parseFloat(inp.value);
+  if (isNaN(price) || price < 0) { showToast('Invalid price','Enter a valid sale price',null,'⚠️'); return; }
+  try {
+    await sb('/rest/v1/pt_products?id=eq.'+id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ black_november_price: price })
+    });
+    const prod = _bnAllProds.find(p=>p.id===id);
+    if (prod) prod.black_november_price = price;
+    showToast('Price saved','Black November price updated',null,'✅');
+  } catch(e) { showToast('Error','Could not save price',null,'❌'); }
+}
+
+// ── FEEDBACK ─────────────────────────────────────────────────────
+async function loadFeedback() {
+  const wrap = document.getElementById('feedbackWrap');
+  wrap.innerHTML = '<div class="loading-state">Loading…</div>';
+  try {
+    const rows = await sb('/rest/v1/pt_feedback?select=*&order=created_at.desc');
+    _allFeedback = rows || [];
+    renderFeedback();
+    const dot = document.getElementById('feedbackDot');
+    if (dot) dot.style.display = _allFeedback.some(r=>!r.is_read) ? 'inline-block' : 'none';
+  } catch(e) { wrap.innerHTML = `<div class="empty-state">Error: ${e.message}</div>`; }
+}
+
+function filterFeedback(btn) {
+  document.querySelectorAll('#page-feedback .ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _feedbackFilter = btn.dataset.f;
+  renderFeedback();
+}
+
+function renderFeedback() {
+  const wrap = document.getElementById('feedbackWrap');
+  let rows = _allFeedback;
+  if (_feedbackFilter === 'unread') rows = rows.filter(r=>!r.is_read);
+  if (_feedbackFilter === 'read') rows = rows.filter(r=>r.is_read);
+  if (!rows.length) { wrap.innerHTML = '<div class="empty-state">No feedback yet</div>'; return; }
+  wrap.innerHTML = `<table class="tbl"><thead><tr><th>Date</th><th>Name</th><th>Contact</th><th>Message</th><th>Actions</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr style="${!r.is_read?'background:var(--surface-2)':''}">
+      <td style="white-space:nowrap;font-size:.82rem">${new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${r.name||'<span style="color:var(--text-muted)">Anonymous</span>'}</td>
+      <td style="font-size:.82rem">${r.email?`<div>${r.email}</div>`:''} ${r.phone?`<div>${r.phone}</div>`:''} ${!r.email&&!r.phone?'<span style="color:var(--text-muted)">—</span>':''}</td>
+      <td style="max-width:300px;white-space:pre-wrap;word-break:break-word">${r.message||''}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${!r.is_read?`<button class="btn btn-ghost btn-sm" onclick="markFeedbackRead(${r.id})">Mark Read</button>`:'<span style="color:var(--success);font-size:.8rem;font-weight:600">✓ Read</span>'}
+          <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:none" onclick="deleteFeedback(${r.id})">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+async function markFeedbackRead(id) {
+  try {
+    await sb('/rest/v1/pt_feedback?id=eq.'+id, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ is_read: true })
+    });
+    const item = _allFeedback.find(r=>r.id===id);
+    if (item) item.is_read = true;
+    renderFeedback();
+    const dot = document.getElementById('feedbackDot');
+    if (dot) dot.style.display = _allFeedback.some(r=>!r.is_read) ? 'inline-block' : 'none';
+  } catch(e) { showToast('Error','Could not update',null,'❌'); }
+}
+
+async function deleteFeedback(id) {
+  if (!confirm('Delete this feedback? This cannot be undone.')) return;
+  try {
+    await sb('/rest/v1/pt_feedback?id=eq.'+id, { method:'DELETE' });
+    _allFeedback = _allFeedback.filter(r=>r.id!==id);
+    renderFeedback();
+    showToast('Deleted','Feedback removed',null,'🗑️');
+  } catch(e) { showToast('Error','Could not delete',null,'❌'); }
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
