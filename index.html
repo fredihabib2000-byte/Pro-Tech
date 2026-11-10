@@ -1648,7 +1648,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   width: 100%;
   max-width: 980px;
   max-height: 94vh;
-  overflow: hidden;
+  overflow-y: auto;
   box-shadow: 0 24px 60px rgba(0,0,0,.8);
   display: flex;
   flex-direction: column;
@@ -1676,7 +1676,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
   display: grid;
   grid-template-columns: 55% 45%;
   flex: 1;
-  overflow: hidden;
   min-height: 0;
 }
 @media (max-width: 680px) {
@@ -1689,6 +1688,7 @@ button { cursor: pointer; font-family: inherit; border: none; }
   flex-direction: column;
   overflow: hidden;
   border-right: 1px solid var(--border);
+  max-height: 540px;
 }
 .prod-modal-main-img {
   flex: 1;
@@ -1769,8 +1769,6 @@ button { cursor: pointer; font-family: inherit; border: none; }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow-y: auto;
-  min-height: 0;
 }
 .prod-modal-cat { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); }
 .prod-modal-name { font-family: var(--display); font-size: 1.35rem; font-weight: 700; line-height: 1.25; }
