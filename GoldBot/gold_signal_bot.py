@@ -1,9 +1,9 @@
 """
-GainzAlgo V3 - XAUUSD Telegram Bot
-- Session filter: London + NY only (08:00–21:00 UTC = 11:00–00:00 Lebanon)
+GainzAlgo V4 - Multi-Asset Telegram Bot
+Assets: Gold (XAU/USD), Silver (XAG/USD), Bitcoin (BTC/USD), NVDA
 - Triple-timeframe: 4H macro + 1H trend + 15min entry
 - Volume Analysis: OBV trend + Volume Surge detection
-- State-based conditions → regular signals in trending markets
+- State-based conditions → signals in trending markets only
 - Three levels: ⚡ Setup (2 cond), 📡 Signal (3 cond), 🚀 Strong (4+ cond)
 - Daily brief at London open (11:00 Lebanon)
 """
@@ -21,18 +21,27 @@ TELEGRAM_TOKEN   = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TWELVE_API_KEY   = os.getenv("TWELVE_API_KEY")
 
-CHECK_EVERY = 60 * 15
+CHECK_EVERY = 60 * 20   # 20 min — keeps daily API calls within free tier
 
 ALPHA_VANTAGE_KEY = os.getenv("ALPHA_VANTAGE_KEY")   # optional — improves accuracy
+
+# ── Asset config ──────────────────────────────────────────────────────────────
+# session: "metals" = London+NY, "crypto" = 24/7, "nyse" = NYSE hours only
+SYMBOLS = [
+    {"symbol": "XAU/USD", "name": "Gold",    "emoji": "🥇", "atr_min": 3.0,  "session": "metals"},
+    {"symbol": "XAG/USD", "name": "Silver",  "emoji": "🥈", "atr_min": 0.05, "session": "metals"},
+    {"symbol": "BTC/USD", "name": "Bitcoin", "emoji": "₿",  "atr_min": 50.0, "session": "crypto"},
+    {"symbol": "NVDA",    "name": "NVDA",    "emoji": "💻", "atr_min": 1.5,  "session": "nyse"},
+]
 
 FAST_EMA   = 8
 SLOW_EMA   = 21
 TREND_EMA  = 200
 RSI_PERIOD = 14
 ATR_PERIOD = 14
-ATR_MULT   = 1.8     # tighter stop → better RR
-RR_RATIO   = 3.0     # 3:1 RR → profitable even at 35% win rate
-ATR_MIN    = 2.5     # skip dead/choppy markets below this ATR
+ATR_MULT   = 1.5     # tighter stop → quicker SL hit, less drawdown
+RR_RATIO   = 2.0     # 2:1 RR → TP is 40% closer, faster exits
+ATR_MIN    = 3.0     # skip low-volatility / dead markets
 
 SETUP_LEVEL  = 2
 SIGNAL_LEVEL = 3
@@ -41,15 +50,24 @@ STRONG_LEVEL = 4
 PIVOT_ZONE  = 0.35   # within X × ATR of a pivot level = "at key level"
 
 # Minimum score to actually send an alert (Setup=2 is detected but NOT sent)
-ALERT_MIN_SCORE = 3
+ALERT_MIN_SCORE = 4     # Strong signals only (was 3)
 
 # Spam guard: don't re-alert same direction+reason within N minutes
-SPAM_MINUTES = 90
+SPAM_MINUTES = 120
 
 # Ranging filter: EMA spread / ATR must exceed this to confirm a trend
-EMA_TREND_MIN = 0.25
+EMA_TREND_MIN = 0.30
 
-last_alert = {}   # direction → (reason_key, timestamp)
+# Pullback filter: price must be within X × ATR of slow EMA (no chasing)
+PULLBACK_ATR_MAX = 1.2
+
+# RSI entry zone: only enter when RSI is in this range (avoid extremes)
+RSI_BUY_MIN  = 40
+RSI_BUY_MAX  = 65
+RSI_SELL_MIN = 35
+RSI_SELL_MAX = 60
+
+last_alert = {}       # symbol → {direction: (reason_key, timestamp)}
 last_brief_date = None
 
 
@@ -69,7 +87,21 @@ def is_trading_day() -> bool:
 
 def is_london_open() -> bool:
     now = datetime.utcnow()
-    return now.hour == 8 and now.minute < 15
+    return now.hour == 8 and now.minute < 20
+
+def is_active_for(sym: dict) -> str:
+    """Returns session label if this asset is in an active session, else ''."""
+    h   = datetime.utcnow().hour
+    dow = datetime.utcnow().weekday()   # 0=Mon … 6=Sun
+    stype = sym.get("session", "metals")
+    if stype == "crypto":               # BTC: 24/7
+        return "Crypto 24/7 ₿"
+    if stype == "nyse":                 # US stocks: 13:30–20:00 UTC, weekdays only
+        if dow >= 5: return ""
+        return "NYSE 🇺🇸" if 13 <= h < 20 else ""
+    # metals: London + NY, weekdays
+    if dow >= 5: return ""
+    return get_session()
 
 
 # ── Math ──────────────────────────────────────────────────────────────────────
@@ -198,9 +230,9 @@ def pivot_levels(highs, lows, closes):
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 
-def _fetch(interval: str, size: int = 250):
+def _fetch(symbol: str, interval: str, size: int = 250):
     url = (f"https://api.twelvedata.com/time_series"
-           f"?symbol=XAU/USD&interval={interval}&outputsize={size}"
+           f"?symbol={symbol}&interval={interval}&outputsize={size}"
            f"&apikey={TWELVE_API_KEY}")
     r = requests.get(url, timeout=15)
     r.raise_for_status()
@@ -214,33 +246,29 @@ def _fetch(interval: str, size: int = 250):
             [float(v["close"])             for v in vals],
             [float(v.get("volume") or 0)   for v in vals])
 
-def fetch_data():  return _fetch("15min", 250)
-def fetch_htf():   return _fetch("1h",    220)
-def fetch_4h():    return _fetch("4h",    120)
-
 
 # ── Multi-timeframe trend ─────────────────────────────────────────────────────
 
-def get_htf_trend() -> tuple:
+def get_htf_trend(symbol: str) -> tuple:
     """Returns (trend_1h, trend_4h) — each is 'UP', 'DOWN', or 'NEUTRAL'."""
     trend_1h = "NEUTRAL"
     trend_4h = "NEUTRAL"
     try:
-        _, _, _, c, _ = fetch_htf()
+        _, _, _, c, _ = _fetch(symbol, "1h", 220)
         if len(c) >= 205:
             et = ema(c, 200); rs = rsi(c, 14)
             if c[-1] > et[-1] and rs[-1] > 50: trend_1h = "UP"
             elif c[-1] < et[-1] and rs[-1] < 50: trend_1h = "DOWN"
     except Exception as e:
-        log.warning("1H fetch: %s", e)
+        log.warning("%s 1H fetch: %s", symbol, e)
     try:
-        _, _, _, c4, _ = fetch_4h()
+        _, _, _, c4, _ = _fetch(symbol, "4h", 120)
         if len(c4) >= 55:
             et4 = ema(c4, 50); rs4 = rsi(c4, 14)
             if c4[-1] > et4[-1] and rs4[-1] > 50: trend_4h = "UP"
             elif c4[-1] < et4[-1] and rs4[-1] < 50: trend_4h = "DOWN"
     except Exception as e:
-        log.warning("4H fetch: %s", e)
+        log.warning("%s 4H fetch: %s", symbol, e)
     return trend_1h, trend_4h
 
 
@@ -413,11 +441,14 @@ def send(msg: str):
         log.error("Telegram: %s", e)
 
 
-def fmt_signal(sig: dict, session: str, trends: tuple, af: dict = None) -> str:
+def fmt_signal(sig: dict, session: str, trends: tuple,
+               sym_name: str = "Gold", sym_emoji: str = "🥇",
+               af: dict = None) -> str:
     score = sig["score"]; d = sig["direction"]
-    if   score >= STRONG_LEVEL: header = f"🚀 <b>STRONG {d} — XAUUSD</b>"; stars = "⭐⭐⭐"
-    elif score >= SIGNAL_LEVEL: header = f"📡 <b>{d} SIGNAL — XAUUSD</b>";  stars = "⭐⭐"
-    else:                       header = f"⚡ <b>{d} SETUP — XAUUSD</b>";   stars = "⭐  (not a trade yet)"
+    label = f"{sym_name} {sym_emoji}"
+    if   score >= STRONG_LEVEL: header = f"🚀 <b>STRONG {d} — {label}</b>"; stars = "⭐⭐⭐"
+    elif score >= SIGNAL_LEVEL: header = f"📡 <b>{d} SIGNAL — {label}</b>";  stars = "⭐⭐"
+    else:                       header = f"⚡ <b>{d} SETUP — {label}</b>";   stars = "⭐  (not a trade yet)"
 
     htf_1h, htf_4h = trends if isinstance(trends, tuple) else (trends, "NEUTRAL")
     icon_1h = "📈" if htf_1h == "UP" else "📉" if htf_1h == "DOWN" else "➡️"
@@ -466,7 +497,8 @@ def fmt_signal(sig: dict, session: str, trends: tuple, af: dict = None) -> str:
     return "\n".join(lines)
 
 
-def fmt_brief(price: float, rsi_v: float, atr_v: float, trends: tuple, af: dict = None) -> str:
+def fmt_brief(price: float, rsi_v: float, atr_v: float, trends: tuple,
+              sym_name: str = "Gold", af: dict = None) -> str:
     htf_1h, htf_4h = trends if isinstance(trends, tuple) else (trends, "NEUTRAL")
     htf_icon = "📈 Bullish" if htf_1h == "UP" else "📉 Bearish" if htf_1h == "DOWN" else "➡️ Neutral"
     htf_4h_icon = "📈 Bullish" if htf_4h == "UP" else "📉 Bearish" if htf_4h == "DOWN" else "➡️ Neutral"
@@ -483,147 +515,134 @@ def fmt_brief(price: float, rsi_v: float, atr_v: float, trends: tuple, af: dict 
             f"Gold Bias : {af['gold_bias']:+d} / 3{blocked_txt}"
         )
     return (
-        f"🌅 <b>LONDON SESSION OPEN — XAUUSD</b>\n"
+        f"🌅 <b>LONDON OPEN — {sym_name}</b>\n"
         f"━━━━━━━━━━━━━━━━\n"
         f"Price : <b>{price:.2f}</b>\n"
         f"4H    : {htf_4h_icon}\n"
         f"1H    : {htf_icon}\n"
         f"RSI   : {rsi_v:.1f}  |  ATR: {atr_v:.2f}{macro}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"Signals: 11:00–00:00 (Lebanon 🇱🇧)"
+        f"Watching: Gold 🥇 Silver 🥈 Bitcoin ₿ NVDA 💻"
     )
 
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
 
+def _check_symbol(sym: dict, session: str) -> None:
+    """Analyze one symbol and send a signal if conditions are met."""
+    symbol   = sym["symbol"]
+    sym_name = sym["name"]
+    sym_emj  = sym["emoji"]
+    atr_min  = sym["atr_min"]
+
+    opens, highs, lows, closes, volumes = _fetch(symbol, "15min", 250)
+    price  = closes[-1]
+    trends = get_htf_trend(symbol)
+
+    sig, atr_val, _ = score_signals(price, opens, highs, lows, closes, volumes)
+
+    if sig is None:
+        log.info("%s ATR filter — skipping", sym_name)
+        return
+
+    # Override ATR_MIN per asset
+    if atr_val < atr_min:
+        log.info("%s ATR %.2f < %.2f — dead market", sym_name, atr_val, atr_min)
+        return
+
+    d     = sig["direction"]
+    score = sig["score"]
+    rkey  = sig["reason_key"]
+    htf_1h, htf_4h = trends
+
+    if score < ALERT_MIN_SCORE:
+        log.info("%s score %d < %d — skipping", sym_name, score, ALERT_MIN_SCORE)
+        return
+
+    ef_last = ema(closes, FAST_EMA)[-1]
+    es_last = ema(closes, SLOW_EMA)[-1]
+    ema_spread = abs(ef_last - es_last) / atr_val if atr_val else 0
+    if ema_spread < EMA_TREND_MIN:
+        log.info("%s ranging (spread %.2f) — skipping", sym_name, ema_spread)
+        return
+
+    ok_4h = (d == "BUY"  and htf_4h in ("UP", "NEUTRAL")) or \
+            (d == "SELL" and htf_4h in ("DOWN", "NEUTRAL"))
+    if not ok_4h:
+        log.info("%s 4H disagrees (%s vs %s)", sym_name, d, htf_4h)
+        return
+
+    htf_ok = (d == "BUY"  and htf_1h in ("UP", "NEUTRAL")) or \
+             (d == "SELL" and htf_1h in ("DOWN", "NEUTRAL"))
+    if not htf_ok:
+        log.info("%s 1H disagrees (%s vs %s)", sym_name, d, htf_1h)
+        return
+
+    price_dist = abs(closes[-1] - es_last) / atr_val if atr_val else 999
+    if price_dist > PULLBACK_ATR_MAX:
+        log.info("%s too far from EMA21 (%.2f ATR)", sym_name, price_dist)
+        return
+
+    rsi_v = sig.get("rsi", 50)
+    if d == "BUY"  and not (RSI_BUY_MIN  <= rsi_v <= RSI_BUY_MAX):
+        log.info("%s RSI %.1f outside BUY zone", sym_name, rsi_v)
+        return
+    if d == "SELL" and not (RSI_SELL_MIN <= rsi_v <= RSI_SELL_MAX):
+        log.info("%s RSI %.1f outside SELL zone", sym_name, rsi_v)
+        return
+
+    # Spam guard per symbol
+    sym_alerts = last_alert.setdefault(symbol, {})
+    prev_rkey, prev_ts = sym_alerts.get(d, ("", 0))
+    age_mins = (time.time() - prev_ts) / 60
+    if rkey == prev_rkey and age_mins < SPAM_MINUTES:
+        log.info("%s %s same cond %d min ago — skip", sym_name, d, int(age_mins))
+        return
+
+    sym_alerts[d] = (rkey, time.time())
+    send(fmt_signal(sig, session, trends, sym_name, sym_emj))
+    log.info("Alert: %s %s score=%d 4H=%s 1H=%s @ %.2f",
+             sym_name, d, score, htf_4h, htf_1h, price)
+
+
 def run():
-    global last_alert, last_brief_date
-    log.info("GainzAlgo started")
+    global last_brief_date
+    log.info("GainzAlgo V4 started — multi-asset")
     send(
-        "🤖 <b>GainzAlgo V3 Started ✅</b>\n"
-        "XAUUSD — London + NY sessions (11:00–00:00 Lebanon 🇱🇧)\n"
+        "🤖 <b>GainzAlgo V4 Started ✅</b>\n"
+        "Watching: Gold 🥇  Silver 🥈  Bitcoin ₿  NVDA 💻\n"
         "📡 Signal (3+ cond)  🚀 Strong (4+ cond)\n"
-        "Filters: 4H + 1H + Trend + Volume"
+        "Filters: 4H + 1H + Trend + Pullback + RSI zone"
     )
 
     while True:
-        if not is_trading_day():
-            time.sleep(3600)
-            continue
-
         today = date.today()
 
-        # Daily brief at London open
+        # Daily brief at London open — Gold only
         if is_london_open() and last_brief_date != today:
             last_brief_date = today
             try:
-                _, highs, lows, closes, _ = fetch_data()
-                price = closes[-1]
-                at_v  = atr(highs, lows, closes, ATR_PERIOD)[-1]
-                rs_v  = rsi(closes, RSI_PERIOD)[-1]
-                trends = get_htf_trend()
-                af    = None
-                if ALPHA_VANTAGE_KEY:
-                    from alpha_filters import get_all_filters
-                    af = get_all_filters()
-                send(fmt_brief(price, rs_v, at_v, trends, af))
+                gold_sym = SYMBOLS[0]
+                _, highs, lows, closes, _ = _fetch(gold_sym["symbol"], "15min", 250)
+                price  = closes[-1]
+                at_v   = atr(highs, lows, closes, ATR_PERIOD)[-1]
+                rs_v   = rsi(closes, RSI_PERIOD)[-1]
+                trends = get_htf_trend(gold_sym["symbol"])
+                send(fmt_brief(price, rs_v, at_v, trends, "Gold"))
                 log.info("Daily brief sent")
             except Exception as e:
                 log.error("Brief error: %s", e)
 
-        session = get_session()
-        if not session:
-            time.sleep(CHECK_EVERY)
-            continue
-
-        try:
-            opens, highs, lows, closes, volumes = fetch_data()
-            price  = closes[-1]
-            trends = get_htf_trend()
-
-            # Alpha Vantage filters (optional — only if key is set)
-            af = None
-            if ALPHA_VANTAGE_KEY:
-                try:
-                    from alpha_filters import get_all_filters
-                    af = get_all_filters()
-                    # Block during high-impact news events
-                    if af["blocked"]:
-                        log.info("News block: %s — skipping", af["block_event"])
-                        time.sleep(CHECK_EVERY)
-                        continue
-                except Exception as e:
-                    log.warning("Alpha filters error: %s", e)
-
-            sig, atr_val, rsi_val = score_signals(price, opens, highs, lows, closes, volumes)
-
-            if sig is None:
-                log.info("ATR filter — skipping")
-                time.sleep(CHECK_EVERY)
+        for sym in SYMBOLS:
+            session = is_active_for(sym)
+            if not session:
+                log.info("%s not in active session — skipping", sym["name"])
                 continue
-
-            d     = sig["direction"]
-            score = sig["score"]
-            rkey  = sig["reason_key"]
-            htf_1h, htf_4h = trends
-
-            # Minimum score: don't send Setup alerts (score=2) — wait for real Signal
-            if score < ALERT_MIN_SCORE:
-                log.info("Score %d < %d — setup only, not sent", score, ALERT_MIN_SCORE)
-                time.sleep(CHECK_EVERY)
-                continue
-
-            # Ranging filter: EMA spread must show a real trend
-            ef_last = ema(closes, FAST_EMA)[-1]
-            es_last = ema(closes, SLOW_EMA)[-1]
-            ema_spread = abs(ef_last - es_last) / atr_val if atr_val else 0
-            if ema_spread < EMA_TREND_MIN:
-                log.info("Ranging market (EMA spread %.2f < %.2f) — skipping", ema_spread, EMA_TREND_MIN)
-                time.sleep(CHECK_EVERY)
-                continue
-
-            # 4H macro filter: ALL signals require 4H agreement or neutral
-            ok_4h = (d == "BUY"  and htf_4h in ("UP", "NEUTRAL")) or \
-                    (d == "SELL" and htf_4h in ("DOWN", "NEUTRAL"))
-            if not ok_4h:
-                log.info("4H disagrees (%s vs %s) — suppressed", d, htf_4h)
-                time.sleep(CHECK_EVERY)
-                continue
-
-            # 1H filter: ALL signals require 1H agreement or neutral
-            htf_ok = (d == "BUY"  and htf_1h in ("UP", "NEUTRAL")) or \
-                     (d == "SELL" and htf_1h in ("DOWN", "NEUTRAL"))
-            if not htf_ok:
-                log.info("1H disagrees (%s vs %s) — suppressed", d, htf_1h)
-                time.sleep(CHECK_EVERY)
-                continue
-
-            # Alpha Vantage macro filter: suppress BUY when environment is bearish for gold
-            if af and score >= SIGNAL_LEVEL:
-                bias = af.get("gold_bias", 0)
-                if d == "BUY"  and bias <= -2:
-                    log.info("Macro bias anti-gold (%d) — BUY suppressed", bias)
-                    time.sleep(CHECK_EVERY)
-                    continue
-                if d == "SELL" and bias >= 2:
-                    log.info("Macro bias pro-gold (%d) — SELL suppressed", bias)
-                    time.sleep(CHECK_EVERY)
-                    continue
-
-            # Spam guard: don't re-alert same conditions within SPAM_MINUTES
-            prev_rkey, prev_ts = last_alert.get(d, ("", 0))
-            age_mins = (time.time() - prev_ts) / 60
-            if rkey == prev_rkey and age_mins < SPAM_MINUTES:
-                log.info("Same conditions %s — %d min ago — skip", d, int(age_mins))
-                time.sleep(CHECK_EVERY)
-                continue
-
-            last_alert[d] = (rkey, time.time())
-            send(fmt_signal(sig, session, trends, af))
-            log.info("Alert: %s score=%d 4H=%s 1H=%s @ %.2f", d, score, htf_4h, htf_1h, price)
-
-        except Exception as e:
-            log.error("Error: %s", e)
+            try:
+                _check_symbol(sym, session)
+            except Exception as e:
+                log.error("%s error: %s", sym["name"], e)
+            time.sleep(3)   # small pause between symbols to stay within API rate limit
 
         time.sleep(CHECK_EVERY)
 
