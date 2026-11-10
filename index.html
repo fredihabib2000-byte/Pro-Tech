@@ -3374,7 +3374,7 @@ html.lenis, html.lenis body { height: auto; }
 
 <!-- ── PRODUCT DETAIL MODAL ───────────────────────────────────── -->
 <div class="prod-modal-overlay" id="productDetailModal" onclick="if(event.target===this)closeProductDetail()">
-  <div class="prod-modal">
+  <div class="prod-modal" data-lenis-prevent>
     <div class="prod-modal-header">
       <h3 id="pmTitle">Product Details</h3>
       <button class="close-btn" onclick="closeProductDetail()">✕</button>
@@ -5455,6 +5455,18 @@ function closeMobileNav() {
   document.getElementById('hamburger').classList.remove('open');
   document.body.style.overflow = '';
 }
+
+// ── Modal wheel scroll fix (bypasses Lenis) ───────────────────────
+(function() {
+  const overlay = document.getElementById('productDetailModal');
+  const modal   = overlay && overlay.querySelector('.prod-modal');
+  if (!overlay || !modal) return;
+  overlay.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    modal.scrollTop += e.deltaY;
+  }, { passive: false });
+})();
 </script>
 </body>
 </html>
