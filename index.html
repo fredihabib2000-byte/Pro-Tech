@@ -4016,6 +4016,22 @@ function addToCart(id) {
     setTimeout(() => { btn.textContent = "+ Add"; btn.classList.remove("added"); }, 1500);
   }
 }
+function addToCartBN(id, bnPrice) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  const existing = cart.find(x => x.id === id);
+  if (existing) { existing.qty++; }
+  else { cart.push({ ...p, price: bnPrice, qty: 1 }); }
+  trackEvent('add_to_cart', { id, name: p.name, price: bnPrice });
+  updateCart();
+  showToast(p.name + ' added to cart');
+  const btn = document.getElementById('bn-addbtn-' + id);
+  if (btn) {
+    btn.textContent = '✓ Added!';
+    btn.style.background = '#22c55e';
+    setTimeout(() => { btn.textContent = 'Add to Cart'; btn.style.background = ''; }, 1500);
+  }
+}
 function updateCart() {
   const total = cart.reduce((s, x) => s + x.price * x.qty, 0);
   const count = cart.reduce((s, x) => s + x.qty, 0);
@@ -4980,7 +4996,7 @@ function renderBnGrid(prods) {
           ${bnPrice ? `<span class="bn-price-new">$${Number(bnPrice).toFixed(2)}</span>` : ''}
           ${origPrice && bnPrice ? `<span class="bn-price-old">$${Number(origPrice).toFixed(2)}</span>` : (origPrice ? `<span class="bn-price-new">$${Number(origPrice).toFixed(2)}</span>` : '')}
         </div>
-        <button class="bn-enquire-btn" onclick="openEnquiry(${p.id})">Enquire Now</button>
+        <button class="bn-enquire-btn" id="bn-addbtn-${p.id}" onclick="addToCartBN(${p.id},${bnPrice || origPrice || 0})">Add to Cart</button>
       </div>
     </div>`;
   }).join('');
