@@ -2540,6 +2540,7 @@ html.lenis, html.lenis body { height: auto; }
 /* ── Feedback floating button & modal ───────────────────── */
 .feed-fab{position:fixed;bottom:calc(84px + 52px + 14px);right:20px;z-index:900;background:var(--accent);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:.78rem;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.3);transition:transform .15s,background .15s;font-family:inherit;white-space:nowrap;letter-spacing:.01em}
 .feed-fab:hover{transform:translateY(-2px);background:var(--accent-hover)}
+@media(max-width:480px){.feed-fab{font-size:0;padding:9px 13px}.feed-fab::after{content:"Feedback";font-size:.78rem;font-weight:600;letter-spacing:.01em}}
 .feed-modal-bg{position:fixed;inset:0;z-index:1900;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
 .feed-modal-bg.open{opacity:1;pointer-events:all}
 .feed-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:0 12px 48px rgba(0,0,0,.45);transform:translateY(20px);transition:transform .25s;box-sizing:border-box}
