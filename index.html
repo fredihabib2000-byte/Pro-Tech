@@ -4016,6 +4016,27 @@ function addToCart(id) {
     setTimeout(() => { btn.textContent = "+ Add"; btn.classList.remove("added"); }, 1500);
   }
 }
+let _bnPriceOverride = null;
+function openProductDetailBN(id, bnPrice) {
+  _bnPriceOverride = bnPrice;
+  openProductDetail(id);
+  // Override price display with BN price
+  const priceEl = document.getElementById("pmPriceNum");
+  const oldEl = document.getElementById("pmPriceOld");
+  if (priceEl) priceEl.textContent = `$${Number(bnPrice).toLocaleString()}`;
+  // Show original as struck-through old price if different
+  const p = PRODUCTS.find(x => x.id === id);
+  if (p && oldEl && p.price && p.price > bnPrice) {
+    oldEl.textContent = `$${p.price.toLocaleString()}`;
+    oldEl.style.display = "";
+  }
+  // Fix WA button message to use BN price
+  const waBtn = document.getElementById("pmWaBtn");
+  if (waBtn && waNumber && p) {
+    const msg = encodeURIComponent(`Hi! I'm interested in: ${p.name} ($${Number(bnPrice).toLocaleString()})`);
+    waBtn.href = `https://wa.me/${waNumber.replace(/\D/g,"")}?text=${msg}`;
+  }
+}
 function addToCartBN(id, bnPrice) {
   const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
@@ -4425,10 +4446,12 @@ function closeProductDetail() {
   document.getElementById("productDetailModal").classList.remove("open");
   closeLightbox();
   document.body.style.overflow = "";
+  _bnPriceOverride = null;
 }
 
 function addFromModal() {
   if (!currentModalProduct) return;
+  if (_bnPriceOverride != null) { addToCartBN(currentModalProduct.id, _bnPriceOverride); return; }
   addToCart(currentModalProduct.id);
   // Attach selected color variant to cart item
   if (_pmCurrentVariant) {
@@ -4988,7 +5011,7 @@ function renderBnGrid(prods) {
     const bnPrice = p.black_november_price;
     const origPrice = p.price;
     const disc = (bnPrice && origPrice && origPrice > bnPrice) ? Math.round(100 - (bnPrice / origPrice) * 100) : null;
-    return `<div class="bn-card" onclick="openProductDetail(${p.id})">
+    return `<div class="bn-card" onclick="openProductDetailBN(${p.id},${bnPrice || origPrice || 0})">
       <div class="bn-card-img">${img}${disc ? `<span class="bn-disc-badge">-${disc}%</span>` : ''}</div>
       <div class="bn-card-body">
         <p class="bn-card-name">${esc(p.name)}</p>
