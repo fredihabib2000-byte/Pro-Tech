@@ -360,6 +360,43 @@ button { cursor: pointer; font-family: inherit; border: none; }
   .nav-links { display: none; }
 }
 
+
+/* ── Mobile app-style bottom bar + menu search ─────────────────── */
+.bottom-bar { display: none; }
+.mobile-nav-search { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 0 14px; margin-bottom: 12px; }
+.mobile-nav-search svg { flex-shrink: 0; color: var(--fg-3); }
+.mobile-nav-search input { flex: 1; min-width: 0; height: 46px; background: none; border: none; outline: none; color: var(--fg); font-size: 16px; font-family: inherit; }
+.mobile-nav-search:focus-within { border-color: var(--accent); }
+@media (max-width: 720px) {
+  .nav-right .cart-btn { display: none; }
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .bottom-bar {
+    display: flex; position: fixed; z-index: 140;
+    left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 6px; gap: 2px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--border); border-radius: 22px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.35);
+  }
+  .bb-item {
+    flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: none; border-radius: 16px; color: var(--fg-3); cursor: pointer;
+    font-family: inherit; font-size: .68rem; font-weight: 600; position: relative; text-decoration: none;
+    -webkit-tap-highlight-color: transparent; transition: background .15s, color .15s;
+  }
+  .bb-item svg { width: 22px; height: 22px; }
+  .bb-item.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .bb-badge {
+    position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px;
+    background: var(--accent); color: #000; border-radius: 99px; font-size: .62rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bb-badge:empty, .bb-badge[data-n="0"] { display: none; }
+  #waBtn { bottom: calc(94px + env(safe-area-inset-bottom, 0px)); }
+  .toast { bottom: calc(94px + env(safe-area-inset-bottom, 0px)); left: 20px; right: 20px; text-align: center; }
+}
+
 /* ── Hero Banner ───────────────────────────────────────────────── */
 .hero-banner {
   position: relative;
@@ -2641,6 +2678,11 @@ html.lenis, html.lenis body { height: auto; }
 <div class="mobile-nav" id="mobileNav" onclick="if(event.target===this)closeMobileNav()">
   <div class="mobile-nav-panel">
     <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+    <div class="mobile-nav-search">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input type="search" id="mobileSearchInput" placeholder="Search products…" enterkeyhint="search" autocomplete="off">
+    </div>
+    <a class="mobile-nav-link" href="#hero" onclick="closeMobileNav()">🏠 Home</a>
     <a class="mobile-nav-link" href="#categories" onclick="closeMobileNav()">🏪 Categories</a>
     <a class="mobile-nav-link" href="#products" onclick="closeMobileNav()">📦 Products</a>
     <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
@@ -2648,6 +2690,26 @@ html.lenis, html.lenis body { height: auto; }
     <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
   </div>
 </div>
+
+<!-- ── MOBILE BOTTOM BAR ─────────────────────────────────── -->
+<nav class="bottom-bar" id="bottomBar" aria-label="Quick navigation">
+  <a class="bb-item active" href="#hero" data-bb="home">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home
+  </a>
+  <button class="bb-item" id="bbSearch" type="button" data-bb="search">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search
+  </button>
+  <a class="bb-item" href="#products" data-bb="shop">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Shop
+  </a>
+  <button class="bb-item" id="bbCart" type="button" data-bb="cart">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>Cart
+    <span class="bb-badge" id="bbBadge" data-n="0"></span>
+  </button>
+  <button class="bb-item" id="bbMenu" type="button" data-bb="menu">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu
+  </button>
+</nav>
 
 <!-- ── HERO ───────────────────────────────────────────────────── -->
 <section class="hero-banner" id="hero">
@@ -5457,6 +5519,56 @@ function closeMobileNav() {
   document.getElementById('hamburger').classList.remove('open');
   document.body.style.overflow = '';
 }
+
+// ── Mobile bottom bar + drawer search ────────────────────────────
+(function() {
+  const bar = document.getElementById('bottomBar');
+  if (!bar) return;
+  const mInput = document.getElementById('mobileSearchInput');
+  const items = bar.querySelectorAll('.bb-item');
+  const setActive = k => items.forEach(i => i.classList.toggle('active', i.dataset.bb === k));
+
+  // sync search box inside the drawer with the main search
+  function applySearch(v) {
+    searchTerm = v.trim().toLowerCase();
+    visibleCount = PAGE_SIZE;
+    ['searchInput','navSearchInput'].forEach(id => { const el = document.getElementById(id); if (el) el.value = v; });
+    renderProducts();
+  }
+  mInput.addEventListener('input', e => applySearch(e.target.value));
+  mInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      mInput.blur();
+      closeMobileNav();
+      document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  document.getElementById('bbSearch').addEventListener('click', () => {
+    const nav = document.getElementById('mobileNav');
+    if (!nav.classList.contains('open')) toggleMobileNav();
+    setTimeout(() => mInput.focus(), 120);
+  });
+  document.getElementById('bbMenu').addEventListener('click', toggleMobileNav);
+  document.getElementById('bbCart').addEventListener('click', () => document.getElementById('cartBtn').click());
+  bar.querySelectorAll('a.bb-item').forEach(a => a.addEventListener('click', () => setActive(a.dataset.bb)));
+
+  // mirror cart count
+  const cc = document.getElementById('cartCount'), badge = document.getElementById('bbBadge');
+  const syncBadge = () => { const n = cc.textContent.trim() || '0'; badge.textContent = n === '0' ? '' : n; badge.dataset.n = n; };
+  new MutationObserver(syncBadge).observe(cc, { childList: true, characterData: true, subtree: true });
+  syncBadge();
+
+  // highlight Home / Shop while scrolling
+  const hero = document.getElementById('hero'), prods = document.getElementById('products');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) setActive(e.target === hero ? 'home' : 'shop');
+    }), { threshold: 0.35 });
+    hero && io.observe(hero); prods && io.observe(prods);
+  }
+})();
 
 // ── Modal wheel scroll fix (bypasses Lenis) ───────────────────────
 (function() {
