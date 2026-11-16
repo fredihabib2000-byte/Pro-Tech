@@ -361,40 +361,78 @@ button { cursor: pointer; font-family: inherit; border: none; }
 }
 
 
-/* ── Mobile app-style bottom bar + menu search ─────────────────── */
+/* ── Mobile app-style bottom bar, wishlist, menu search ───────── */
 .bottom-bar { display: none; }
 .mobile-nav-search { display: flex; align-items: center; gap: 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 0 14px; margin-bottom: 12px; }
 .mobile-nav-search svg { flex-shrink: 0; color: var(--fg-3); }
 .mobile-nav-search input { flex: 1; min-width: 0; height: 46px; background: none; border: none; outline: none; color: var(--fg); font-size: 16px; font-family: inherit; }
 .mobile-nav-search:focus-within { border-color: var(--accent); }
+.mobile-nav-sep { height: 1px; background: var(--border); margin: 8px 6px; }
+.mn-badge { margin-left: auto; min-width: 20px; padding: 1px 7px; border-radius: 99px; background: var(--accent); color: #000; font-size: .7rem; font-weight: 800; text-align: center; }
+.mn-badge:empty { display: none; }
+
+/* heart on product cards */
+.wish-btn { position: absolute; top: 10px; right: 10px; z-index: 3; width: 34px; height: 34px; padding: 0; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(10,10,10,.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer; transition: transform .15s, background .15s; -webkit-tap-highlight-color: transparent; }
+.wish-btn svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2; stroke-linejoin: round; transition: fill .15s, stroke .15s; }
+.wish-btn:hover { transform: scale(1.08); }
+.wish-btn.on svg { fill: #ef4444; stroke: #ef4444; }
+.wish-btn.pop { animation: wishPop .35s ease; }
+@keyframes wishPop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+/* desktop nav heart */
+.wish-nav-btn { position: relative; }
+.wish-nav-count { position: absolute; top: -4px; right: -4px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 99px; background: #ef4444; color: #fff; font-size: .62rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.wish-nav-count:empty { display: none; }
+/* wishlist drawer */
+.wish-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex-shrink: 0; }
+.wish-add { background: var(--accent); color: #000; border: none; border-radius: 99px; padding: 6px 12px; font-size: .75rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+.wish-remove { background: none; border: none; color: var(--fg-3); font-size: .74rem; cursor: pointer; padding: 2px 4px; font-family: inherit; }
+.wish-remove:hover { color: #ef4444; }
+#wishDrawer .cart-item-info, #wishDrawer .cart-item-icon { cursor: pointer; }
+@keyframes bbBump { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+
 @media (max-width: 720px) {
-  .nav-right .cart-btn { display: none; }
-  body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .nav-right .cart-btn, .wish-nav-btn { display: none; }
+  body { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   .bottom-bar {
-    display: flex; position: fixed; z-index: 140;
+    display: grid; grid-template-columns: 1fr 1fr 78px 1fr 1fr; align-items: center;
+    position: fixed; z-index: 140; height: 66px; padding: 0 6px;
     left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    padding: 6px; gap: 2px;
-    background: color-mix(in srgb, var(--surface) 88%, transparent);
-    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
-    border: 1px solid var(--border); border-radius: 22px;
-    box-shadow: 0 8px 28px rgba(0,0,0,.35);
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    backdrop-filter: blur(22px) saturate(1.6); -webkit-backdrop-filter: blur(22px) saturate(1.6);
+    border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent); border-radius: 26px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
   }
   .bb-item {
-    flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    background: none; border: none; border-radius: 16px; color: var(--fg-3); cursor: pointer;
-    font-family: inherit; font-size: .68rem; font-weight: 600; position: relative; text-decoration: none;
-    -webkit-tap-highlight-color: transparent; transition: background .15s, color .15s;
+    position: relative; height: 52px; margin: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: none; border-radius: 18px; color: var(--fg-3); cursor: pointer; font-family: inherit; text-decoration: none;
+    -webkit-tap-highlight-color: transparent; transition: background .2s, color .2s, transform .15s;
   }
-  .bb-item svg { width: 22px; height: 22px; }
-  .bb-item.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .bb-item:active { transform: scale(.94); }
+  .bb-item svg { width: 22px; height: 22px; transition: transform .2s, fill .2s, stroke .2s; }
+  .bb-lbl { font-size: .66rem; font-weight: 600; letter-spacing: .01em; }
+  .bb-item.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); }
+  .bb-item.active svg { transform: translateY(-1px) scale(1.06); }
+  .bb-fab { background: none !important; justify-content: flex-end; padding-bottom: 5px; }
+  .bb-fab-circle {
+    position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+    width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(145deg, var(--accent), color-mix(in srgb, var(--accent) 65%, #fff));
+    color: #111; border: 5px solid var(--bg);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 45%, transparent); transition: transform .2s;
+  }
+  .bb-fab:active .bb-fab-circle { transform: translateX(-50%) scale(.92); }
+  .bb-fab:active { transform: none; }
+  .bb-item[data-bb="wish"].has svg { fill: #ef4444; stroke: #ef4444; }
   .bb-badge {
-    position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px;
+    position: absolute; top: 2px; left: calc(50% + 6px); min-width: 17px; height: 17px; padding: 0 5px;
     background: var(--accent); color: #000; border-radius: 99px; font-size: .62rem; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
   }
-  .bb-badge:empty, .bb-badge[data-n="0"] { display: none; }
-  #waBtn { bottom: calc(94px + env(safe-area-inset-bottom, 0px)); }
-  .toast { bottom: calc(94px + env(safe-area-inset-bottom, 0px)); left: 20px; right: 20px; text-align: center; }
+  .bb-badge.red { background: #ef4444; color: #fff; }
+  .bb-badge:empty { display: none; }
+  .bb-badge.bump { animation: bbBump .3s ease; }
+  #waBtn { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+  .toast { bottom: calc(112px + env(safe-area-inset-bottom, 0px)); left: 20px; right: 20px; text-align: center; }
 }
 
 /* ── Hero Banner ───────────────────────────────────────────────── */
@@ -2667,6 +2705,7 @@ html.lenis, html.lenis body { height: auto; }
     </button>
     <div class="nav-right">
       <button class="theme-btn" id="themeToggle" title="Toggle theme">☀️</button>
+      <button class="theme-btn wish-nav-btn" id="wishNavBtn" title="Wishlist" aria-label="Wishlist" onclick="openWishlist()">❤️<span class="wish-nav-count" id="wishNavCount"></span></button>
       <button class="cart-btn" id="cartBtn">
         🛒 Cart <span class="cart-count" id="cartCount">0</span>
       </button>
@@ -2688,26 +2727,31 @@ html.lenis, html.lenis body { height: auto; }
     <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
     <a class="mobile-nav-link" href="#faq" onclick="closeMobileNav()">❓ FAQ</a>
     <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
+    <div class="mobile-nav-sep"></div>
+    <a class="mobile-nav-link" href="#" onclick="closeMobileNav();openWishlist();return false">❤️ Wishlist <span class="mn-badge" id="wishCountNav"></span></a>
+    <a class="mobile-nav-link" href="#" onclick="closeMobileNav();document.getElementById('cartBtn').click();return false">🛒 Cart <span class="mn-badge" id="cartCountNav"></span></a>
   </div>
 </div>
 
 <!-- ── MOBILE BOTTOM BAR ─────────────────────────────────── -->
 <nav class="bottom-bar" id="bottomBar" aria-label="Quick navigation">
   <a class="bb-item active" href="#hero" data-bb="home">
-    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>Home
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span class="bb-lbl">Home</span>
   </a>
-  <button class="bb-item" id="bbSearch" type="button" data-bb="search">
-    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search
-  </button>
   <a class="bb-item" href="#products" data-bb="shop">
-    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Shop
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span class="bb-lbl">Shop</span>
   </a>
-  <button class="bb-item" id="bbCart" type="button" data-bb="cart">
-    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>Cart
-    <span class="bb-badge" id="bbBadge" data-n="0"></span>
+  <button class="bb-item bb-fab" id="bbSearch" type="button" data-bb="search" aria-label="Search">
+    <span class="bb-fab-circle"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
+    <span class="bb-lbl">Search</span>
   </button>
-  <button class="bb-item" id="bbMenu" type="button" data-bb="menu">
-    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu
+  <button class="bb-item" id="bbWish" type="button" data-bb="wish" aria-label="Wishlist">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9z"/></svg><span class="bb-lbl">Wishlist</span>
+    <span class="bb-badge red" id="bbWishBadge"></span>
+  </button>
+  <button class="bb-item" id="bbCart" type="button" data-bb="cart" aria-label="Cart">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg><span class="bb-lbl">Cart</span>
+    <span class="bb-badge" id="bbBadge"></span>
   </button>
 </nav>
 
@@ -3436,6 +3480,19 @@ html.lenis, html.lenis body { height: auto; }
   </div>
 </div>
 
+<!-- ── WISHLIST DRAWER ─────────────────────────────────────────── -->
+<div class="cart-overlay" id="wishOverlay" onclick="closeWishlist()"></div>
+<div class="cart-drawer" id="wishDrawer" aria-label="Wishlist">
+  <div class="cart-header">
+    <h3>My Wishlist ❤️</h3>
+    <button class="close-btn" onclick="closeWishlist()">✕</button>
+  </div>
+  <div class="cart-items" id="wishItems"></div>
+  <div class="cart-footer">
+    <button class="checkout-btn" id="wishAllBtn" onclick="wishAddAll()">Add all to cart</button>
+  </div>
+</div>
+
 <!-- ── PRODUCT DETAIL MODAL ───────────────────────────────────── -->
 <div class="prod-modal-overlay" id="productDetailModal" onclick="if(event.target===this)closeProductDetail()">
   <div class="prod-modal" data-lenis-prevent>
@@ -3722,6 +3779,73 @@ let PRODUCTS = [];
 let PROMOS = [];
 let cart = [];
 
+// ── Wishlist (saved on this device) ───────────────────────────────
+let wishlist = [];
+try { wishlist = (JSON.parse(localStorage.getItem('pt_wishlist') || '[]') || []).filter(x => typeof x === 'number'); } catch (e) { wishlist = []; }
+function saveWish() { try { localStorage.setItem('pt_wishlist', JSON.stringify(wishlist)); } catch (e) {} }
+function isWished(id) { return wishlist.includes(id); }
+function toggleWish(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (isWished(id)) { wishlist = wishlist.filter(x => x !== id); showToast('Removed from wishlist'); }
+  else { wishlist.push(id); showToast(`${p ? p.name : 'Item'} saved to wishlist ❤️`); }
+  saveWish();
+  syncWishUI(id);
+  if (document.getElementById('wishDrawer').classList.contains('open')) renderWishlist();
+}
+function syncWishUI(popId) {
+  if (PRODUCTS.length) {
+    const valid = wishlist.filter(id => PRODUCTS.some(p => p.id === id));
+    if (valid.length !== wishlist.length) { wishlist = valid; saveWish(); }
+  }
+  document.querySelectorAll('.wish-btn').forEach(b => {
+    const id = Number(b.dataset.wish);
+    b.classList.toggle('on', isWished(id));
+    if (id === popId) { b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  });
+  const n = wishlist.length, txt = n ? String(n) : '';
+  [['bbWishBadge'], ['wishNavCount'], ['wishCountNav']].forEach(([id]) => { const el = document.getElementById(id); if (el && el.textContent !== txt) { el.textContent = txt; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } });
+  const bw = document.getElementById('bbWish'); if (bw) bw.classList.toggle('has', n > 0);
+}
+function renderWishlist() {
+  const box = document.getElementById('wishItems'); if (!box) return;
+  syncWishUI();
+  const list = wishlist.map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+  document.getElementById('wishAllBtn').style.display = list.length ? '' : 'none';
+  if (!list.length) {
+    box.innerHTML = '<div class="cart-empty"><span style="font-size:2.5rem">❤️</span><span>Your wishlist is empty</span><span style="font-size:.8rem">Tap the heart on any product to save it</span></div>';
+    return;
+  }
+  box.innerHTML = list.map(p => `
+    <div class="cart-item">
+      <div class="cart-item-icon" onclick="closeWishlist();openProductDetail(${p.id})">${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="" loading="lazy">` : esc(p.icon || '📦')}</div>
+      <div class="cart-item-info" onclick="closeWishlist();openProductDetail(${p.id})">
+        <div class="cart-item-name">${esc(p.name)}</div>
+        <div class="cart-item-price">$${p.price.toLocaleString()}</div>
+      </div>
+      <div class="wish-actions">
+        <button class="wish-add" onclick="addToCart(${p.id})">+ Cart</button>
+        <button class="wish-remove" onclick="toggleWish(${p.id})">Remove</button>
+      </div>
+    </div>`).join('');
+}
+function openWishlist() {
+  renderWishlist();
+  document.getElementById('wishDrawer').classList.add('open');
+  document.getElementById('wishOverlay').classList.add('open');
+}
+function closeWishlist() {
+  document.getElementById('wishDrawer').classList.remove('open');
+  document.getElementById('wishOverlay').classList.remove('open');
+}
+function wishAddAll() {
+  const ids = wishlist.filter(id => PRODUCTS.some(p => p.id === id));
+  if (!ids.length) return;
+  ids.forEach(id => addToCart(id));
+  closeWishlist();
+  document.getElementById('cartBtn').click();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWishlist(); });
+
 // Escape untrusted strings before injecting into innerHTML
 function esc(str) {
   return String(str ?? "")
@@ -3847,6 +3971,7 @@ function productCardHTML(p) {
         <div class="shimmer-layer" aria-hidden="true"></div>
         <div class="product-img">
           ${p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling&&(this.nextElementSibling.style.display='');this.parentElement.querySelector('.img-fallback')&&(this.parentElement.querySelector('.img-fallback').style.display='flex')">` : ``}<span class="img-fallback" style="display:${p.imageUrl?'none':'flex'};align-items:center;justify-content:center;width:100%;height:100%">${esc(p.icon)}</span>
+          <button class="wish-btn${isWished(p.id)?' on':''}" data-wish="${p.id}" aria-label="Save to wishlist" onclick="event.stopPropagation();toggleWish(${p.id})"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9z"/></svg></button>
           ${p.badge ? `<div class="product-badge ${p.badge.toLowerCase()==='sale'?'sale':p.badge.toLowerCase()==='new'?'new':''}">${esc(p.badge)}</div>` : ""}
           ${p.quantity > 0 && p.quantity <= 5 ? `<div class="stock-badge">Low Stock</div>` : ""}
           <div class="product-img-overlay">
@@ -4067,6 +4192,9 @@ document.getElementById("loadMoreBtn").addEventListener("click", () => {
 });
 
 // ── Cart logic ────────────────────────────────────────────────────
+// keep hearts/badges in sync after every product render
+(function() { const _rp = renderProducts; renderProducts = function() { const r = _rp.apply(this, arguments); syncWishUI(); return r; }; })();
+
 function addToCart(id) {
   const p = PRODUCTS.find(x => x.id === id);
   const existing = cart.find(x => x.id === id);
@@ -5526,9 +5654,15 @@ function closeMobileNav() {
   if (!bar) return;
   const mInput = document.getElementById('mobileSearchInput');
   const items = bar.querySelectorAll('.bb-item');
-  const setActive = k => items.forEach(i => i.classList.toggle('active', i.dataset.bb === k));
+  const cartDr = document.getElementById('cartDrawer'), wishDr = document.getElementById('wishDrawer');
+  let section = 'home';
+  function refreshActive() {
+    const k = cartDr.classList.contains('open') ? 'cart' : wishDr.classList.contains('open') ? 'wish' : section;
+    items.forEach(i => i.classList.toggle('active', i.dataset.bb === k));
+  }
+  [cartDr, wishDr].forEach(el => new MutationObserver(refreshActive).observe(el, { attributes: true, attributeFilter: ['class'] }));
 
-  // sync search box inside the drawer with the main search
+  // search box inside the drawer, synced with the main search
   function applySearch(v) {
     searchTerm = v.trim().toLowerCase();
     visibleCount = PAGE_SIZE;
@@ -5550,21 +5684,28 @@ function closeMobileNav() {
     if (!nav.classList.contains('open')) toggleMobileNav();
     setTimeout(() => mInput.focus(), 120);
   });
-  document.getElementById('bbMenu').addEventListener('click', toggleMobileNav);
+  document.getElementById('bbWish').addEventListener('click', openWishlist);
   document.getElementById('bbCart').addEventListener('click', () => document.getElementById('cartBtn').click());
-  bar.querySelectorAll('a.bb-item').forEach(a => a.addEventListener('click', () => setActive(a.dataset.bb)));
+  bar.querySelectorAll('a.bb-item').forEach(a => a.addEventListener('click', () => { section = a.dataset.bb; refreshActive(); }));
 
-  // mirror cart count
-  const cc = document.getElementById('cartCount'), badge = document.getElementById('bbBadge');
-  const syncBadge = () => { const n = cc.textContent.trim() || '0'; badge.textContent = n === '0' ? '' : n; badge.dataset.n = n; };
+  // mirror the cart count (bar badge + menu link)
+  const cc = document.getElementById('cartCount'), badge = document.getElementById('bbBadge'), navBadge = document.getElementById('cartCountNav');
+  let lastN = '';
+  const syncBadge = () => {
+    const n = cc.textContent.trim() || '0', txt = n === '0' ? '' : n;
+    badge.textContent = txt; navBadge.textContent = txt;
+    if (txt && txt !== lastN) { badge.classList.remove('bump'); void badge.offsetWidth; badge.classList.add('bump'); }
+    lastN = txt;
+  };
   new MutationObserver(syncBadge).observe(cc, { childList: true, characterData: true, subtree: true });
   syncBadge();
+  syncWishUI();
 
   // highlight Home / Shop while scrolling
   const hero = document.getElementById('hero'), prods = document.getElementById('products');
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver(es => es.forEach(e => {
-      if (e.isIntersecting) setActive(e.target === hero ? 'home' : 'shop');
+      if (e.isIntersecting) { section = e.target === hero ? 'home' : 'shop'; refreshActive(); }
     }), { threshold: 0.35 });
     hero && io.observe(hero); prods && io.observe(prods);
   }
