@@ -3035,6 +3035,7 @@ body.mn-open #waBtn, body.mn-open .feed-fab { display: none !important; }
       </div>
       <div class="sort-filter-right">
         <select class="sort-select" id="sortSelect" onchange="setSort(this.value)">
+          <option value="shuffle">Shuffle (random)</option>
           <option value="alpha-asc">Alphabetically, A–Z</option>
           <option value="alpha-desc">Alphabetically, Z–A</option>
           <option value="price-asc">Price, Low to High</option>
@@ -3969,7 +3970,9 @@ function esc(str) {
     .replace(/'/g, "&#x27;");
 }
 let activeFilter = "all";
-let activeSort = "alpha-asc";
+let activeSort = "shuffle";
+const _shuffleKey = {}; // stable random order for this visit (changes on every page load)
+function _shuffleVal(id) { return _shuffleKey[id] ?? (_shuffleKey[id] = Math.random()); }
 let activePriceFilter = "all";
 let activeBrandFilter = "";
 let searchTerm = "";
@@ -4125,7 +4128,8 @@ function renderProducts(appendFrom) {
   });
 
   // Sort
-  if (activeSort === "alpha-asc")  filtered.sort((a,b) => a.name.localeCompare(b.name));
+  if (activeSort === "shuffle") filtered.sort((a,b) => _shuffleVal(a.id) - _shuffleVal(b.id));
+  else if (activeSort === "alpha-asc")  filtered.sort((a,b) => a.name.localeCompare(b.name));
   else if (activeSort === "alpha-desc") filtered.sort((a,b) => b.name.localeCompare(a.name));
   else if (activeSort === "price-asc")  filtered.sort((a,b) => (a.price||0) - (b.price||0));
   else if (activeSort === "price-desc") filtered.sort((a,b) => (b.price||0) - (a.price||0));
