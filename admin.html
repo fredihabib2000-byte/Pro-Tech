@@ -684,6 +684,7 @@ let allMsgs=[];
 let settingsData={};
 let allCategories=[];
 
+function escH(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
 function togglePw(id,btn){const el=document.getElementById(id);el.type=el.type==="password"?"text":"password";btn.textContent=el.type==="password"?"👁":"🙈";}
 
 async function doLogin(){
@@ -946,7 +947,7 @@ function renderReviews(f) {
   const wrap = document.getElementById("reviewsWrap");
   const rows = f === "all" ? _allReviews : _allReviews.filter(r => String(r.rating) === f);
   if (!rows.length) { wrap.innerHTML = '<div class="loading-state">No reviews found.</div>'; return; }
-  const esc = s => String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const esc = s => escH(s);
   wrap.innerHTML = `<table><thead><tr><th>Product</th><th>Reviewer</th><th>Rating</th><th>Title</th><th>Review</th><th>Date</th><th></th></tr></thead><tbody>` +
     rows.map(r => {
       const stars = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
@@ -1055,7 +1056,7 @@ function renderOrdersTable(orders,wrapId,compact){
   const wrap=document.getElementById(wrapId);
   if(!orders.length){wrap.innerHTML='<div class="empty-state">No orders found.</div>';return}
   const rows=orders.map(o=>{
-    const items=Array.isArray(o.items)?o.items.map(i=>`${i.name} ×${i.qty}`).join(", "):"—";
+    const items=Array.isArray(o.items)?o.items.map(i=>`${escH(i.name)} ×${escH(i.qty)}`).join(", "):"—";
     const date=o.created_at?new Date(o.created_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}):"—";
     const statusSel=compact?`<span class="badge ${o.status}">${cap(o.status)}</span>`:`
       <select class="status-sel" data-id="${o.id}" onchange="updateOrderStatus(this)">
@@ -1063,7 +1064,7 @@ function renderOrdersTable(orders,wrapId,compact){
       </select>`;
     return `<tr>
       <td style="color:var(--fg-2);font-size:.78rem;white-space:nowrap">${date}</td>
-      <td><strong>${o.customer_name||"—"}</strong><br><span style="color:var(--fg-2);font-size:.78rem">${o.customer_phone||""}</span></td>
+      <td><strong>${escH(o.customer_name)||"—"}</strong><br><span style="color:var(--fg-2);font-size:.78rem">${escH(o.customer_phone)}</span></td>
       <td style="max-width:220px;color:var(--fg-2);font-size:.82rem">${items}</td>
       <td><strong>$${num(o.total).toFixed(2)}</strong></td>
       <td>${statusSel}</td>
@@ -1083,18 +1084,18 @@ async function updateOrderStatus(sel){
 
 function viewOrder(id){
   const o=allOrders.find(x=>x.id==id);if(!o)return;
-  const items=Array.isArray(o.items)?o.items.map(i=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>${i.name} ×${i.qty}</span><strong>$${(num(i.price)*i.qty).toFixed(2)}</strong></div>`).join(""):"";
+  const items=Array.isArray(o.items)?o.items.map(i=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><span>${escH(i.name)} ×${escH(i.qty)}</span><strong>$${(num(i.price)*i.qty).toFixed(2)}</strong></div>`).join(""):"";
   const date=o.created_at?new Date(o.created_at).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"}):"—";
   document.getElementById("orderDetailContent").innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px">
-      <div><div style="font-size:.73rem;color:var(--fg-2);margin-bottom:3px">CUSTOMER</div><strong>${o.customer_name}</strong></div>
-      <div><div style="font-size:.73rem;color:var(--fg-2);margin-bottom:3px">PHONE</div><strong>${o.customer_phone}</strong></div>
+      <div><div style="font-size:.73rem;color:var(--fg-2);margin-bottom:3px">CUSTOMER</div><strong>${escH(o.customer_name)}</strong></div>
+      <div><div style="font-size:.73rem;color:var(--fg-2);margin-bottom:3px">PHONE</div><strong>${escH(o.customer_phone)}</strong></div>
       <div><div style="font-size:.73rem;color:var(--fg-2);margin-bottom:3px">DATE</div>${date}</div>
       <div><div style="font-size:.73rem;color:var(--fg-2);margin-bottom:3px">STATUS</div><span class="badge ${o.status}">${cap(o.status)}</span></div>
     </div>
     <div style="margin-bottom:16px">${items}</div>
     <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700;padding-top:10px;border-top:1px solid var(--border)"><span>Total</span><span>$${num(o.total).toFixed(2)}</span></div>
-    ${o.notes?`<div style="margin-top:12px;background:var(--surface-2);border-radius:var(--r-sm);padding:10px 14px;font-size:.85rem;color:var(--fg-2)"><strong style="color:var(--fg)">Note:</strong> ${o.notes}</div>`:""}
+    ${o.notes?`<div style="margin-top:12px;background:var(--surface-2);border-radius:var(--r-sm);padding:10px 14px;font-size:.85rem;color:var(--fg-2)"><strong style="color:var(--fg)">Note:</strong> ${escH(o.notes)}</div>`:""}
   `;
   document.getElementById("orderModal").classList.add("open");
 }
@@ -1950,9 +1951,9 @@ function renderMsgs(f){
     const date=m.created_at?new Date(m.created_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}):"—";
     return `<tr style="${!m.is_read?"font-weight:600":""}">
       <td><span class="badge ${m.is_read?"read":"unread"}">${m.is_read?"Read":"New"}</span></td>
-      <td>${m.name||"—"}</td>
-      <td style="color:var(--fg-2)">${m.phone||m.email||"—"}</td>
-      <td style="max-width:300px">${m.message||"—"}</td>
+      <td>${escH(m.name)||"—"}</td>
+      <td style="color:var(--fg-2)">${escH(m.phone||m.email)||"—"}</td>
+      <td style="max-width:300px">${escH(m.message)||"—"}</td>
       <td style="color:var(--fg-2);font-size:.78rem;white-space:nowrap">${date}</td>
       <td>${!m.is_read?`<button class="btn btn-ghost btn-sm" onclick="markRead(${m.id})">Mark Read</button>`:""}</td>
     </tr>`;
@@ -2524,9 +2525,9 @@ function renderFeedback() {
   wrap.innerHTML = `<table class="tbl"><thead><tr><th>Date</th><th>Name</th><th>Contact</th><th>Message</th><th>Actions</th></tr></thead><tbody>
     ${rows.map(r=>`<tr style="${!r.is_read?'background:var(--surface-2)':''}">
       <td style="white-space:nowrap;font-size:.82rem">${new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</td>
-      <td>${r.name||'<span style="color:var(--text-muted)">Anonymous</span>'}</td>
-      <td style="font-size:.82rem">${r.email?`<div>${r.email}</div>`:''} ${r.phone?`<div>${r.phone}</div>`:''} ${!r.email&&!r.phone?'<span style="color:var(--text-muted)">—</span>':''}</td>
-      <td style="max-width:300px;white-space:pre-wrap;word-break:break-word">${r.message||''}</td>
+      <td>${escH(r.name)||'<span style="color:var(--text-muted)">Anonymous</span>'}</td>
+      <td style="font-size:.82rem">${r.email?`<div>${escH(r.email)}</div>`:''} ${r.phone?`<div>${escH(r.phone)}</div>`:''} ${!r.email&&!r.phone?'<span style="color:var(--text-muted)">—</span>':''}</td>
+      <td style="max-width:300px;white-space:pre-wrap;word-break:break-word">${escH(r.message)}</td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${!r.is_read?`<button class="btn btn-ghost btn-sm" onclick="markFeedbackRead(${r.id})">Mark Read</button>`:'<span style="color:var(--success);font-size:.8rem;font-weight:600">✓ Read</span>'}

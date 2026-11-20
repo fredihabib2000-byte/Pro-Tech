@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://pro-technology-prixo2.vercel.app/sitemap.xml
+Sitemap: https://pro-techstore.com/sitemap.xml
