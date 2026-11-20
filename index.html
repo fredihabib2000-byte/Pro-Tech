@@ -2571,6 +2571,29 @@ html.lenis, html.lenis body { height: auto; }
 .mobile-nav-close { align-self: flex-end; background: var(--surface-2); border: none; border-radius: var(--r-sm); padding: 8px 10px; font-size: 1rem; cursor: pointer; margin-bottom: 12px; }
 .mobile-nav-link { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--r-sm); font-weight: 600; font-size: .95rem; color: var(--fg); text-decoration: none; transition: background .15s; }
 .mobile-nav-link:hover { background: var(--surface-2); }
+
+/* ── Mobile menu: clean list + accordions ─────────────────────── */
+.mobile-nav { backdrop-filter: blur(3px); }
+.mobile-nav-panel { width: min(340px, 88vw); padding: 16px 18px 28px; gap: 2px; }
+.mobile-nav-panel > * { flex-shrink: 0; }
+.mn-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.mn-title { font-weight: 800; font-size: 1.05rem; color: var(--fg); letter-spacing: .01em; }
+.mn-head .mobile-nav-close { margin: 0; align-self: auto; }
+.mobile-nav-link { gap: 16px; padding: 14px 10px; font-size: 1.05rem; font-weight: 600; }
+.mobile-nav-link svg { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent); }
+.mobile-nav-sep { margin: 10px 0; }
+.mn-acc { margin: 6px 0; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-2); overflow: hidden; }
+.mn-acc-btn { width: 100%; display: flex; align-items: center; gap: 14px; padding: 15px 16px; background: none; border: none; cursor: pointer; font: inherit; font-size: 1.05rem; font-weight: 700; color: var(--fg); text-align: left; }
+.mn-acc-btn > svg:first-child { width: 22px; height: 22px; flex-shrink: 0; color: var(--accent); }
+.mn-acc-btn span { flex: 1; }
+.mn-chev { width: 20px; height: 20px; flex-shrink: 0; transition: transform .25s; color: var(--fg-3); }
+.mn-acc.open .mn-chev { transform: rotate(180deg); }
+.mn-acc-body { display: none; padding: 0 8px 10px; }
+.mn-acc.open .mn-acc-body { display: block; max-height: 46vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+body.mn-open #waBtn, body.mn-open .feed-fab { display: none !important; }
+.mn-sub { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 10px; background: none; border: none; border-radius: 10px; cursor: pointer; font: inherit; font-size: 1rem; font-weight: 500; color: var(--fg); text-align: left; }
+.mn-sub:active, .mn-sub:hover { background: var(--surface); }
+.mn-sub small { color: var(--fg-3); font-size: .8rem; font-weight: 600; }
 @media (max-width: 720px) { .hamburger { display: flex; } }
 
 /* ── General mobile fixes ────────────────────────────────── */
@@ -2740,21 +2763,40 @@ html.lenis, html.lenis body { height: auto; }
 
 <!-- ── MOBILE NAV ────────────────────────────────────────── -->
 <div class="mobile-nav" id="mobileNav" onclick="if(event.target===this)closeMobileNav()">
-  <div class="mobile-nav-panel">
-    <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+  <div class="mobile-nav-panel" role="dialog" aria-label="Menu">
+    <div class="mn-head">
+      <span class="mn-title">Pro Technology</span>
+      <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close menu">✕</button>
+    </div>
     <div class="mobile-nav-search">
       <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M11 11l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <input type="search" id="mobileSearchInput" placeholder="Search products…" enterkeyhint="search" autocomplete="off">
     </div>
-    <a class="mobile-nav-link" href="#hero" onclick="closeMobileNav()">🏠 Home</a>
-    <a class="mobile-nav-link" href="#categories" onclick="closeMobileNav()">🏪 Categories</a>
-    <a class="mobile-nav-link" href="#products" onclick="closeMobileNav()">📦 Products</a>
-    <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()">⭐ Why Us</a>
-    <a class="mobile-nav-link" href="#faq" onclick="closeMobileNav()">❓ FAQ</a>
-    <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()">📞 Contact</a>
+    <a class="mobile-nav-link" href="#hero" onclick="closeMobileNav()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>Home</a>
+    <a class="mobile-nav-link" href="#products" onclick="mnShowAll();return false"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 8h12l1 12H5L6 8zm3-1a3 3 0 0 1 6 0h-2a1 1 0 0 0-2 0H9z"/></svg>All Products</a>
+    <a class="mobile-nav-link" href="#why-us" onclick="closeMobileNav()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>About</a>
+    <a class="mobile-nav-link" href="#faq" onclick="closeMobileNav()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 16h-2v-2h2v2zm1.5-6.2c-.8.6-1.5 1-1.5 2.2h-2c0-2 1.2-2.7 2-3.3.6-.4.9-.7.9-1.2 0-.7-.6-1.3-1.4-1.3s-1.4.5-1.5 1.3H8.1C8.2 7.5 9.8 6 12 6s3.5 1.3 3.5 3c0 1.2-.5 1.9-1 2.8z"/></svg>FAQ</a>
+    <a class="mobile-nav-link" href="#contact" onclick="closeMobileNav()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.3.2 2.5.57 3.6a1 1 0 0 1-.25 1z"/></svg>Contact</a>
     <div class="mobile-nav-sep"></div>
-    <a class="mobile-nav-link" href="#" onclick="closeMobileNav();openWishlist();return false">❤️ Wishlist <span class="mn-badge" id="wishCountNav"></span></a>
-    <a class="mobile-nav-link" href="#" onclick="closeMobileNav();document.getElementById('cartBtn').click();return false">🛒 Cart <span class="mn-badge" id="cartCountNav"></span></a>
+    <div class="mn-acc" id="mnAccBrand">
+      <button class="mn-acc-btn" type="button" onclick="toggleMnAcc('mnAccBrand')" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 2.2 3.2-.4.9 3.1 2.9 1.5-1 3.1 1 3.1-2.9 1.5-.9 3.1-3.2-.4L12 22l-2.4-2.2-3.2.4-.9-3.1-2.9-1.5 1-3.1-1-3.1 2.9-1.5.9-3.1 3.2.4z"/></svg>
+        <span>Shop by Brand</span>
+        <svg class="mn-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="mn-acc-body" id="mnBrandList"></div>
+    </div>
+    <div class="mn-acc" id="mnAccCat">
+      <button class="mn-acc-btn" type="button" onclick="toggleMnAcc('mnAccCat')" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5zm0 11L2 8v3l10 5 10-5V8l-10 5zm0 4L2 12v3l10 5 10-5v-3l-10 5z"/></svg>
+        <span>Shop by Category</span>
+        <svg class="mn-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="mn-acc-body" id="mnCatList"></div>
+    </div>
+    <div class="mobile-nav-sep"></div>
+    <a class="mobile-nav-link" href="#" onclick="closeMobileNav();document.getElementById('cartBtn').click();return false"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM1 2v2h2l3.6 7.6-1.4 2.4A2 2 0 0 0 7 17h12v-2H7.4l1.1-2h7.5a2 2 0 0 0 1.7-1l3.6-6.5L19.4 4H5.2L4.3 2H1z"/></svg>Cart <span class="mn-badge" id="cartCountNav"></span></a>
+    <a class="mobile-nav-link" href="#" onclick="closeMobileNav();openWishlist();return false"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.4-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.6-9.5 9-9.5 9z"/></svg>Wishlist <span class="mn-badge" id="wishCountNav"></span></a>
   </div>
 </div>
 
@@ -2919,8 +2961,8 @@ html.lenis, html.lenis body { height: auto; }
       </button>
       <!-- Samsung: official logo image -->
       <button class="phone-brand-card" data-pbrand="Samsung" onclick="filterPhoneBrand('Samsung')">
-        <div class="phone-brand-logo" style="background:#f5f5f7; padding:0; overflow:hidden;">
-          <img src="/public/images/samsung-logo.webp" alt="Samsung" style="width:100%;height:100%;object-fit:contain;padding:6px;">
+        <div class="phone-brand-logo" style="background:#f2f2f2;">
+          <img src="/public/images/samsung-wordmark.webp" alt="Samsung" width="80" height="48" style="width:86%;height:auto;display:block;">
         </div>
         <span class="phone-brand-name">Samsung</span>
       </button>
@@ -5731,9 +5773,44 @@ function toggleMobileNav() {
   const btn = document.getElementById('hamburger');
   const open = nav.classList.toggle('open');
   btn.classList.toggle('open', open);
+  document.body.classList.toggle('mn-open', open);
   document.body.style.overflow = open ? 'hidden' : '';
 }
+// ── Mobile menu accordions (brands + categories, built from live data) ──
+function toggleMnAcc(id) {
+  const box = document.getElementById(id); if (!box) return;
+  const open = box.classList.toggle('open');
+  box.querySelector('.mn-acc-btn').setAttribute('aria-expanded', open);
+  if (open) buildMobileNavLists();
+}
+function buildMobileNavLists() {
+  if (typeof PRODUCTS === 'undefined' || !PRODUCTS.length) return;
+  const live = PRODUCTS.filter(p => p.quantity > 0);
+  const bl = document.getElementById('mnBrandList'), cl = document.getElementById('mnCatList');
+  if (bl) {
+    const found = _KNOWN_BRANDS.map(b => [b, live.filter(p => p.name.toLowerCase().includes(b.toLowerCase())).length]).filter(x => x[1] > 0);
+    found.sort((a, b) => b[1] - a[1]);
+    bl.innerHTML = found.map(([b, n]) => `<button class="mn-sub" type="button" data-brand="${esc(b)}">${esc(b)} <small>${n}</small></button>`).join('');
+    bl.querySelectorAll('.mn-sub').forEach(el => el.addEventListener('click', () => { closeMobileNav(); filterPhoneBrand(el.dataset.brand); }));
+  }
+  if (cl) {
+    const cats = {}; live.forEach(p => { if (p.cat) cats[p.cat] = (cats[p.cat] || 0) + 1; });
+    cl.innerHTML = Object.keys(cats).sort().map(c => `<button class="mn-sub" type="button" data-cat="${esc(c)}">${esc(catLabel(c))} <small>${cats[c]}</small></button>`).join('');
+    cl.querySelectorAll('.mn-sub').forEach(el => el.addEventListener('click', () => { mnPickCategory(el.dataset.cat); }));
+  }
+}
+function mnResetBrand() {
+  activeBrandFilter = '';
+  document.querySelectorAll('.brand-chip, .phone-brand-card').forEach(c => c.classList.remove('active'));
+}
+function mnScrollProducts() {
+  requestAnimationFrame(() => { const el = document.getElementById('products'); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: 'auto' }); });
+}
+function mnPickCategory(cat) { closeMobileNav(); mnResetBrand(); setFilter(cat); mnScrollProducts(); }
+function mnShowAll() { closeMobileNav(); mnResetBrand(); setFilter('all'); mnScrollProducts(); }
+
 function closeMobileNav() {
+  document.body.classList.remove('mn-open');
   document.getElementById('mobileNav').classList.remove('open');
   document.getElementById('hamburger').classList.remove('open');
   document.body.style.overflow = '';
