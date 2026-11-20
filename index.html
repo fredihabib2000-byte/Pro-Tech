@@ -4791,7 +4791,7 @@ async function loadProductQuestions(productId) {
   if (!listEl) return;
   listEl.innerHTML = "";
   try {
-    const rows = await sbFetch(`/rest/v1/pt_product_questions?product_id=eq.${productId}&order=created_at.desc&select=*`);
+    const rows = await sbFetch(`/rest/v1/pt_product_questions?product_id=eq.${productId}&order=created_at.desc&select=id,display_name,question,answer,created_at`);
     if (!rows || rows.length === 0) return;
     listEl.innerHTML = `<div class="pm-qa-title">Customer Q&A</div>` +
       rows.map(r => `
