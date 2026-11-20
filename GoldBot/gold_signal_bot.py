@@ -1,6 +1,6 @@
 """
 GainzAlgo V4 - Multi-Asset Telegram Bot
-Assets: Gold (XAU/USD), Silver (XAG/USD), Bitcoin (BTC/USD), NVDA
+Assets: Gold (XAU/USD), Silver (XAG/USD), NVDA
 - Triple-timeframe: 4H macro + 1H trend + 15min entry
 - Volume Analysis: OBV trend + Volume Surge detection
 - State-based conditions → signals in trending markets only
@@ -28,10 +28,9 @@ ALPHA_VANTAGE_KEY = os.getenv("ALPHA_VANTAGE_KEY")   # optional — improves acc
 # ── Asset config ──────────────────────────────────────────────────────────────
 # session: "metals" = London+NY, "crypto" = 24/7, "nyse" = NYSE hours only
 SYMBOLS = [
-    {"symbol": "XAU/USD", "name": "Gold",    "emoji": "🥇", "atr_min": 3.0,  "session": "metals"},
-    {"symbol": "XAG/USD", "name": "Silver",  "emoji": "🥈", "atr_min": 0.05, "session": "metals"},
-    {"symbol": "BTC/USD", "name": "Bitcoin", "emoji": "₿",  "atr_min": 50.0, "session": "crypto"},
-    {"symbol": "NVDA",    "name": "NVDA",    "emoji": "💻", "atr_min": 1.5,  "session": "nyse"},
+    {"symbol": "XAU/USD", "name": "Gold",   "emoji": "🥇", "atr_min": 3.0,  "session": "metals"},
+    {"symbol": "XAG/USD", "name": "Silver", "emoji": "🥈", "atr_min": 0.05, "session": "metals"},
+    {"symbol": "NVDA",    "name": "NVDA",   "emoji": "💻", "atr_min": 1.5,  "session": "nyse"},
 ]
 
 FAST_EMA   = 8
@@ -56,16 +55,16 @@ ALERT_MIN_SCORE = 4     # Strong signals only (was 3)
 SPAM_MINUTES = 120
 
 # Ranging filter: EMA spread / ATR must exceed this to confirm a trend
-EMA_TREND_MIN = 0.30
+EMA_TREND_MIN = 0.40        # raised: requires stronger trend to trade
 
 # Pullback filter: price must be within X × ATR of slow EMA (no chasing)
-PULLBACK_ATR_MAX = 1.2
+PULLBACK_ATR_MAX = 1.0      # tighter: only enter on clean pullbacks
 
 # RSI entry zone: only enter when RSI is in this range (avoid extremes)
-RSI_BUY_MIN  = 40
-RSI_BUY_MAX  = 65
-RSI_SELL_MIN = 35
-RSI_SELL_MAX = 60
+RSI_BUY_MIN  = 45           # tighter: avoid early entries
+RSI_BUY_MAX  = 62
+RSI_SELL_MIN = 38
+RSI_SELL_MAX = 55           # tighter: avoid early entries
 
 last_alert = {}       # symbol → {direction: (reason_key, timestamp)}
 last_brief_date = None
@@ -522,7 +521,7 @@ def fmt_brief(price: float, rsi_v: float, atr_v: float, trends: tuple,
         f"1H    : {htf_icon}\n"
         f"RSI   : {rsi_v:.1f}  |  ATR: {atr_v:.2f}{macro}\n"
         f"━━━━━━━━━━━━━━━━\n"
-        f"Watching: Gold 🥇 Silver 🥈 Bitcoin ₿ NVDA 💻"
+        f"Watching: Gold 🥇 Silver 🥈 NVDA 💻"
     )
 
 
@@ -566,16 +565,16 @@ def _check_symbol(sym: dict, session: str) -> None:
         log.info("%s ranging (spread %.2f) — skipping", sym_name, ema_spread)
         return
 
-    ok_4h = (d == "BUY"  and htf_4h in ("UP", "NEUTRAL")) or \
-            (d == "SELL" and htf_4h in ("DOWN", "NEUTRAL"))
+    # Require 4H to explicitly confirm direction (NEUTRAL = no trade)
+    ok_4h = (d == "BUY" and htf_4h == "UP") or (d == "SELL" and htf_4h == "DOWN")
     if not ok_4h:
-        log.info("%s 4H disagrees (%s vs %s)", sym_name, d, htf_4h)
+        log.info("%s 4H not confirmed (%s vs %s) — skipping", sym_name, d, htf_4h)
         return
 
-    htf_ok = (d == "BUY"  and htf_1h in ("UP", "NEUTRAL")) or \
-             (d == "SELL" and htf_1h in ("DOWN", "NEUTRAL"))
+    # Require 1H to explicitly confirm direction (NEUTRAL = no trade)
+    htf_ok = (d == "BUY" and htf_1h == "UP") or (d == "SELL" and htf_1h == "DOWN")
     if not htf_ok:
-        log.info("%s 1H disagrees (%s vs %s)", sym_name, d, htf_1h)
+        log.info("%s 1H not confirmed (%s vs %s) — skipping", sym_name, d, htf_1h)
         return
 
     price_dist = abs(closes[-1] - es_last) / atr_val if atr_val else 999
@@ -610,9 +609,9 @@ def run():
     log.info("GainzAlgo V4 started — multi-asset")
     send(
         "🤖 <b>GainzAlgo V4 Started ✅</b>\n"
-        "Watching: Gold 🥇  Silver 🥈  Bitcoin ₿  NVDA 💻\n"
-        "📡 Signal (3+ cond)  🚀 Strong (4+ cond)\n"
-        "Filters: 4H + 1H + Trend + Pullback + RSI zone"
+        "Watching: Gold 🥇  Silver 🥈  NVDA 💻\n"
+        "🚀 Strong signals only (4H + 1H must confirm direction)\n"
+        "Filters: Trend + Pullback + RSI zone + EMA spread"
     )
 
     while True:
