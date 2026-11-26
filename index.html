@@ -5220,7 +5220,7 @@ async function submitOrder() {
     const itemsList = cart.map(i => `• ${i.name}${i.variantLabel ? ` (${i.variantLabel})` : ""} ×${i.qty}`).join("\n");
     const orderResult = await sbFetch("/rest/v1/pt_orders", {
       method: "POST",
-      headers: { "Prefer": "return=representation" },
+      headers: { "Prefer": "return=minimal" },
       body: JSON.stringify({
         customer_name: name,
         customer_phone: phone,
@@ -5231,7 +5231,6 @@ async function submitOrder() {
         status: "pending"
       })
     });
-    const orderId = Array.isArray(orderResult) ? orderResult[0]?.id : orderResult?.id;
     trackEvent('order_placed', { total: parseFloat(grandTotal.toFixed(2)), items_count: cart.length });
 
     const ownerNum = (waNumber || "96170107139").replace(/\D/g, "");
